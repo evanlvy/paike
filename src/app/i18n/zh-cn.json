@@ -8,6 +8,10 @@
     "docking": "对接",
     "grade_template": "{{grade}}级"
   },
+  "lab": {
+    "by_center": "分中心",
+    "by_building": "实验楼"
+  },
   "loginScreen": {
     "signin": "登录",
     "username": "用户名",

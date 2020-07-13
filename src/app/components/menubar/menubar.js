@@ -24,7 +24,7 @@ import {
 } from 'react-icons/md';
 import { Trans, withTranslation } from 'react-i18next';
 
-import { GradesMenu } from './grades-menu';
+import { GradesMenu, LabsMenu } from './';
 
 function withMenu(WrappedMenuList) {
   return class extends Component {
@@ -52,6 +52,11 @@ const MenuType = {
   BASIC_MAINTAIN: 7,
 };
 
+const MenuListType = {
+  GRADE: 1,
+  LAB: 2,
+}
+
 class MenuBarWrapped extends Component {
   constructor(props) {
     super(props);
@@ -59,6 +64,11 @@ class MenuBarWrapped extends Component {
   }
 
   initMenu = () => {
+    this.initGrades();
+    this.initLabs();
+  }
+
+  initGrades = () => {
     this.college_grades = [];
     this.vocational_grades = [];
     this.docking_grades = [];
@@ -67,6 +77,15 @@ class MenuBarWrapped extends Component {
       this.vocational_grades[i] = grade;
       this.docking_grades[i] = grade;
     }
+  }
+
+  initLabs = () => {
+    this.lab_centers = [
+      "基础", "护理", "影像", "临床", "药学", "医疗技术"
+    ];
+    this.lab_buildings = [
+      "A栋","B栋","C栋","D栋","E栋","F栋","L栋"
+    ]
   }
 
   notifyMenuSelected = (menu, menu_params) => {
@@ -81,38 +100,57 @@ class MenuBarWrapped extends Component {
     this.notifyMenuSelected(menu_type, {edu: education, grd: grade});
   }
 
+  onLabChanged = (menu_type, by_type, lab_index) => {
+    console.log("onLabChanged, menu type: "+menu_type+", by type: "+by_type+", index: "+lab_index);
+    this.notifyMenuSelected(menu_type, {by: by_type, idx: lab_index});
+  }
+
   render() {
-    const { college_grades, vocational_grades, docking_grades } = this;
+    const { college_grades, vocational_grades, docking_grades, lab_centers, lab_buildings } = this;
     const menus = [
-      { type: MenuType.LILUN, title: "menuBar.lilunkebiao_title", icon: FiBookOpen, bgColor: "orange",
+      { list_type: MenuListType.GRADE, type: MenuType.LILUN, title: "menuBar.lilunkebiao_title", icon: FiBookOpen, bgColor: "orange",
           menuListProps: {collegeGrades: college_grades ,vocationalGrades: vocational_grades, dockingGrades: docking_grades, onGradeChange: this.onGradeChanged} },
-      { type: MenuType.BANJI, title: "menuBar.banjikebiao_title", icon: FaCalendarDay, bgColor: "cyan",
+      { list_type: MenuListType.GRADE, type: MenuType.BANJI, title: "menuBar.banjikebiao_title", icon: FaCalendarDay, bgColor: "cyan",
               menuListProps: {collegeGrades: college_grades ,vocationalGrades: vocational_grades, dockingGrades: docking_grades, onGradeChange: this.onGradeChanged} },
-      { type: MenuType.SHIXUN, title: "menuBar.shixunkebiao_title", icon: AiTwotoneExperiment, bgColor: "green",
+      { list_type: MenuListType.GRADE, type: MenuType.SHIXUN, title: "menuBar.shixunkebiao_title", icon: AiTwotoneExperiment, bgColor: "green",
               menuListProps: {collegeGrades: college_grades ,vocationalGrades: vocational_grades, dockingGrades: docking_grades, onGradeChange: this.onGradeChanged} },
-      { type: MenuType.SHIYANSHI, title: "menuBar.shiyanshi_anpai_title", icon: FaBuilding, bgColor: "blue",
+      { list_type: MenuListType.LAB, type: MenuType.SHIYANSHI, title: "menuBar.shiyanshi_anpai_title", icon: FaBuilding, bgColor: "blue",
+              menuListProps: {labCenters: lab_centers ,labBuildings: lab_buildings, onLabChange: this.onLabChanged} },
+      { list_type: MenuListType.GRADE, type: MenuType.JIAOYANSHI, title: "menuBar.jiaoyanshi_kebiao_title", icon: MdCollectionsBookmark, bgColor: "red",
               menuListProps: {collegeGrades: college_grades ,vocationalGrades: vocational_grades, dockingGrades: docking_grades, onGradeChange: this.onGradeChanged} },
-      { type: MenuType.JIAOYANSHI, title: "menuBar.jiaoyanshi_kebiao_title", icon: MdCollectionsBookmark, bgColor: "red",
+      { list_type: MenuListType.GRADE, type: MenuType.JIAOSHI, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink",
               menuListProps: {collegeGrades: college_grades ,vocationalGrades: vocational_grades, dockingGrades: docking_grades, onGradeChange: this.onGradeChanged} },
-      { type: MenuType.JIAOSHI, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink",
-              menuListProps: {collegeGrades: college_grades ,vocationalGrades: vocational_grades, dockingGrades: docking_grades, onGradeChange: this.onGradeChanged} },
-      { type: MenuType.BASIC_MAINTAIN, title: "menuBar.basic_maintain_title", icon: FaUserCog, bgColor: "purple",
+      { list_type: MenuListType.GRADE, type: MenuType.BASIC_MAINTAIN, title: "menuBar.basic_maintain_title", icon: FaUserCog, bgColor: "purple",
               menuListProps: {collegeGrades: college_grades ,vocationalGrades: vocational_grades, dockingGrades: docking_grades, onGradeChange: this.onGradeChanged} },
     ]
     return (
       <Flex direction="row" justify="center" mt={5}>
         {
-          menus.map((item) => (
-            <GradesMenu
-              key={item.type}
-              menuType={item.type}
-              mx={1}
-              width="11em"
-              title={item.title}
-              icon={item.icon}
-              bgColor={item.bgColor}
-              menuListProps={item.menuListProps} />
-          ))
+          menus.map((item) => {
+            switch(item.list_type){
+              case MenuListType.LAB:
+                return <LabsMenu
+                  key={item.type}
+                  menuType={item.type}
+                  mx={1}
+                  width="11em"
+                  title={item.title}
+                  icon={item.icon}
+                  bgColor={item.bgColor}
+                  menuListProps={item.menuListProps} />
+              case MenuListType.GRADE:
+              default:
+                return <GradesMenu
+                  key={item.type}
+                  menuType={item.type}
+                  mx={1}
+                  width="11em"
+                  title={item.title}
+                  icon={item.icon}
+                  bgColor={item.bgColor}
+                  menuListProps={item.menuListProps} />
+            }
+          })
         }
       </Flex>
     );
