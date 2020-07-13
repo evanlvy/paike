@@ -1,0 +1,35 @@
+{
+  "common": {
+
+  },
+  "grade": {
+    "college": "College",
+    "vocational": "Higher Vocational",
+    "docking": "Docking",
+    "grade_template": "{{grade}}"
+  },
+  "loginScreen": {
+    "signin": "Sign In",
+    "username": "User Name",
+    "username_placeholder": "Please enter your username",
+    "username_error_empty": "Username can't be empty",
+    "password": "Password",
+    "password_placeholder": "Please enter your password",
+    "password_error_empty": "Password can't be empty"
+  },
+  "menuBar": {
+    "lilunkebiao_title": "Theory Course Schedule",
+    "banjikebiao_title": "Weekly Class Schedule",
+    "shixunkebiao_title": "Training Course Schedule",
+    "shiyanshi_anpai_title": "Laboratory Arrangement",
+    "jiaoyanshi_kebiao_title": "Teaching and Research Section Schedule",
+    "jiaoshi_paike_title": "Teacher Scheduling",
+    "basic_maintain_title": "Basic Maintaining"
+  },
+  "subjectBoard": {
+    "title_template": "Please select subject [{{grade_info}}]"
+  },
+  "lilunKebiaoScreen": {
+    "title_template": "{{grade_info}} Course Schedule ({{semester_info}})"
+  }
+}

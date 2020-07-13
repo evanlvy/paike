@@ -1,0 +1,35 @@
+{
+  "common": {
+
+  },
+  "grade": {
+    "college": "大专",
+    "vocational": "高职",
+    "docking": "对接",
+    "grade_template": "{{grade}}级"
+  },
+  "loginScreen": {
+    "signin": "登录",
+    "username": "用户名",
+    "username_placeholder": "请输入用户名",
+    "username_error_empty": "用户名不能为空",
+    "password": "密码",
+    "password_placeholder": "请输入密码",
+    "password_error_empty": "密码不能为空"
+  },
+  "menuBar": {
+    "lilunkebiao_title": "理论课总课表",
+    "banjikebiao_title": "班级周课表",
+    "shixunkebiao_title": "实训课表",
+    "shiyanshi_anpai_title": "实验室安排",
+    "jiaoyanshi_kebiao_title": "教研室时间表",
+    "jiaoshi_paike_title": "教师排课",
+    "basic_maintain_title": "基础数据维护"
+  },
+  "subjectBoard": {
+    "title_template": "请选择专业 [{{grade_info}}]"
+  },
+  "lilunKebiaoScreen": {
+    "title_template": "{{grade_info}}总课表 ({{semester_info}})"
+  }
+}
