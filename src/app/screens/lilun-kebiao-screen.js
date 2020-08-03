@@ -22,6 +22,19 @@ class LiLunKeBiaoScreenWrapped extends Component {
     this.state = {
       grade_info: ""
     };
+
+    this.subjectsData = [
+      {title: "护理", color: "red.400"},
+      {title: "助产", color: "green.200"},
+      {title: "临床医学", color: "blue.400"},
+      {title: "临床医学\n病理", color: "orange.300"},
+      {title: "全科医学", color: "cyan.500"},
+      {title: "卫生信息\n管理", color: "blue.200"},
+      {title: "医学影像", color: "green.100"},
+      {title: "影像技术", color: "green.300"},
+      {title: "放射治疗\n技术", color: "blue.400"},
+      {title: "医学美容", color: "purple.500"},
+    ];
     this.tabTitles = [
       "第一学期1-9周",
       "第一学期10-18周",
@@ -107,13 +120,14 @@ class LiLunKeBiaoScreenWrapped extends Component {
   render() {
     const { t } = this.props;
     const { grade_info } = this.state;
-    const { tabTitles, tableHeaders, tableData, onTabChanged, onResultTableCellClicked } = this;
+    const { subjectsData, tabTitles, tableHeaders, tableData, onTabChanged, onResultTableCellClicked } = this;
     return (
       <Flex width="100%" direction="column" justify="center" align="center">
         <SubjectBoard
           my={4}
           color={LILUNKEBIAO_COLOR}
-          title={t("subjectBoard.title_template", {grade_info: grade_info})}/>
+          title={t("subjectBoard.title_template", {grade_info: grade_info})}
+          subjects={ subjectsData }/>
         <ResultTabList
           my={4}
           width="100%"
