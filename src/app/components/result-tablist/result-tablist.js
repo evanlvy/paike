@@ -12,10 +12,11 @@ import {
 
 class ResultTabList extends Component {
   render() {
-    const { titles, tabHeight, pages, color, ...other_props } = this.props;
+    const { titles, tabHeight, pages, color, onTabChange, ...other_props } = this.props;
     return (
       <Tabs variant="enclosed"  {...other_props}>
-        <TabList>
+        <TabList
+          onChange={onTabChange}>
           {
             titles.map((title, index) => (
               <Tab

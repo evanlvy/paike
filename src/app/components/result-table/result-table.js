@@ -46,6 +46,7 @@ class ResultTable extends Component {
     const columnDefs = [];
     for (let i=0; i < headers.length; i++) {
       columnDefs[i] = {
+        index: i,
         headerName: headers[i].name,
         field: headers[i].field,
         width: headers[i].width == null ? defaultColWidth : headers[i].width,
@@ -71,9 +72,23 @@ class ResultTable extends Component {
     event.api.resetRowHeights();
   }
 
+  onCellClicked = (event) => {
+    const { onCellClicked: onCellClickedCallback } = this.props;
+    //console.log("onCellClicked, row: "+event.rowIndex+" col: "+event.colDef.index+" field: "+event.colDef.field+" value: "+event.value);
+    let e = {
+      row: event.rowIndex,
+      col: event.colDef.index,
+      field: event.colDef.field,
+      value: event.value,
+    }
+    if (onCellClickedCallback != null) {
+      onCellClickedCallback(e);
+    }
+  }
+
   render() {
-    const { defaultColDef, onGridSizeChanged } = this;
-    const { width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data, ...other_props } = this.props;
+    const { defaultColDef, onGridSizeChanged, onCellClicked } = this;
+    const { width, title, titleHeight, colLineHeight, defaultColWidth, onCellClicked: onCellClickedCallback, color, headers, data, ...other_props } = this.props;
     const { frameworkComponents, columnDefs, rowData } = this.state;
     return (
       <Flex direction="column" width={width ? width : "100%"} {...other_props} >
@@ -86,7 +101,8 @@ class ResultTable extends Component {
             defaultColDef={defaultColDef}
             frameworkComponents={frameworkComponents}
             columnDefs={columnDefs}
-            rowData={rowData} >
+            rowData={rowData}
+            onCellClicked={onCellClicked} >
           </AgGridReact>
         </div>
         </Box>

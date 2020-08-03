@@ -67,7 +67,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
         wednesday_12: "社区护理学 曾丽", wednesday_34: "自习", wednesday_67: "内科护理学 曹琴", wednesday_89: "自习",
         thursday_12: "护理伦理学 陈红", thursday_34: "自习", thursday_67: "自习", thursday_89: "自习",
         friday_12: "护理管理学 刘诗诗", friday_34: "遗传与优生 刘芳", friday_67: "助产技术 杨新", friday_89: "自习" },
-    ]
+    ];
+    this.selTabIndex = 0;
   }
 
   componentDidMount() {
@@ -92,10 +93,21 @@ class LiLunKeBiaoScreenWrapped extends Component {
     })
   }
 
+  onTabChanged = (index) => {
+    const { tabTitles } = this;
+    console.log("onTabChanged: "+tabTitles[index]);
+    this.selTabIndex = index;
+  }
+
+  onResultTableCellClicked = (e) => {
+    const tableTitle = this.tabTitles[this.selTabIndex];
+    console.log(`onResultTableCellClicked, ${tableTitle} row: ${e.row} col: ${e.col} field: ${e.field} value: ${e.value}`);
+  }
+
   render() {
     const { t } = this.props;
     const { grade_info } = this.state;
-    const { tableHeaders, tableData } = this;
+    const { tabTitles, tableHeaders, tableData, onTabChanged, onResultTableCellClicked } = this;
     return (
       <Flex width="100%" direction="column" justify="center" align="center">
         <SubjectBoard
@@ -107,7 +119,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
           width="100%"
           tabHeight={50}
           color={LILUNKEBIAO_COLOR}
-          titles={this.tabTitles}
+          titles={tabTitles}
+          onChange={onTabChanged}
           pages={[
             (<ResultTable
               height={400}
@@ -117,7 +130,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
               title={t("lilunKebiaoScreen.title_template", {grade_info: grade_info, semester_info: this.tabTitles[0]})}
               color={LILUNKEBIAO_COLOR}
               headers={tableHeaders}
-              data={tableData} />),
+              data={tableData}
+              onCellClicked={onResultTableCellClicked} />),
             (<ResultTable
               height={400}
               titleHeight={50}
@@ -126,7 +140,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
               title={t("lilunKebiaoScreen.title_template", {grade_info: grade_info, semester_info: this.tabTitles[1]})}
               color={LILUNKEBIAO_COLOR}
               headers={tableHeaders}
-              data={tableData} />) ,
+              data={tableData}
+              onCellClicked={onResultTableCellClicked} />) ,
             (<ResultTable
               height={400}
               titleHeight={50}
@@ -135,7 +150,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
               title={t("lilunKebiaoScreen.title_template", {grade_info: grade_info, semester_info: this.tabTitles[2]})}
               color={LILUNKEBIAO_COLOR}
               headers={tableHeaders}
-              data={tableData} />),
+              data={tableData}
+              onCellClicked={onResultTableCellClicked} />),
             (<ResultTable
               height={400}
               titleHeight={50}
@@ -144,7 +160,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
               title={t("lilunKebiaoScreen.title_template", {grade_info: grade_info, semester_info: this.tabTitles[3]})}
               color={LILUNKEBIAO_COLOR}
               headers={tableHeaders}
-              data={tableData} />)]}
+              data={tableData}
+              onCellClicked={onResultTableCellClicked} />)]}
         />
       </Flex>
     );
