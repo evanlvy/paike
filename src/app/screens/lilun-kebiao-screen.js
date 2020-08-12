@@ -65,17 +65,17 @@ class LiLunKeBiaoScreenWrapped extends Component {
       {name: "8,9", field: "friday_89"},
     ];
     this.tableData = [
-      {class_name: "护理1班 B101", monday_12: "护理伦理学 陈红", monday_34: "社区护理学 曾丽", monday_67: "自习", monday_89: "自习",
+      {class_name: {title: "护理1班 B101"}, monday_12: "护理伦理学 陈红", monday_34: "社区护理学 曾丽", monday_67: "自习", monday_89: "自习",
         tuesday_12: "护理管理学 刘诗诗", tuesday_34: "老年护理学 张英", tuesday_67: "自习", tuesday_89: "自习",
         wednesday_12: "自习", wednesday_34: "自习", wednesday_67: "内科护理学 黄丽", wednesday_89: "自习",
         thursday_12: "老年护理学 张英", thursday_34: "遗传与优生 刘芳", thursday_67: "自习", thursday_89: "自习",
         friday_12: "社区护理学 吴琼", friday_34: "护理伦理学 陈红", friday_67: "自习", friday_89: "自习" },
-      {class_name: "护理2班 A110", monday_12: "遗传与优生 刘芳", monday_34: "护理管理学 刘诗诗", monday_67: "内科护理学 黄丽", monday_89: "自习",
+      {class_name: {title: "护理2班 A110", array: ["组1：1-20号", "组2：21-40号"]}, monday_12: "遗传与优生 刘芳", monday_34: "护理管理学 刘诗诗", monday_67: "内科护理学 黄丽", monday_89: "自习",
         tuesday_12: "护理伦理学 陈红", tuesday_34: "内科护理学 曹琴", tuesday_67: "自习", tuesday_89: "自习",
         wednesday_12: "老年护理学 张英", wednesday_34: "自习", wednesday_67: "社区护理学 吴琼", wednesday_89: "自习",
         thursday_12: "护理管理学 刘诗诗", thursday_34: "自习", thursday_67: "自习", thursday_89: "自习",
         friday_12: "内科护理学 杨欣", friday_34: "护理管理学 刘诗诗", friday_67: "自习", friday_89: "护理管理学 刘诗诗" },
-      {class_name: "助产班 B102", monday_12: "内科护理学 曹琴", monday_34: "助产技术 杨新", monday_67: "遗传与优生 刘芳", monday_89: "自习",
+      {class_name: {title: "助产班 B102", array: ["组1：1-30号", "组2：31-50号"], onItemClicked: this.onClassItemClicked}, monday_12: "内科护理学 曹琴", monday_34: "助产技术 杨新", monday_67: "遗传与优生 刘芳", monday_89: "自习",
         tuesday_12: "妇婴保健 吴懿", tuesday_34: "内科护理学 曹琴", tuesday_67: "自习", tuesday_89: "自习",
         wednesday_12: "社区护理学 曾丽", wednesday_34: "自习", wednesday_67: "内科护理学 曹琴", wednesday_89: "自习",
         thursday_12: "护理伦理学 陈红", thursday_34: "自习", thursday_67: "自习", thursday_89: "自习",
@@ -112,15 +112,26 @@ class LiLunKeBiaoScreenWrapped extends Component {
     this.selTabIndex = index;
   }
 
-  onResultTableCellClicked = (e) => {
-    const tableTitle = this.tabTitles[this.selTabIndex];
-    console.log(`onResultTableCellClicked, ${tableTitle} row: ${e.row} col: ${e.col} field: ${e.field} value: ${e.value}`);
+  onClassItemClicked = (index) => {
+    console.log("onClassItemClicked, index: "+index);
   }
 
   render() {
     const { t } = this.props;
     const { grade_info } = this.state;
-    const { subjectsData, tabTitles, tableHeaders, tableData, onTabChanged, onResultTableCellClicked } = this;
+    const { subjectsData, tabTitles, tableHeaders, tableData, onTabChanged } = this;
+    const pageTables = [];
+    for (let i=0; i < tabTitles.length; i++) {
+      pageTables[i] = (<ResultTable
+        height={400}
+        titleHeight={50}
+        colLineHeight={20}
+        defaultColWidth={100}
+        title={t("lilunKebiaoScreen.title_template", {grade_info: grade_info, semester_info: this.tabTitles[i]})}
+        color={LILUNKEBIAO_COLOR}
+        headers={tableHeaders}
+        data={tableData} />);
+    }
     return (
       <Flex width="100%" direction="column" justify="center" align="center">
         <SubjectBoard
@@ -135,47 +146,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
           color={LILUNKEBIAO_COLOR}
           titles={tabTitles}
           onChange={onTabChanged}
-          pages={[
-            (<ResultTable
-              height={400}
-              titleHeight={50}
-              colLineHeight={20}
-              defaultColWidth={100}
-              title={t("lilunKebiaoScreen.title_template", {grade_info: grade_info, semester_info: this.tabTitles[0]})}
-              color={LILUNKEBIAO_COLOR}
-              headers={tableHeaders}
-              data={tableData}
-              onCellClicked={onResultTableCellClicked} />),
-            (<ResultTable
-              height={400}
-              titleHeight={50}
-              colLineHeight={20}
-              defaultColWidth={100}
-              title={t("lilunKebiaoScreen.title_template", {grade_info: grade_info, semester_info: this.tabTitles[1]})}
-              color={LILUNKEBIAO_COLOR}
-              headers={tableHeaders}
-              data={tableData}
-              onCellClicked={onResultTableCellClicked} />) ,
-            (<ResultTable
-              height={400}
-              titleHeight={50}
-              colLineHeight={20}
-              defaultColWidth={100}
-              title={t("lilunKebiaoScreen.title_template", {grade_info: grade_info, semester_info: this.tabTitles[2]})}
-              color={LILUNKEBIAO_COLOR}
-              headers={tableHeaders}
-              data={tableData}
-              onCellClicked={onResultTableCellClicked} />),
-            (<ResultTable
-              height={400}
-              titleHeight={50}
-              colLineHeight={20}
-              defaultColWidth={100}
-              title={t("lilunKebiaoScreen.title_template", {grade_info: grade_info, semester_info: this.tabTitles[3]})}
-              color={LILUNKEBIAO_COLOR}
-              headers={tableHeaders}
-              data={tableData}
-              onCellClicked={onResultTableCellClicked} />)]}
+          pages={pageTables}
         />
       </Flex>
     );

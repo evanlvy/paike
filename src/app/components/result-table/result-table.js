@@ -12,6 +12,7 @@ import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 import './result-table.css';
 
 import { CommonRenderer } from "./common-renderer";
+import { ArrayDataRenderer } from "./arraydata-renderer";
 
 class ResultTable extends Component {
   constructor(props) {
@@ -19,6 +20,7 @@ class ResultTable extends Component {
     this.state = {
       frameworkComponents: {
         commonRenderer: CommonRenderer,
+        arrayDataRenderer: ArrayDataRenderer,
       },
       columnDefs: [],
       rowData: []
@@ -51,7 +53,7 @@ class ResultTable extends Component {
         field: headers[i].field,
         width: headers[i].width == null ? defaultColWidth : headers[i].width,
         lineHeight: colLineHeight,
-        cellRenderer: "commonRenderer",
+        cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
       };
     }
     columnDefs[0]["pinned"] = "left";
