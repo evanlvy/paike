@@ -1,6 +1,7 @@
 {
   "common": {
-
+    "previous": "上一个",
+    "next": "下一个"
   },
   "grade": {
     "college": "大专",
@@ -35,5 +36,8 @@
   },
   "lilunKebiaoScreen": {
     "title_template": "{{grade_info}}总课表 ({{semester_info}})"
+  },
+  "solveConflictModal": {
+    "title": "处理冲突"
   }
 }

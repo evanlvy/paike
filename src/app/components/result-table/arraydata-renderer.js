@@ -2,7 +2,7 @@
 
 import React, { Component } from 'react';
 
-import "./result-table.css"
+import "./table.css"
 
 import {
   Text,
@@ -30,7 +30,7 @@ class ArrayDataRenderer extends Component {
       return (
         <Popover usePortal>
           <PopoverTrigger>
-            <div className="cell-wrap-text" style={{lineHeight: lineHeight+"px", marginTop: "5px", marginBottom: "5px"}}>{value.title}</div>
+            <div className="common-cell" style={{lineHeight: lineHeight+"px"}}>{value.title}</div>
           </PopoverTrigger>
           <PopoverContent zIndex={4}>
             <PopoverArrow />

@@ -31,5 +31,8 @@
   },
   "lilunKebiaoScreen": {
     "title_template": "{{grade_info}} Course Schedule ({{semester_info}})"
+  },
+  "saveConflictModal": {
+    "title": "SAVE CONFLICT"
   }
 }

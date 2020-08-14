@@ -9,7 +9,7 @@ import {
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
-import './result-table.css';
+import './table.css';
 
 import { CommonRenderer } from "./common-renderer";
 import { ArrayDataRenderer } from "./arraydata-renderer";
@@ -88,9 +88,18 @@ class ResultTable extends Component {
     }
   }
 
+  onRowClicked = (event) => {
+    const { onRowClicked: onRowClickedCallback } = this.props;
+    if (onRowClickedCallback != null) {
+      onRowClickedCallback(event.rowIndex);
+    }
+  }
+
   render() {
-    const { defaultColDef, onGridSizeChanged, onCellClicked } = this;
-    const { width, title, titleHeight, colLineHeight, defaultColWidth, onCellClicked: onCellClickedCallback, color, headers, data, ...other_props } = this.props;
+    const { defaultColDef, onGridSizeChanged, onCellClicked, onRowClicked } = this;
+    const { width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data,
+      onCellClicked: onCellClickedCallback,
+      onRowClicked: onRowClickedCallback,  ...other_props } = this.props;
     const { frameworkComponents, columnDefs, rowData } = this.state;
     return (
       <Flex direction="column" width={width ? width : "100%"} {...other_props} >
@@ -104,7 +113,8 @@ class ResultTable extends Component {
             frameworkComponents={frameworkComponents}
             columnDefs={columnDefs}
             rowData={rowData}
-            onCellClicked={onCellClicked} >
+            onCellClicked={onCellClicked}
+            onRowClicked={onRowClicked} >
           </AgGridReact>
         </div>
         </Box>

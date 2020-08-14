@@ -11,6 +11,7 @@ import {
   SubjectBoard,
   ResultTabList,
   ResultTable,
+  SolveConflictModal,
 } from '../components';
 
 import { getEducationText } from '../models/grade';
@@ -82,6 +83,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
         friday_12: "护理管理学 刘诗诗", friday_34: "遗传与优生 刘芳", friday_67: "助产技术 杨新", friday_89: "自习" },
     ];
     this.selTabIndex = 0;
+
+    this.conflictModal = React.createRef();
   }
 
   componentDidMount() {
@@ -116,10 +119,17 @@ class LiLunKeBiaoScreenWrapped extends Component {
     console.log("onClassItemClicked, index: "+index);
   }
 
+  onKebiaoRowClicked = (index) => {
+    console.log("onKebiaoRowClicked, index: "+index);
+    if (index === 2) {
+      this.conflictModal.current.show();
+    }
+  }
+
   render() {
     const { t } = this.props;
     const { grade_info } = this.state;
-    const { subjectsData, tabTitles, tableHeaders, tableData, onTabChanged } = this;
+    const { subjectsData, tabTitles, tableHeaders, tableData, onTabChanged, onKebiaoRowClicked } = this;
     const pageTables = [];
     for (let i=0; i < tabTitles.length; i++) {
       pageTables[i] = (<ResultTable
@@ -130,7 +140,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
         title={t("lilunKebiaoScreen.title_template", {grade_info: grade_info, semester_info: this.tabTitles[i]})}
         color={LILUNKEBIAO_COLOR}
         headers={tableHeaders}
-        data={tableData} />);
+        data={tableData}
+        onRowClicked={onKebiaoRowClicked} />);
     }
     return (
       <Flex width="100%" direction="column" justify="center" align="center">
@@ -146,8 +157,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
           color={LILUNKEBIAO_COLOR}
           titles={tabTitles}
           onChange={onTabChanged}
-          pages={pageTables}
-        />
+          pages={pageTables} />
+        <SolveConflictModal ref={this.conflictModal} isCentered />
       </Flex>
     );
   }

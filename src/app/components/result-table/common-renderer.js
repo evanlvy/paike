@@ -1,16 +1,20 @@
 /* @flow */
 
 import React, { Component } from 'react';
+import {
+  Icon,
+} from '@chakra-ui/core';
 
-import "./result-table.css"
+import "./table.css"
 
 class CommonRenderer extends Component {
   render() {
     const { value, colDef } = this.props;
-    const { lineHeight } = colDef;
+    const { lineHeight, editable } = colDef;
     return (
-      <div className="cell-wrap-text" style={{lineHeight: lineHeight+"px", marginTop: "5px", marginBottom: "5px"}}>
+      <div className="common-cell" style={{lineHeight: lineHeight+"px"}}>
         {value.title == null ? value : value.title}
+        { editable && <Icon name="edit" marginLeft="2" />}
       </div>
     );
   }
