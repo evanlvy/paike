@@ -77,7 +77,8 @@ class EditableTable extends Component {
             defaultColDef={defaultColDef}
             frameworkComponents={frameworkComponents}
             columnDefs={columnDefs}
-            rowData={rowData} >
+            rowData={rowData}
+            onCellClicked={onCellClickedCallback} >
           </AgGridReact>
         </div>
       </Flex>

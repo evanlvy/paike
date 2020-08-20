@@ -1,7 +1,9 @@
 {
   "common": {
     "previous": "上一个",
-    "next": "下一个"
+    "next": "下一个",
+    "cancel": "取消",
+    "ok": "确认"
   },
   "grade": {
     "college": "大专",
@@ -39,5 +41,12 @@
   },
   "solveConflictModal": {
     "title": "处理冲突"
+  },
+  "chooseLabModal": {
+    "title_template": "选择实验室 [{{center_name}}]",
+    "previous_time": "上一时段",
+    "next_time": "下一时段",
+    "occupied_suffix": "有课"
   }
+
 }

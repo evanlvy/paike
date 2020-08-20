@@ -27,7 +27,7 @@ class GroupMenuListWrapped extends Component {
   updateGroupValues = (group_index, value) => {
     let groupValues = [];
     const { menuGroups } = this.props;
-    console.log("Group length: "+menuGroups.length);
+    //console.log("Group length: "+menuGroups.length);
     for (let i=0; i < menuGroups.length; i++) {
       if (i === group_index) {
         groupValues[i] = value;

@@ -12,6 +12,7 @@ import {
   ResultTabList,
   ResultTable,
   SolveConflictModal,
+  ChooseItemModal,
 } from '../components';
 
 import { getEducationText } from '../models/grade';
@@ -21,7 +22,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      grade_info: ""
+      grade_info: "",
+      labs: []
     };
 
     this.subjectsData = [
@@ -84,7 +86,29 @@ class LiLunKeBiaoScreenWrapped extends Component {
     ];
     this.selTabIndex = 0;
 
+    this.labCenters = [
+      {name: "基础分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E218"}, {title: "E214", occupied: "张磊"}]},
+      {name: "护理分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E318"}, {title: "E214", occupied: "张磊"}]},
+      {name: "影像分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E418"}, {title: "E214", occupied: "张磊"}]},
+      {name: "临床分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E118"}, {title: "E214", occupied: "张磊"}]},
+      {name: "药学分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E518"}, {title: "E214", occupied: "张磊"}]},
+      {name: "医疗技术分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E618"}, {title: "E214", occupied: "张磊"}]},
+      {name: "社科部", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "B118"}, {title: "E214", occupied: "张磊"}]},
+    ];
+    this.labTimeSegments = [
+      { name: "1,2节" },
+      { name: "3,4节" },
+      { name: "6,7节" },
+      { name: "8,9节" },
+    ];
+
+    this.teachers = [
+      {title: "王欣"}, {title: "张倩", occupied: "E211"}, {title: "莫迪", occupied: "E212"}, {title: "苏畅", occupied: "E213"}, {title: "张磊", occupied: "E214"}, {title: "邱丽"}, {title: "周佳", occupied: "F301"}, {title: "刘燕", occupied: "F302"}
+    ];
+
     this.conflictModal = React.createRef();
+    this.chooseLabModal = React.createRef();
+    this.chooseTeacherModal = React.createRef();
   }
 
   componentDidMount() {
@@ -103,9 +127,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
     const { t } = this.props;
     const { edu, grd } = this.props.location.state;
     const grade_info = getEducationText(t, edu) + t("grade.grade_template", {grade: grd});
-    console.log("initUI grade: "+grade_info);
+    console.log("initUI grade: "+grade_info+" labs: "+this.labCenters[0].labs.length);
     this.setState({
-      grade_info: grade_info
+      grade_info: grade_info,
+      labs: this.labCenters[0].labs,
     })
   }
 
@@ -126,10 +151,42 @@ class LiLunKeBiaoScreenWrapped extends Component {
     }
   }
 
+  // Choose Lab
+  onChooseLab = () => {
+    this.chooseLabModal.current.show();
+  }
+
+  onChooseLabCenterChanged = (index) => {
+    this.setState({
+      labs: this.labCenters[index].labs
+    })
+  }
+
+  onChooseLabTimeSegChanged = (index) => {
+    console.log("onChooseLabTimeSegChanged index: "+index);
+  }
+
+  onChooseLabResult = (confirm, labIndex) => {
+    if (confirm) {
+      console.log("onChooseLabResult: "+this.state.labs[labIndex]);
+    }
+    return true;
+  }
+  // Choose Teacher
+  onChooseTeacher = () => {
+    this.chooseTeacherModal.current.show();
+  }
+
+  onChooseTeacherCenterChanged = (index) => {
+    console.log("onChooseTeacherCenterChanged, center: "+this.labCenters[index].name);
+  }
+
   render() {
     const { t } = this.props;
-    const { grade_info } = this.state;
-    const { subjectsData, tabTitles, tableHeaders, tableData, onTabChanged, onKebiaoRowClicked } = this;
+    const { grade_info, labs } = this.state;
+    const { teachers, subjectsData, tabTitles, tableHeaders, tableData, labCenters, labTimeSegments,
+      onTabChanged, onKebiaoRowClicked, onChooseLab, onChooseLabCenterChanged, onChooseLabTimeSegChanged,
+      onChooseTeacher, onChooseTeacherCenterChanged } = this;
     const pageTables = [];
     for (let i=0; i < tabTitles.length; i++) {
       pageTables[i] = (<ResultTable
@@ -158,7 +215,26 @@ class LiLunKeBiaoScreenWrapped extends Component {
           titles={tabTitles}
           onChange={onTabChanged}
           pages={pageTables} />
-        <SolveConflictModal ref={this.conflictModal} isCentered />
+        <SolveConflictModal
+          ref={this.conflictModal}
+          isCentered
+          onChooseLab={onChooseLab}
+          onChooseTeacher={onChooseTeacher} />
+        <ChooseItemModal
+          ref={this.chooseLabModal}
+          centers={labCenters}
+          items={labs}
+          occupiedSuffix={t("chooseLabModal.occupied_suffix")}
+          timeSegments={labTimeSegments}
+          onCenterChanged={onChooseLabCenterChanged}
+          onTimeSegChanged={onChooseLabTimeSegChanged}/>
+        <ChooseItemModal
+          ref={this.chooseTeacherModal}
+          centers={labCenters}
+          items={teachers}
+          emptyColor="pink.200"
+          occupiedSuffix={t("chooseLabModal.occupied_suffix")}
+          onCenterChanged={onChooseTeacherCenterChanged} />
       </Flex>
     );
   }
