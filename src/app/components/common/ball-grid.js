@@ -7,8 +7,13 @@ import {
   Icon,
 } from '@chakra-ui/core'
 
+const DEFAULT_CHECK_ICON_COLOR = "blue.500";
 function BallGrid(props) {
   const { height, balls, ballSize, colCount, selectedBallIndex, onBallClicked } = props;
+  let { checkIconColor } = props;
+  if (checkIconColor == null) {
+    checkIconColor = DEFAULT_CHECK_ICON_COLOR;
+  }
   return (
     <Flex height={height == null ? "100%" : height} overflowY="scroll">
       <SimpleGrid width="100%" columns={colCount} spacing={6}>
@@ -16,7 +21,7 @@ function BallGrid(props) {
           balls.map((ball, index) => (
             <Flex justify="center" m={2} key={index}>
               <Box display="flex" position="relative" width={ballSize} height={ballSize} borderRadius="50%" justifyContent="center" alignItems="center" backgroundColor={ball.color} onClick={()=>{onBallClicked(index)}}>
-                {selectedBallIndex != null && index === selectedBallIndex &&  <Icon name="check" color="blue.500" position="absolute" bottom="2px" right="2px"/>}
+                {selectedBallIndex != null && index === selectedBallIndex &&  <Icon name="check" color={checkIconColor} position="absolute" bottom="0px" right="0px" size="2em"/>}
                 <Text width="80%" color="white" textAlign="center">{ball.title}</Text>
               </Box>
             </Flex>

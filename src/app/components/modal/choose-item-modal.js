@@ -142,7 +142,7 @@ class ChooseItemModalWrapped extends PureComponent {
 
   render() {
     const { isOpen, curCenterIndex, curTimeSegIndex, selectedItemIndex } = this.state;
-    const { t, items, centers, timeSegments, ...other_props } = this.props;
+    const { t, items, centers, timeSegments, checkIconColor, ...other_props } = this.props;
     let curCenter = null;
     if (centers != null) {
       curCenter = centers[curCenterIndex];
@@ -177,6 +177,7 @@ class ChooseItemModalWrapped extends PureComponent {
               colCount={6}
               ballSize={100}
               balls={itemsData}
+              checkIconColor={checkIconColor}
               selectedBallIndex={selectedItemIndex}
               onBallClicked={this.onItemSelected} />
             <Flex margin="2" padding="3" alignItems="center" borderTop="solid 1px" borderTopColor="gray.200">

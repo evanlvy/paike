@@ -4,7 +4,7 @@ import React, { Component } from 'react';
 import { withTranslation } from 'react-i18next';
 
 import {
-  Flex
+  Flex,
 } from '@chakra-ui/core';
 
 import {
@@ -13,6 +13,8 @@ import {
   ResultTable,
   SolveConflictModal,
   ChooseItemModal,
+  EditItemModal,
+  SelectItemModal,
 } from '../components';
 
 import { getEducationText } from '../models/grade';
@@ -106,9 +108,15 @@ class LiLunKeBiaoScreenWrapped extends Component {
       {title: "王欣"}, {title: "张倩", occupied: "E211"}, {title: "莫迪", occupied: "E212"}, {title: "苏畅", occupied: "E213"}, {title: "张磊", occupied: "E214"}, {title: "邱丽"}, {title: "周佳", occupied: "F301"}, {title: "刘燕", occupied: "F302"}
     ];
 
+    this.groups = [
+      {name: "第一批 1-30号"}, {name: "第二批 31-60号"}, {name: "第三批 61-80号"}
+    ]
+
     this.conflictModal = React.createRef();
     this.chooseLabModal = React.createRef();
     this.chooseTeacherModal = React.createRef();
+    this.editRemarkModal = React.createRef();
+    this.selectGroupModal = React.createRef();
   }
 
   componentDidMount() {
@@ -168,7 +176,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
 
   onChooseLabResult = (confirm, labIndex) => {
     if (confirm) {
-      console.log("onChooseLabResult: "+this.state.labs[labIndex]);
+      console.log("onChooseLabResult: "+JSON.stringify(this.state.labs[labIndex]));
     }
     return true;
   }
@@ -181,12 +189,45 @@ class LiLunKeBiaoScreenWrapped extends Component {
     console.log("onChooseTeacherCenterChanged, center: "+this.labCenters[index].name);
   }
 
+  onChooseTeacherResult = (confirm, index) => {
+    if (confirm) {
+      console.log("onChooseTeacherResult: "+JSON.stringify(this.teachers[index]));
+    }
+    return true;
+  }
+  // Edit Remark
+  onEditRemark = () => {
+    console.log("onEditRemark");
+    this.editRemarkModal.current.show();
+  }
+
+  onEditRemarkResult =  (confirm, result) => {
+    if (confirm) {
+      console.log("onEditRemarkResult: "+result);
+    }
+    return true;
+  }
+  // Select Group
+  onSelectGroup = () => {
+    console.log("onSelectGroup");
+    this.selectGroupModal.current.show();
+  }
+
+  onSelectGroupResult = (confirm, index) => {
+    if (confirm) {
+      console.log("onEditRemarkResult: "+JSON.stringify(this.groups[index]));
+    }
+    return true;
+  }
+
   render() {
     const { t } = this.props;
     const { grade_info, labs } = this.state;
-    const { teachers, subjectsData, tabTitles, tableHeaders, tableData, labCenters, labTimeSegments,
-      onTabChanged, onKebiaoRowClicked, onChooseLab, onChooseLabCenterChanged, onChooseLabTimeSegChanged,
-      onChooseTeacher, onChooseTeacherCenterChanged } = this;
+    const { teachers, groups, subjectsData, tabTitles, tableHeaders, tableData, labCenters, labTimeSegments,
+      onTabChanged, onKebiaoRowClicked, onChooseLab, onChooseTeacher, onEditRemark, onSelectGroup,
+      onChooseLabCenterChanged, onChooseLabTimeSegChanged, onChooseLabResult,
+      onChooseTeacherCenterChanged, onChooseTeacherResult,
+      onEditRemarkResult, onSelectGroupResult } = this;
     const pageTables = [];
     for (let i=0; i < tabTitles.length; i++) {
       pageTables[i] = (<ResultTable
@@ -200,6 +241,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
         data={tableData}
         onRowClicked={onKebiaoRowClicked} />);
     }
+    let curClass = this.tableData[2].class_name.title;
     return (
       <Flex width="100%" direction="column" justify="center" align="center">
         <SubjectBoard
@@ -219,22 +261,38 @@ class LiLunKeBiaoScreenWrapped extends Component {
           ref={this.conflictModal}
           isCentered
           onChooseLab={onChooseLab}
-          onChooseTeacher={onChooseTeacher} />
+          onChooseTeacher={onChooseTeacher}
+          onEditRemark={onEditRemark}
+          onSelectGroup={onSelectGroup} />
         <ChooseItemModal
           ref={this.chooseLabModal}
           centers={labCenters}
           items={labs}
+          checkIconColor="red.500"
           occupiedSuffix={t("chooseLabModal.occupied_suffix")}
           timeSegments={labTimeSegments}
           onCenterChanged={onChooseLabCenterChanged}
-          onTimeSegChanged={onChooseLabTimeSegChanged}/>
+          onTimeSegChanged={onChooseLabTimeSegChanged}
+          onResult={onChooseLabResult} />
         <ChooseItemModal
           ref={this.chooseTeacherModal}
           centers={labCenters}
           items={teachers}
           emptyColor="pink.200"
           occupiedSuffix={t("chooseLabModal.occupied_suffix")}
-          onCenterChanged={onChooseTeacherCenterChanged} />
+          onCenterChanged={onChooseTeacherCenterChanged}
+          onResult={onChooseTeacherResult} />
+        <EditItemModal
+          ref={this.editRemarkModal}
+          title={t("solveConflictModal.remark")}
+          placeholder={t("solveConflictModal.remark_placeholder")}
+          titleBgColor="orange.500"
+          onResult={onEditRemarkResult} />
+        <SelectItemModal
+          ref={this.selectGroupModal}
+          title={t("solveConflictModal.group")+"["+curClass+"]"}
+          choices={groups}
+          onResult={onSelectGroupResult} />
       </Flex>
     );
   }

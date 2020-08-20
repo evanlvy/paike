@@ -64,7 +64,7 @@ class SolveConflictModalWrapped extends Component {
 
   onCellClicked = (event) => {
     //console.log("onCellClicked, row: "+event.rowIndex+" col: "+event.colDef.index+" field: "+event.colDef.field+" value: "+event.value);
-    const { onChooseLab, onChooseTeacher } = this.props;
+    const { onChooseLab, onChooseTeacher, onSelectGroup, onEditRemark } = this.props;
     const { colDef } = event;
     if ( !colDef.editable ) {
       return;
@@ -83,6 +83,16 @@ class SolveConflictModalWrapped extends Component {
           onChooseLab();
         }
         break;
+      case "group":
+        if (onSelectGroup != null) {
+          onSelectGroup();
+        }
+        break;
+      case "remark":
+        if (onEditRemark != null) {
+          onEditRemark();
+        }
+        break;
       default:
         break;
     }
@@ -91,7 +101,7 @@ class SolveConflictModalWrapped extends Component {
   render() {
     const { isOpen } = this.state;
     const { tableHeaders, tableData, onCellClicked } = this;
-    const { conflictList, onChooseLab,onChooseTeacher, ...other_props } = this.props;
+    const { conflictList, onChooseLab, onChooseTeacher, onSelectGroup, onEditRemark, ...other_props } = this.props;
     return (
       <Modal isOpen={isOpen} onClose={this.onClose} {...other_props}>
         <ModalOverlay />
