@@ -12,6 +12,7 @@ import {
   ResultTabList,
   ResultTable,
   SolveConflictModal,
+  DatePickerModal,
   ChooseItemModal,
   EditItemModal,
   SelectItemModal,
@@ -113,6 +114,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
     ]
 
     this.conflictModal = React.createRef();
+    this.chooseDateModal = React.createRef();
     this.chooseLabModal = React.createRef();
     this.chooseTeacherModal = React.createRef();
     this.editRemarkModal = React.createRef();
@@ -157,6 +159,16 @@ class LiLunKeBiaoScreenWrapped extends Component {
     if (index === 2) {
       this.conflictModal.current.show();
     }
+  }
+
+  // Choose Date
+  onChooseDate = () => {
+    this.chooseDateModal.current.show();
+  }
+
+  onChooseDateResult = (newDate) => {
+    console.log("onChooseDateResult, date: "+newDate);
+    return true;
   }
 
   // Choose Lab
@@ -224,10 +236,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
     const { t } = this.props;
     const { grade_info, labs } = this.state;
     const { teachers, groups, subjectsData, tabTitles, tableHeaders, tableData, labCenters, labTimeSegments,
-      onTabChanged, onKebiaoRowClicked, onChooseLab, onChooseTeacher, onEditRemark, onSelectGroup,
+      onTabChanged, onKebiaoRowClicked, onChooseDate, onChooseLab, onChooseTeacher, onEditRemark, onSelectGroup,
       onChooseLabCenterChanged, onChooseLabTimeSegChanged, onChooseLabResult,
       onChooseTeacherCenterChanged, onChooseTeacherResult,
-      onEditRemarkResult, onSelectGroupResult } = this;
+      onEditRemarkResult, onSelectGroupResult, onChooseDateResult } = this;
     const pageTables = [];
     for (let i=0; i < tabTitles.length; i++) {
       pageTables[i] = (<ResultTable
@@ -260,10 +272,16 @@ class LiLunKeBiaoScreenWrapped extends Component {
         <SolveConflictModal
           ref={this.conflictModal}
           isCentered
+          onChooseDate={onChooseDate}
           onChooseLab={onChooseLab}
           onChooseTeacher={onChooseTeacher}
           onEditRemark={onEditRemark}
           onSelectGroup={onSelectGroup} />
+        <DatePickerModal
+          ref={this.chooseDateModal}
+          title={t("solveConflictModal.choose_date")}
+          titleBgColor="orange.500"
+          onResult={onChooseDateResult} />
         <ChooseItemModal
           ref={this.chooseLabModal}
           centers={labCenters}
@@ -291,6 +309,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
         <SelectItemModal
           ref={this.selectGroupModal}
           title={t("solveConflictModal.group")+"["+curClass+"]"}
+          titleBgColor="orange.500"
           choices={groups}
           onResult={onSelectGroupResult} />
       </Flex>

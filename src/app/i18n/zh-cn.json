@@ -41,6 +41,7 @@
   },
   "solveConflictModal": {
     "title": "处理冲突",
+    "choose_date": "选择日期",
     "remark": "备注",
     "remark_placeholder": "请输入备注内容",
     "group": "批次"

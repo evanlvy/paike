@@ -7,3 +7,4 @@ export * from './modal/edit-item-modal';
 export * from './modal/select-item-modal';
 export * from './modal/solve-conflict-modal';
 export * from './modal/choose-item-modal';
+export * from './modal/date-picker-modal';

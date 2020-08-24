@@ -11,6 +11,7 @@
     "@testing-library/user-event": "^7.1.2",
     "ag-grid-community": "^23.2.1",
     "ag-grid-react": "^23.2.1",
+    "date-fns": "^2.15.0",
     "emotion-theming": "^10.0.27",
     "formik": "^2.1.4",
     "i18next": "^19.4.5",
