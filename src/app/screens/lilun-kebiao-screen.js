@@ -16,6 +16,7 @@ import {
   ChooseItemModal,
   EditItemModal,
   SelectItemModal,
+  Alert,
 } from '../components';
 
 import { getEducationText } from '../models/grade';
@@ -119,6 +120,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
     this.chooseTeacherModal = React.createRef();
     this.editRemarkModal = React.createRef();
     this.selectGroupModal = React.createRef();
+    this.confirmConflictDialog = React.createRef();
   }
 
   componentDidMount() {
@@ -187,8 +189,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
   }
 
   onChooseLabResult = (confirm, labIndex) => {
+    const { t } = this.props;
     if (confirm) {
       console.log("onChooseLabResult: "+JSON.stringify(this.state.labs[labIndex]));
+      this.showConfirmConflictDialog(t("solveConflictModal.confirm_conflict_title"), t("solveConflictModal.confirm_conflict_message"));
     }
     return true;
   }
@@ -232,6 +236,16 @@ class LiLunKeBiaoScreenWrapped extends Component {
     return true;
   }
 
+  // Alert Dialog
+  showConfirmConflictDialog = (title, message) => {
+    this.confirmConflictDialog.current.show(title, message);
+  }
+
+  onConfirmConflict = (confirmed) => {
+    console.log("onConfirmConflict, confirmed: "+confirmed);
+    return true;
+  }
+
   render() {
     const { t } = this.props;
     const { grade_info, labs } = this.state;
@@ -239,7 +253,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
       onTabChanged, onKebiaoRowClicked, onChooseDate, onChooseLab, onChooseTeacher, onEditRemark, onSelectGroup,
       onChooseLabCenterChanged, onChooseLabTimeSegChanged, onChooseLabResult,
       onChooseTeacherCenterChanged, onChooseTeacherResult,
-      onEditRemarkResult, onSelectGroupResult, onChooseDateResult } = this;
+      onEditRemarkResult, onSelectGroupResult, onChooseDateResult, onConfirmConflict } = this;
     const pageTables = [];
     for (let i=0; i < tabTitles.length; i++) {
       pageTables[i] = (<ResultTable
@@ -312,6 +326,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
           titleBgColor="orange.500"
           choices={groups}
           onResult={onSelectGroupResult} />
+        <Alert
+          ref={this.confirmConflictDialog}
+          negativeBtnCaption={t("common.cancel")}
+          onResult={onConfirmConflict}/>
       </Flex>
     );
   }

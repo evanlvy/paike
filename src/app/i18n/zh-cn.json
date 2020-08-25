@@ -5,6 +5,10 @@
     "cancel": "取消",
     "ok": "确认"
   },
+  "alert": {
+    "default_title": "警告",
+    "default_positive_btn_caption": "$t(common.ok)"
+  },
   "grade": {
     "college": "大专",
     "vocational": "高职",
@@ -44,7 +48,9 @@
     "choose_date": "选择日期",
     "remark": "备注",
     "remark_placeholder": "请输入备注内容",
-    "group": "批次"
+    "group": "批次",
+    "confirm_conflict_title": "请确认",
+    "confirm_conflict_message": "强制指定该教师/实验室/时间段，将产生新的冲突！\n\n请再次确认。"
   },
   "chooseLabModal": {
     "title_template": "选择实验室 [{{center_name}}]",
