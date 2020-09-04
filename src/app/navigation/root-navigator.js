@@ -6,16 +6,18 @@ import {
   Route
 } from "react-router-dom";
 
-import { MainNavigator } from './';
+import AsyncComponent from '../utils/AsyncComponent';
+import connectRoute from '../utils/connectRoute';
 
-import { LoginScreen } from '../screens';
+const AsyncMainNavigator = connectRoute(AsyncComponent(() => import('./main-navigator')));
+const AsyncLoginScreen = connectRoute(AsyncComponent(() => import('../screens/login-screen')));
 
 function RootNavigator() {
   return (
     <Router>
       <Switch>
-        <Route path="/login" component={LoginScreen} />
-        <Route path="/" component={MainNavigator} />
+        <Route path="/login" component={AsyncLoginScreen} />
+        <Route path="/" component={AsyncMainNavigator} />
       </Switch>
     </Router>
   )

@@ -1,6 +1,9 @@
 /* @flow */
 
-import React, { Component, Redirect } from 'react';
+import React, { Component } from 'react';
+import { Redirect } from 'react-router-dom';
+import { bindActionCreators } from "redux";
+import { connect } from "react-redux";
 import {
   Flex,
   FormControl,
@@ -15,23 +18,35 @@ import {
 } from 'formik';
 import { Trans, withTranslation } from 'react-i18next';
 
-import { setCurUser } from '../models/user';
+import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
 
 class WrappedLoginScreen extends Component {
   constructor(props) {
     super(props);
+    this.oldToken = props.user.get("userToken");
     this.state = {
       redirectToReferer: false,
     };
   }
 
-  onLogin = (values, actions) => {
-    setCurUser(values.name);
-    setTimeout(() => {
-      actions.setSubmitting(false);
-      const { history } = this.props;
-      history.replace("/");
-    }, 1000);
+  componentDidUpdate() {
+    const token = this.props.user.get("userToken");
+    const isLoggedIn = token != null;
+    console.log("componentDidUpdate, isLoggedIn: "+isLoggedIn);
+    if (isLoggedIn && token !== this.oldToken) {
+      this.oldToken = token;
+      this.setState({
+        redirectToReferer: true
+      });
+    }
+  }
+
+  onLogin = (values) => {
+    const { user } = this.props;
+    if (user && user.userToken) {
+      this.props.logout();
+    }
+    this.props.login(values.name, values.password);
   }
 
   validateName = (value) => {
@@ -57,7 +72,8 @@ class WrappedLoginScreen extends Component {
     const { from } = this.props.location.state || { from: { pathname: "/"}};
     const { redirectToReferer } = this.state;
     if (redirectToReferer) {
-      return <Redirect to={from} />;
+      console.log("redirect to "+from.pathname);
+      return <Redirect to={from.pathname} />;
     }
     return (
       <Flex bg="green.50" height="100vh" align="center" justify="center">
@@ -96,6 +112,16 @@ class WrappedLoginScreen extends Component {
   }
 }
 
-const LoginScreen = withTranslation()(WrappedLoginScreen);
+const mapStateToProps = (state, props) => {
+  return {
+    user: getLoggedUser(state)
+  }
+}
 
-export { LoginScreen };
+const mapDispatchToProps = (dispatch) => {
+  return {
+    ...bindActionCreators(authActions, dispatch)
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(WrappedLoginScreen));

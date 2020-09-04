@@ -10,4 +10,4 @@ class ShiXunKeBiaoScreen extends Component {
   }
 }
 
-export { ShiXunKeBiaoScreen };
+export default ShiXunKeBiaoScreen;

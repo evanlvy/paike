@@ -334,6 +334,5 @@ class LiLunKeBiaoScreenWrapped extends Component {
     );
   }
 }
-const LiLunKeBiaoScreen = withTranslation()(LiLunKeBiaoScreenWrapped)
 
-export { LiLunKeBiaoScreen };
+export default withTranslation()(LiLunKeBiaoScreenWrapped);

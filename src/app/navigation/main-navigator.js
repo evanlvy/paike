@@ -1,8 +1,11 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import {
   Switch,
   Route,
+  Redirect,
 } from 'react-router-dom';
+import { bindActionCreators } from "redux";
+import { connect } from "react-redux";
 import {
   Flex
 } from '@chakra-ui/core';
@@ -11,20 +14,22 @@ import {
   MenuBar,
   MenuType
 } from '../components';
-import {
-  LiLunKeBiaoScreen,
-  BanJiKeBiaoScreen,
-  ShiXunKeBiaoScreen,
-} from '../screens';
 
-import { hasLogin } from '../models/user';
+import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
 
-class MainNavigator extends Component {
+import AsyncComponent from '../utils/AsyncComponent';
+import connectRoute from '../utils/connectRoute';
+
+const AsyncLiLunKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/lilun-kebiao-screen')));
+const AsyncBanJiKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/banji-kebiao-screen')));
+const AsyncShiXunKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/shixun-kebiao-screen')));
+
+class MainNavigatorWrapper extends Component {
   constructor(props) {
     super(props);
-    if (!hasLogin()) {
-      const { history } = props;
-      history.replace('/login');
+    this.token = props.user.get("userToken");
+    this.state = {
+      needLogin: this.token == null
     }
   }
 
@@ -41,17 +46,33 @@ class MainNavigator extends Component {
   }
 
   render() {
+    const { needLogin } = this.state;
+    if (needLogin) {
+      return <Redirect to="/login" />;
+    }
     return (
       <Flex px="10%" direction="column" justify="center" >
         <MenuBar onMenuSelected={this.onMenuSelected}/>
         <Switch>
-          <Route path="/kebiao/lilun" component={LiLunKeBiaoScreen} />
-          <Route path="/kebiao/banji" component={BanJiKeBiaoScreen} />
-          <Route path="/kebiao/shixun" component={ShiXunKeBiaoScreen} />
+          <Route path="/kebiao/lilun" component={AsyncLiLunKeBiaoScreen} />
+          <Route path="/kebiao/banji" component={AsyncBanJiKeBiaoScreen} />
+          <Route path="/kebiao/shixun" component={AsyncShiXunKeBiaoScreen} />
         </Switch>
       </Flex>
     )
   }
 }
 
-export { MainNavigator };
+const mapStateToProps = (state, props) => {
+  return {
+    user: getLoggedUser(state)
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    ...bindActionCreators(authActions, dispatch)
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(MainNavigatorWrapper);

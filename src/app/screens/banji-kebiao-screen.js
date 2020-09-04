@@ -10,4 +10,4 @@ class BanJiKeBiaoScreen extends Component {
   }
 }
 
-export { BanJiKeBiaoScreen };
+export default BanJiKeBiaoScreen;
