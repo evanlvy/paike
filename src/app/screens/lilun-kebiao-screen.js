@@ -1,6 +1,8 @@
 /* @flow */
 
 import React, { Component } from 'react';
+import { bindActionCreators } from "redux";
+import { connect } from "react-redux";
 import { withTranslation } from 'react-i18next';
 
 import {
@@ -19,6 +21,7 @@ import {
   Alert,
 } from '../components';
 
+import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
 import { getEducationText } from '../models/grade';
 
 const LILUNKEBIAO_COLOR = "orange";
@@ -335,4 +338,16 @@ class LiLunKeBiaoScreenWrapped extends Component {
   }
 }
 
-export default withTranslation()(LiLunKeBiaoScreenWrapped);
+const mapStateToProps = (state, props) => {
+  return {
+    user: getLoggedUser(state)
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    ...bindActionCreators(authActions, dispatch)
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(LiLunKeBiaoScreenWrapped));

@@ -16,6 +16,7 @@ import {
 } from '../components';
 
 import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
+import { actions as gradeTypeActions, getGradesOfAllGradeTypes } from '../redux/modules/grade_type';
 
 import AsyncComponent from '../utils/AsyncComponent';
 import connectRoute from '../utils/connectRoute';
@@ -31,6 +32,10 @@ class MainNavigatorWrapper extends Component {
     this.state = {
       needLogin: this.token == null
     }
+  }
+
+  componentDidMount() {
+    this.props.fetchAllGradeTypes();
   }
 
   onMenuSelected = (menu, menu_params) => {
@@ -50,9 +55,11 @@ class MainNavigatorWrapper extends Component {
     if (needLogin) {
       return <Redirect to="/login" />;
     }
+    const { gradeTypes } = this.props;
+    console.log("gradeTypes: "+JSON.stringify(gradeTypes));
     return (
       <Flex px="10%" direction="column" justify="center" >
-        <MenuBar onMenuSelected={this.onMenuSelected}/>
+        <MenuBar gradeTypes={gradeTypes} onMenuSelected={this.onMenuSelected}/>
         <Switch>
           <Route path="/kebiao/lilun" component={AsyncLiLunKeBiaoScreen} />
           <Route path="/kebiao/banji" component={AsyncBanJiKeBiaoScreen} />
@@ -65,13 +72,15 @@ class MainNavigatorWrapper extends Component {
 
 const mapStateToProps = (state, props) => {
   return {
-    user: getLoggedUser(state)
+    user: getLoggedUser(state),
+    gradeTypes: getGradesOfAllGradeTypes(state)
   }
 }
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    ...bindActionCreators(authActions, dispatch)
+    ...bindActionCreators(authActions, dispatch),
+    ...bindActionCreators(gradeTypeActions, dispatch)
   }
 }
 

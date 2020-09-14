@@ -2,7 +2,7 @@ import axios from 'axios';
 
 import { server } from './common/info';
 
-export class api {
+class Api {
   constructor() {
     this.baseUrl = server.url + "/api/v1";
   }
@@ -25,3 +25,5 @@ export class api {
     }
   }
 }
+
+export const api = new Api();
