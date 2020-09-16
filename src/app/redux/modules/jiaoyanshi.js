@@ -2,6 +2,7 @@ import Immutable from 'immutable';
 import { combineReducers } from 'redux-immutable';
 
 import { actions as appActions } from './app';
+import { types as centerTypes } from './center';
 import { api as jiaoyanshiApi } from '../../services/jiaoyanshi';
 
 // action types
@@ -62,6 +63,8 @@ const convertJiaoyanshiToPlain = (jiaoyanshi) => {
 // reducers
 const byIds = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
+    case centerTypes.FETCH_ALL_CENTERS:
+      return state.merge(action.jiaoyanshiByIds);
     case types.FETCH_JIAOYANSHI:
       return state.merge(action.jiaoyanshiByIds);
     default:
@@ -71,6 +74,8 @@ const byIds = (state = Immutable.fromJS({}), action) => {
 
 const byCenter = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
+    case centerTypes.FETCH_ALL_CENTERS:
+      return state.merge(action.jiaoyanshiByCenter);
     case types.FETCH_JIAOYANSHI:
       return state.merge({[action.centerId]: action.jiaoyanshiIds});
     default:
@@ -89,5 +94,7 @@ export default reducer;
 export const getJiaoyanshi = state => state.getIn(["jiaoyanshi", "byIds"]);
 
 export const getJiaoyanshiById = (state, id) => state.getIn(["jiaoyanshi", "byIds", id]);
+
+export const getJiaoyanshiByAllCenter = state => state.getIn(["jiaoyanshi", "byCenter"]);
 
 export const getJiaoyanshiByCenter = (state, centerId) => state.getIn(["jiaoyanshi", "byCenter", centerId]);

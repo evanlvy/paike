@@ -7,6 +7,7 @@ import grade_type from './grade_type';
 import grade from './grade';
 import jiaoyanshi from './jiaoyanshi';
 import lab from './lab';
+import lab_building from './lab_building';
 import subject from './subject';
 import teacher from './teacher';
 
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   grade,
   jiaoyanshi,
   lab,
+  lab_building,
   subject,
   teacher,
 });

@@ -74,7 +74,7 @@ class MenuBarWrapped extends Component {
         return {
           name: grade.name
         }
-      })
+      });
       return {
         name: type.name,
         items: grades
@@ -86,24 +86,41 @@ class MenuBarWrapped extends Component {
   }
 
   initLabs = () => {
-    this.lab_centers = [
-      "基础", "护理", "影像", "临床", "药学", "医疗技术"
-    ];
-    this.lab_buildings = [
-      "A栋","B栋","C栋","D栋","E栋","F栋","L栋"
-    ]
+    const { centers, labBuildings } = this.props;
+    let center_info = centers.map((center) => {
+      return {
+        name: center.name
+      };
+    });
+    center_info.length = centers.length;
+    this.lab_centers = center_info;
+    console.log("initLabs, labBuildings: "+JSON.stringify(labBuildings))
+    let building_info = labBuildings.map((building) => {
+      return {
+        name: building.name
+      };
+    })
+    console.log("initLabs, building_info: "+JSON.stringify(building_info))
+    this.lab_buildings = building_info;
   }
 
   initJiaoYanShi = () => {
-    this.jiaoyanshi_centers = [
-      {name: "基础分中心", items: [{name: "解剖"}, {name: "病理"}, {name: "生化"}, {name: "生理"}, {name: "微寄"}, {name: "组胚"}, {name: "生物遗传"}, {name: "计算机"}]},
-      {name: "护理分中心", items: [{name: "基础护理"}, {name: "内科护理"}, {name: "外科护理"}]},
-      {name: "影像分中心", items: [{name: "影像诊断"}, {name: "影像技术"}]},
-      {name: "临床分中心", items: [{name: "内科"}, {name: "外科"}, {name: "妇科"}, {name: "儿科"}, {name: "五官"}, {name: "眼视光"}, {name: "康复"}, {name: "中医"}, {name: "预防"}]},
-      {name: "药学分中心", items: [{name: "药理"}, {name: "化学"}, {name: "药剂"}, {name: "生药"}]},
-      {name: "医疗技术分中心", items: [{name: "检验"}, {name: "美容"}]},
-      {name: "社科部", items: [{name: "概论"}, {name: "基础"}]},
-    ];
+    const { centers } = this.props;
+    console.log("initJiaoYanShi, centers: "+JSON.stringify(centers)+" length: "+centers.length);
+    let jys_info = centers.map((center) => {
+      let jysList = center.jiaoyanshi.map((jys) => {
+        return {
+          name: jys.name
+        }
+      });
+      return {
+        name: center.name,
+        items: jysList
+      };
+    })
+    jys_info.length = centers.length;
+    console.log("initJiaoYanShi, jys_info: "+JSON.stringify(jys_info));
+    this.jiaoyanshi_centers = jys_info;
   }
 
   initMaintainMenu = () => {
@@ -159,7 +176,6 @@ class MenuBarWrapped extends Component {
   render() {
     this.initMenu();
     const { grade_info, lab_centers, lab_buildings, jiaoyanshi_centers, maintain_menus } = this;
-    console.log("GradeInfo: "+JSON.stringify(grade_info));
     const menus = [
       { list_type: MenuListType.GROUP, type: MenuType.LILUN, title: "menuBar.lilunkebiao_title", icon: FiBookOpen, bgColor: "orange",
               menuListProps: {menuGroups: grade_info, onGroupMenuSelect: this.onGradeGroupChange } },

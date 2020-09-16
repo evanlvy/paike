@@ -49,7 +49,7 @@ const convertGradeTypesToPlain = (types) => {
   let allTypes = [];
   let gradeByIds = {};
   let gradeByTypes = {};
-  //console.log("Got Grade types data: "+JSON.stringify(types));
+  console.log("Got Grade types data: "+JSON.stringify(types));
   types.forEach(item => {
     typeByIds[item.id] = { ...item };
     allTypes.push(item.id);

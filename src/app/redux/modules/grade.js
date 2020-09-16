@@ -70,7 +70,6 @@ const byIds = (state = Immutable.fromJS({}), action) => {
 const byType = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case gradeTypeActionTypes.FETCH_ALL_GRADE_TYPES:
-      console.log("Grade, byType, got data: "+JSON.stringify(action.gradeByTypes));
       return state.merge(action.gradeByTypes);
     case types.FETCH_GRADES_BY_TYPE:
       return state.merge({[action.typeId]: action.gradeIds});

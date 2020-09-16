@@ -52,7 +52,7 @@ class LabsMenuListWrapped extends Component {
         <MenuOptionGroup title={t("lab.by_center")} type="radio" value={lab_center_value} onChange={this.onLabCenterChanged}>
           {
             labCenters.map((item, index) => (
-              <MenuItemOption key={index} value={index}>{item}</MenuItemOption>
+              <MenuItemOption key={index} value={index}>{item.name}</MenuItemOption>
             ))
           }
         </MenuOptionGroup>
@@ -60,7 +60,7 @@ class LabsMenuListWrapped extends Component {
         <MenuOptionGroup title={t("lab.by_building")} type="radio" value={lab_building_value} onChange={this.onLabBuildingChanged}>
           {
             labBuildings.map((item, index) => (
-              <MenuItemOption key={index} value={index}>{item}</MenuItemOption>
+              <MenuItemOption key={index} value={index}>{item.name}</MenuItemOption>
             ))
           }
         </MenuOptionGroup>

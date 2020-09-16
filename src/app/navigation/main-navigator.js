@@ -17,6 +17,8 @@ import {
 
 import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
 import { actions as gradeTypeActions, getGradesOfAllGradeTypes } from '../redux/modules/grade_type';
+import { actions as centerActions, getJiaoyanshiOfAllCenters } from '../redux/modules/center';
+import { actions as labBuildingActions, getAllLabBuildingsInfo } from '../redux/modules/lab_building';
 
 import AsyncComponent from '../utils/AsyncComponent';
 import connectRoute from '../utils/connectRoute';
@@ -36,6 +38,8 @@ class MainNavigatorWrapper extends Component {
 
   componentDidMount() {
     this.props.fetchAllGradeTypes();
+    this.props.fetchAllCenters();
+    this.props.fetchLabBuildings();
   }
 
   onMenuSelected = (menu, menu_params) => {
@@ -55,11 +59,11 @@ class MainNavigatorWrapper extends Component {
     if (needLogin) {
       return <Redirect to="/login" />;
     }
-    const { gradeTypes } = this.props;
+    const { gradeTypes, centers, labBuildings } = this.props;
     console.log("gradeTypes: "+JSON.stringify(gradeTypes));
     return (
       <Flex px="10%" direction="column" justify="center" >
-        <MenuBar gradeTypes={gradeTypes} onMenuSelected={this.onMenuSelected}/>
+        <MenuBar gradeTypes={gradeTypes} centers={centers} labBuildings={labBuildings} onMenuSelected={this.onMenuSelected}/>
         <Switch>
           <Route path="/kebiao/lilun" component={AsyncLiLunKeBiaoScreen} />
           <Route path="/kebiao/banji" component={AsyncBanJiKeBiaoScreen} />
@@ -73,14 +77,18 @@ class MainNavigatorWrapper extends Component {
 const mapStateToProps = (state, props) => {
   return {
     user: getLoggedUser(state),
-    gradeTypes: getGradesOfAllGradeTypes(state)
+    gradeTypes: getGradesOfAllGradeTypes(state),
+    centers: getJiaoyanshiOfAllCenters(state),
+    labBuildings: getAllLabBuildingsInfo(state),
   }
 }
 
 const mapDispatchToProps = (dispatch) => {
   return {
     ...bindActionCreators(authActions, dispatch),
-    ...bindActionCreators(gradeTypeActions, dispatch)
+    ...bindActionCreators(gradeTypeActions, dispatch),
+    ...bindActionCreators(centerActions, dispatch),
+    ...bindActionCreators(labBuildingActions, dispatch)
   }
 }
 

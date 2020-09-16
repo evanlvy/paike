@@ -6,7 +6,7 @@ import { api as labApi } from '../../services/lab';
 
 // action types
 export const types = {
-  FETCH_LABS: "LAB/FETCH_LABS"
+  FETCH_LABS: "LAB/FETCH_LABS",
 };
 
 // actions
@@ -16,7 +16,7 @@ export const actions = {
       try {
         if (shouldFetchLabs(centerId, getState())) {
           dispatch(appActions.startRequest());
-          const data = queryLabs(centerId);
+          const data = labApi.queryLabs(centerId);
           dispatch(appActions.finishRequest());
           const { labByIds, labIds } = convertLabsToPlain(data);
           dispatch(fetchLabsSuccess(centerId, labIds, labByIds));
@@ -25,11 +25,7 @@ export const actions = {
         dispatch(appActions.setError(error));
       }
     }
-  },
-}
-
-const queryLabs = async (centerId) => {
-  return await labApi.queryLabs(centerId);
+  }
 }
 
 const shouldFetchLabs = (centerId, state) => {
