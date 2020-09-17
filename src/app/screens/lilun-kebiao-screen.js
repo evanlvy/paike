@@ -22,7 +22,7 @@ import {
 } from '../components';
 
 import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
-import { getEducationText } from '../models/grade';
+import { actions as subjectActions, colors as subjectColors, getSubjects, getSubjectByGrade } from '../redux/modules/subject';
 
 const LILUNKEBIAO_COLOR = "orange";
 class LiLunKeBiaoScreenWrapped extends Component {
@@ -33,18 +33,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
       labs: []
     };
 
-    this.subjectsData = [
-      {title: "护理", color: "red.400"},
-      {title: "助产", color: "green.200"},
-      {title: "临床医学", color: "blue.400"},
-      {title: "临床医学\n病理", color: "orange.300"},
-      {title: "全科医学", color: "cyan.500"},
-      {title: "卫生信息\n管理", color: "blue.200"},
-      {title: "医学影像", color: "green.100"},
-      {title: "影像技术", color: "green.300"},
-      {title: "放射治疗\n技术", color: "blue.400"},
-      {title: "医学美容", color: "purple.500"},
-    ];
+
     this.tabTitles = [
       "第一学期1-9周",
       "第一学期10-18周",
@@ -139,13 +128,35 @@ class LiLunKeBiaoScreenWrapped extends Component {
   }
 
   initUI = () => {
-    const { t } = this.props;
     const { edu, grd } = this.props.location.state;
-    const grade_info = getEducationText(t, edu) + t("grade.grade_template", {grade: grd});
+    const grade_info = edu.name + grd.name;
     console.log("initUI grade: "+grade_info+" labs: "+this.labCenters[0].labs.length);
     this.setState({
       grade_info: grade_info,
       labs: this.labCenters[0].labs,
+    });
+    this.props.fetchSubjects(edu.id, grd.id);
+  }
+
+  buildData = () => {
+    this.buildSubjects();
+  }
+
+  buildSubjects = () => {
+    this.subjectsData = [];
+    const { subjects } = this.props;
+    if (!subjects) {
+      return;
+    }
+    console.log("buildSubjects: "+JSON.stringify(subjects));
+    let colorIndex = 0;
+    subjects.forEach((subject) => {
+      let subject_item = {
+        title: subject.name,
+        color: subjectColors[colorIndex]
+      };
+      this.subjectsData.push(subject_item);
+      colorIndex = (colorIndex+1) % subjectColors.length;
     })
   }
 
@@ -252,6 +263,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
   render() {
     const { t } = this.props;
     const { grade_info, labs } = this.state;
+    this.buildData();
     const { teachers, groups, subjectsData, tabTitles, tableHeaders, tableData, labCenters, labTimeSegments,
       onTabChanged, onKebiaoRowClicked, onChooseDate, onChooseLab, onChooseTeacher, onEditRemark, onSelectGroup,
       onChooseLabCenterChanged, onChooseLabTimeSegChanged, onChooseLabResult,
@@ -339,14 +351,17 @@ class LiLunKeBiaoScreenWrapped extends Component {
 }
 
 const mapStateToProps = (state, props) => {
+  const { edu, grd } = props.location.state;
   return {
-    user: getLoggedUser(state)
+    user: getLoggedUser(state),
+    subjects: getSubjectByGrade(state, edu.id, grd.id),
   }
 }
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    ...bindActionCreators(authActions, dispatch)
+    ...bindActionCreators(authActions, dispatch),
+    ...bindActionCreators(subjectActions, dispatch),
   }
 }
 

@@ -24,7 +24,7 @@ import {
 } from 'react-icons/md';
 import { Trans, withTranslation } from 'react-i18next';
 
-import { GradesMenu, LabsMenu, GroupMenu } from './';
+import { LabsMenu, GroupMenu } from './';
 
 function withMenu(WrappedMenuList) {
   return class extends Component {
@@ -53,9 +53,8 @@ const MenuType = {
 };
 
 const MenuListType = {
-  GRADE: 1,
-  LAB: 2,
-  GROUP: 3,
+  LAB: 1,
+  GROUP: 2,
 }
 
 class MenuBarWrapped extends Component {
@@ -68,58 +67,55 @@ class MenuBarWrapped extends Component {
 
   initGrades = () => {
     const { gradeTypes } = this.props;
-    console.log("initGrades, gradeTypes: "+JSON.stringify(gradeTypes)+" length: "+gradeTypes.length);
-    let grade_info = gradeTypes.map((type) => {
-      let grades = type.grades.map((grade) => {
-        return {
-          name: grade.name
-        }
+    let grade_info = [];
+    gradeTypes.forEach((type) => {
+      let grades = [];
+      type.grades.forEach((grade) => {
+        let grade_item = { name: grade.name };
+        grades.push(grade_item);
       });
-      return {
+      let grade_type = {
         name: type.name,
         items: grades
       };
+      grade_info.push(grade_type);
     })
-    grade_info.length = gradeTypes.length;
-    console.log("initGrades, grade_info: "+JSON.stringify(grade_info));
+    //console.log("initGrades, grade_info: "+JSON.stringify(grade_info));
     this.grade_info = grade_info;
   }
 
   initLabs = () => {
     const { centers, labBuildings } = this.props;
-    let center_info = centers.map((center) => {
-      return {
-        name: center.name
-      };
+    let center_info = [];
+    centers.forEach((center) => {
+      let center_item = { name: center.name };
+      center_info.push(center_item);
     });
-    center_info.length = centers.length;
     this.lab_centers = center_info;
-    console.log("initLabs, labBuildings: "+JSON.stringify(labBuildings))
-    let building_info = labBuildings.map((building) => {
-      return {
-        name: building.name
-      };
-    })
-    console.log("initLabs, building_info: "+JSON.stringify(building_info))
+    let building_info = [];
+    labBuildings.forEach((building) => {
+      let building_item = { name: building.name };
+      building_info.push(building_item);
+    });
     this.lab_buildings = building_info;
   }
 
   initJiaoYanShi = () => {
     const { centers } = this.props;
-    console.log("initJiaoYanShi, centers: "+JSON.stringify(centers)+" length: "+centers.length);
-    let jys_info = centers.map((center) => {
-      let jysList = center.jiaoyanshi.map((jys) => {
-        return {
-          name: jys.name
-        }
+    let jys_info = [];
+    centers.forEach((center) => {
+      let jysList = [];
+      center.jiaoyanshi.forEach((jys) => {
+        let jys_item = { name: jys.name };
+        jysList.push(jys_item);
       });
-      return {
+      let center_item = {
         name: center.name,
         items: jysList
       };
+      jys_info.push(center_item);
     })
-    jys_info.length = centers.length;
-    console.log("initJiaoYanShi, jys_info: "+JSON.stringify(jys_info));
+    //console.log("initJiaoYanShi, jys_info: "+JSON.stringify(jys_info));
     this.jiaoyanshi_centers = jys_info;
   }
 
@@ -141,11 +137,12 @@ class MenuBarWrapped extends Component {
   }
 
   onGradeGroupChanged = (menu_type, grade_type_index, grade_index) => {
-    const { grade_info } = this;
+    const { gradeTypes } = this.props;
+    const grade_info = gradeTypes.toJS();
     const grade_type = grade_info[grade_type_index];
-    const grade = grade_type.items[grade_index];
+    const grade = grade_type.grades[grade_index];
     console.log("onGradeChanged, menu type: "+menu_type+", education: "+grade_type.name+", grade: "+grade.name);
-    this.notifyMenuSelected(menu_type, {edu: grade_type.name, grd: grade.name});
+    this.notifyMenuSelected(menu_type, {edu: grade_type, grd: grade});
   }
 
   onLabChanged = (menu_type, by_type, lab_index) => {
@@ -178,18 +175,18 @@ class MenuBarWrapped extends Component {
     const { grade_info, lab_centers, lab_buildings, jiaoyanshi_centers, maintain_menus } = this;
     const menus = [
       { list_type: MenuListType.GROUP, type: MenuType.LILUN, title: "menuBar.lilunkebiao_title", icon: FiBookOpen, bgColor: "orange",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelect: this.onGradeGroupChange } },
+              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged } },
       { list_type: MenuListType.GROUP, type: MenuType.BANJI, title: "menuBar.banjikebiao_title", icon: FaCalendarDay, bgColor: "cyan",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelect: this.onGradeGroupChange } },
+              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged } },
       { list_type: MenuListType.GROUP, type: MenuType.SHIXUN, title: "menuBar.shixunkebiao_title", icon: AiTwotoneExperiment, bgColor: "green",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelect: this.onGradeGroupChange} },
+              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged} },
       { list_type: MenuListType.LAB, type: MenuType.SHIYANSHI, title: "menuBar.shiyanshi_anpai_title", icon: FaBuilding, bgColor: "blue",
               menuListProps: {labCenters: lab_centers ,labBuildings: lab_buildings, onLabChange: this.onLabChanged} },
       { list_type: MenuListType.GROUP, type: MenuType.JIAOYANSHI, title: "menuBar.jiaoyanshi_kebiao_title", icon: MdCollectionsBookmark, bgColor: "red",
-              menuListProps: {menuGroups: jiaoyanshi_centers, onGroupMenuSelected: this.onJiaoYanShiChange} },
+              menuListProps: {menuGroups: jiaoyanshi_centers, onGroupMenuSelected: this.onJiaoYanShiChange, height: 500} },
       { type: MenuType.JIAOSHI, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink", onClick: this.onJiaoShiPaiKeClicked},
       { list_type: MenuListType.GROUP, type: MenuType.BASIC_MAINTAIN, title: "menuBar.basic_maintain_title", icon: FaUserCog, bgColor: "purple",
-              menuListProps: {menuGroups: maintain_menus, onGroupMenuSelected: this.onMaintainMenuSelected} },
+              menuListProps: {menuGroups: maintain_menus, onGroupMenuSelected: this.onMaintainMenuSelected, height: 500} },
     ]
     return (
       <Flex direction="row" justify="center" mt={5}>
@@ -208,16 +205,6 @@ class MenuBarWrapped extends Component {
                   menuListProps={item.menuListProps} />
               case MenuListType.GROUP:
                 return <GroupMenu
-                  key={item.type}
-                  menuType={item.type}
-                  mx={1}
-                  width="11em"
-                  title={item.title}
-                  icon={item.icon}
-                  bgColor={item.bgColor}
-                  menuListProps={item.menuListProps} />
-              case MenuListType.GRADE:
-                return <GradesMenu
                   key={item.type}
                   menuType={item.type}
                   mx={1}

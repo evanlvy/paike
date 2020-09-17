@@ -9,6 +9,14 @@ export const types = {
   FETCH_SUBJECTS: "SUBJECT/FETCH_SUBJECTS"
 };
 
+// colors
+export const colors = [
+  "red.400", "green.200", "blue.400",
+  "orange.300", "cyan.500", "blue.200",
+  "green.100", "green.300", "blue.400",
+  "purple.500",
+];
+
 // actions
 export const actions = {
   fetchSubjects: (gradeTypeId, gradeId) => {
@@ -16,7 +24,7 @@ export const actions = {
       try {
         if (shouldFetchSubjects(gradeTypeId, gradeId, getState())) {
           dispatch(appActions.startRequest());
-          const data = querySubjects(gradeTypeId, gradeId);
+          const data = subjectApi.querySubjects(gradeTypeId, gradeId);
           dispatch(appActions.finishRequest());
           const { subjectByIds, subjectIds } = convertSubjectsToPlain(data);
           dispatch(fetchSubjectsSuccess(gradeTypeId, gradeId, subjectIds, subjectByIds));
@@ -26,10 +34,6 @@ export const actions = {
       }
     }
   },
-}
-
-const querySubjects = async (gradeTypeId, gradeId) => {
-  return await subjectApi.querySubjects(gradeTypeId, gradeId);
 }
 
 const buildGradeInfoId = (gradeTypeId, gradeId) => {
@@ -96,4 +100,13 @@ export const getSubjects = state => state.getIn(["subject", "byIds"]);
 
 export const getSubjectById = (state, id) => state.getIn(["subject", "byIds", id]);
 
-export const getSubjectByGrade = (state, gradeTypeId, gradeId) => state.getIn(["subject", "byGrade", buildGradeInfoId(gradeTypeId, gradeId)]);
+export const getSubjectByGrade = (state, gradeTypeId, gradeId) => {
+  let subjectIds = state.getIn(["subject", "byGrade", buildGradeInfoId(gradeTypeId, gradeId)]);
+  if (subjectIds) {
+    return subjectIds.map(subjectId => {
+      return getSubjectById(state, subjectId);
+    });
+  } else {
+    return null;
+  }
+}

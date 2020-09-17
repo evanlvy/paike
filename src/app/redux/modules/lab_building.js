@@ -32,7 +32,6 @@ export const actions = {
 
 const shouldFetchLabBuildings = (state) => {
   const allIds = getAllLabBuildings(state);
-  console.log("shouldFetchLabBuildings, allIds: "+JSON.stringify(allIds));
   return !allIds || allIds.size === 0;
 }
 

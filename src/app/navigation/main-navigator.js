@@ -60,7 +60,6 @@ class MainNavigatorWrapper extends Component {
       return <Redirect to="/login" />;
     }
     const { gradeTypes, centers, labBuildings } = this.props;
-    console.log("gradeTypes: "+JSON.stringify(gradeTypes));
     return (
       <Flex px="10%" direction="column" justify="center" >
         <MenuBar gradeTypes={gradeTypes} centers={centers} labBuildings={labBuildings} onMenuSelected={this.onMenuSelected}/>
