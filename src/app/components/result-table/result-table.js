@@ -17,37 +17,40 @@ import { ArrayDataRenderer } from "./arraydata-renderer";
 class ResultTable extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      frameworkComponents: {
-        commonRenderer: CommonRenderer,
-        arrayDataRenderer: ArrayDataRenderer,
-      },
-      columnDefs: [],
-      rowData: []
-    }
+    this.frameworkComponents = {
+      commonRenderer: CommonRenderer,
+      arrayDataRenderer: ArrayDataRenderer,
+    };
+
     this.defaultColDef = {
       autoHeight: true,
     }
+    this.buildUI(props);
   }
 
-  componentDidMount() {
-    this.initUI();
+  shouldComponentUpdate(nextProps) {
+    const { props } = this;
+    // console.log("shouldComponentUpdate, orig props "+JSON.stringify(props));
+    // console.log("shouldComponentUpdate, new props "+JSON.stringify(nextProps));
+    if (nextProps.headers !== props.headers || nextProps.defaultColWidth !== props.defaultColWidth
+    || nextProps.colLineHeight !== props.colLineHeight || nextProps.data !== props.data) {
+      this.buildUI(nextProps);
+      return true;
+    }
+    return false;
   }
 
-  initUI = () => {
-    const columns = this.initColDef();
-    const rows = this.initData();
-    this.setState({
-      columnDefs: columns,
-      rowData: rows
-    });
+  buildUI = (props) => {
+    console.log("resultTable buildUI");
+    this.buildColDef(props);
+    this.buildData(props);
   }
 
-  initColDef = () => {
-    const { headers, defaultColWidth, colLineHeight } = this.props;
-    const columnDefs = [];
+  buildColDef = (props) => {
+    const { headers, defaultColWidth, colLineHeight } = props;
+    this.columnDefs = [];
     for (let i=0; i < headers.length; i++) {
-      columnDefs[i] = {
+      this.columnDefs[i] = {
         index: i,
         headerName: headers[i].name,
         field: headers[i].field,
@@ -56,17 +59,15 @@ class ResultTable extends Component {
         cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
       };
     }
-    columnDefs[0]["pinned"] = "left";
-    return columnDefs;
+    this.columnDefs[0]["pinned"] = "left";
   }
 
-  initData = () => {
-    const { data } = this.props;
-    const rowData = [];
+  buildData = (props) => {
+    const { data } = props;
+    this.rowData = [];
     for (let i=0; i < data.length; i++) {
-      rowData[i] = data[i];
+      this.rowData[i] = data[i];
     }
-    return rowData;
   }
 
   onGridSizeChanged = (event) => {
@@ -96,11 +97,10 @@ class ResultTable extends Component {
   }
 
   render() {
-    const { defaultColDef, onGridSizeChanged, onCellClicked, onRowClicked } = this;
+    const { frameworkComponents, columnDefs, defaultColDef, rowData, onGridSizeChanged, onCellClicked, onRowClicked } = this;
     const { width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data,
       onCellClicked: onCellClickedCallback,
       onRowClicked: onRowClickedCallback,  ...other_props } = this.props;
-    const { frameworkComponents, columnDefs, rowData } = this.state;
     return (
       <Flex direction="column" width={width ? width : "100%"} {...other_props} >
         <Box display="flex" bg={color+".400"} height={titleHeight} px={4} alignItems="center"

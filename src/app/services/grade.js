@@ -7,39 +7,16 @@ class Api {
     this.baseUrl = server.url + "/api/v1";
   }
 
-  queryGradeTypes = () => {
-    const data = [
-      {id: "1", name: "大专", grades:[{id: "1", name: "2017级"}, {id: "2", name: "2018级"}, {id: "3", name: "2019级"}]},
-      {id: "2", name: "高职", grades:[{id: "2", name: "2018级"}, {id: "3", name: "2019级"}]},
-      {id: "3", name: "对接", grades:[{id: "3", name: "2019级"}]},
-    ];
+  queryGrades = async () => {
     try {
-      const url = this.baseUrl+"/grades_types";
+      const url = this.baseUrl+"/actual_grade_from_classes";
       console.log("Request url "+url);
-      /*let response = await axios.post(url);
+      let response = await axios.post(url, {});
       const { success, data, message } = response.data;
       if (!success) {
         throw new Error(message.message);
       }
-      return data;*/
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  queryGrades = async (type) => {
-    try {
-      const url = this.baseURL+"/grades";
-      console.log("Request url "+url+" with type "+type);
-      let request_param = {
-        grade_type: type
-      };
-      let response = await axios.post(url, request_param);
-      const { success, data, message } = response.data;
-      if (!success) {
-        throw new Error(message.message);
-      }
+      //console.log(`Response of url: ${url} is ${JSON.stringify(data[0])}`);
       return data;
     } catch (error) {
       throw error;

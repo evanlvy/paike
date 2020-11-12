@@ -112,7 +112,7 @@ class WrappedLoginScreen extends Component {
   }
 }
 
-const mapStateToProps = (state, props) => {
+const mapStateToProps = (state) => {
   return {
     user: getLoggedUser(state)
   }

@@ -7,19 +7,16 @@ class Api {
     this.baseUrl = server.url + "/api/v1";
   }
 
-  queryJiaoyanshi = async (centerId) => {
+  queryJiaoyanshi = async () => {
     try {
-      const url = this.baseUrl+"/jiaoyanshi";
-      console.log("Request url "+url+" with center: "+centerId);
-      let request_param = {
-        center: centerId
-      }
-      let response = await axios.post(url, request_param);
+      const url = this.baseUrl+"/department";
+      console.log("Request url "+url);
+      let response = await axios.post(url, {});
       const { success, data, message } = response.data;
       if (!success) {
         throw new Error(message.message);
       }
-      return data;
+      return data.departments;
     } catch (error) {
       throw error;
     }

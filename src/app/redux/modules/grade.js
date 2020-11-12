@@ -1,25 +1,25 @@
 import Immutable from 'immutable';
 import { combineReducers } from 'redux-immutable';
+import { createSelector } from 'reselect';
 
 import { actions as appActions } from './app';
-import { types as gradeTypeActionTypes } from './grade_type';
 import { api as gradeApi } from '../../services/grade';
 
 // action types
 export const types = {
-  FETCH_GRADES_BY_TYPE: "GRADE/FETCH_GRADES_BY_TYPE"
+  FETCH_DEGREE_GRADE: "GRADE/FETCH_DEGREE_GRADE"
 };
-// actions
+// action creators
 export const actions = {
-  fetchGrades: (typeId) => {
-    return (dispatch, getState) => {
+  fetchAllGradeInfo: () => {
+    return async (dispatch, getState) => {
       try {
-        if (shouldFetchGrades(typeId, getState())) {
+        if (shouldFetchAllGradeInfo(getState())) {
           dispatch(appActions.startRequest());
-          const data = gradeApi.queryGrades(typeId);
+          const data = await gradeApi.queryGrades();
           dispatch(appActions.finishRequest());
-          const { gradeByIds, gradeIds } = convertGradesToPlain(data);
-          dispatch(fetchGradesSuccess(typeId, gradeByIds, gradeIds));
+          const {degreeByIds, allDegrees, gradeByIds, gradeByDegree} = convertGradeInfoToPlain(data);
+          dispatch(fetchAllGradeInfoSuccess(degreeByIds, allDegrees, gradeByIds, gradeByDegree));
         }
       } catch (error) {
         dispatch(appActions.setError(error));
@@ -28,68 +28,118 @@ export const actions = {
   },
 }
 
-const shouldFetchGrades = (typeId, state) => {
-  const gradeIds = getGradeByType(state, typeId);
-  return !gradeIds;
+const shouldFetchAllGradeInfo = (state) => {
+  const degrees = getDegreeIds(state);
+  //console.log(`shouldFetchAllGradeInfo: ${degrees} ${degrees.size}`);
+  return !degrees || degrees.size === 0;
 }
 
-const fetchGradesSuccess = (typeId, gradeByIds, gradeIds) => {
+const fetchAllGradeInfoSuccess = (degreeByIds, allDegrees, gradeByIds, gradeByDegree) => {
   return ({
-    type: types.FETCH_GRADES_BY_TYPE,
-    typeId,
-    gradeIds,
+    type: types.FETCH_DEGREE_GRADE,
+    degreeByIds,
+    allDegrees,
     gradeByIds,
+    gradeByDegree,
   })
 }
 
-const convertGradesToPlain = (grades) => {
+const convertGradeInfoToPlain = (degrees) => {
+  let degreeByIds = {};
+  let allDegrees = [];
   let gradeByIds = {};
-  let gradeIds = [];
-  console.log("Got Grade data: "+JSON.stringify(grades));
-  grades.forEach(item => {
-    gradeByIds[item.id] = { ...item };
-    gradeIds.push(item.id);
+  let gradeByDegree = {};
+  //console.log("Got Degree data: "+JSON.stringify(degrees));
+  degrees.forEach(item => {
+    degreeByIds[item.id] = { ...item };
+    allDegrees.push(""+item.id);
+    let grades = [];
+    const gradeIds = Object.keys(item.grades);
+    gradeIds.forEach(gradeId => {
+      const grade = item.grades[gradeId];
+      gradeByIds[gradeId] = grade;
+      grades.push(gradeId);
+    })
+    gradeByDegree[item.id] = grades;
   });
   return {
+    degreeByIds,
+    allDegrees,
     gradeByIds,
-    gradeIds
-  };
+    gradeByDegree,
+  }
 }
 // reducers
-const byIds = (state = Immutable.fromJS({}), action) => {
+const degreeByIds = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
-    case gradeTypeActionTypes.FETCH_ALL_GRADE_TYPES:
-      return state.merge(action.gradeByIds);
-    case types.FETCH_GRADES_BY_TYPE:
+    case types.FETCH_DEGREE_GRADE:
+      return state.merge(action.degreeByIds);
+    default:
+      return state;
+  }
+}
+
+const degreeIds = (state = Immutable.fromJS([]), action) => {
+  switch(action.type) {
+    case types.FETCH_DEGREE_GRADE:
+      return Immutable.List(action.allDegrees);
+    default:
+      return state;
+  }
+}
+
+const gradeByIds = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.FETCH_DEGREE_GRADE:
       return state.merge(action.gradeByIds);
     default:
       return state;
   }
 }
 
-const byType = (state = Immutable.fromJS({}), action) => {
+const gradeByDegree = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
-    case gradeTypeActionTypes.FETCH_ALL_GRADE_TYPES:
-      return state.merge(action.gradeByTypes);
-    case types.FETCH_GRADES_BY_TYPE:
-      return state.merge({[action.typeId]: action.gradeIds});
+    case types.FETCH_DEGREE_GRADE:
+      return state.merge(action.gradeByDegree);
     default:
       return state;
   }
 }
 
 const reducer = combineReducers({
-  byIds,
-  byType,
+  degreeByIds,
+  degreeIds,
+  gradeByIds,
+  gradeByDegree
 });
 
 export default reducer;
 
 // selectors
-export const getGrades = state => state.getIn(["grade", "byIds"]);
+export const getDegrees = state => state.getIn(["grade", "degreeByIds"]);
 
-export const getGradeById = (state, id) => state.getIn(["grade", "byIds", id]);
+export const getDegreeIds = state => state.getIn(["grade", "degreeIds"]);
 
-export const getGradeByAllType = (state) => state.getIn(["grade", "byType"]);
+export const getGrades = state => state.getIn(["grade", "gradeByIds"]);
 
-export const getGradeByType = (state, typeId) => state.getIn(["grade", "byType", typeId]);
+export const getGradeByAllDegree = state => state.getIn(["grade", "gradeByDegree"]);
+
+export const getGradesOfAllDegrees = createSelector(
+  [getDegreeIds, getDegrees, getGradeByAllDegree, getGrades],
+  (degreeIds, degreeByIds, gradesByAllDegree, grades) => {
+    let gradeInfo = []
+    degreeIds.forEach(id => {
+      const degree = degreeByIds.get(id);
+      const gradesByDegree = gradesByAllDegree.get(id);
+      //console.log("gradesByDegree.get "+id+" degree: "+JSON.stringify(degree));
+      let gradeInfosByDegree = [];
+      gradesByDegree.forEach(gradeId => {
+        gradeInfosByDegree.push({id: gradeId, name: grades.get(gradeId)});
+      });
+      degree["grades"] = gradeInfosByDegree;
+      //console.log("build degree info: "+JSON.stringify(degree));
+      gradeInfo.push(degree);
+    });
+    return gradeInfo;
+  }
+);

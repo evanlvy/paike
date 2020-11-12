@@ -1,8 +1,8 @@
 import Immutable from 'immutable';
 import { combineReducers } from 'redux-immutable';
+import { createSelector } from 'reselect';
 
 import { actions as appActions } from './app';
-import { types as centerTypes } from './center';
 import { api as jiaoyanshiApi } from '../../services/jiaoyanshi';
 
 // action types
@@ -12,15 +12,15 @@ export const types = {
 
 // actions
 export const actions = {
-  fetchJiaoyanshi: (centerId) => {
-    return (dispatch, getState) => {
+  fetchJiaoyanshi: () => {
+    return async (dispatch, getState) => {
       try {
-        if (shouldFetchJiaoyanshi(centerId, getState())) {
+        if (shouldFetchJiaoyanshi(getState())) {
           dispatch(appActions.startRequest());
-          const data = queryJiaosYanShi(centerId);
+          const data = await jiaoyanshiApi.queryJiaoyanshi();
           dispatch(appActions.finishRequest());
-          const { jiaoyanshiByIds, jiaoyanshiIds } = convertJiaoyanshiToPlain(data);
-          dispatch(fetchJiaoyanshiSuccess(centerId, jiaoyanshiIds, jiaoyanshiByIds));
+          const { centerByIds, centerIds, jiaoyanshiByIds, jiaoyanshiByCenter } = convertJiaoyanshiToPlain(data);
+          dispatch(fetchJiaoyanshiSuccess(centerIds, centerByIds, jiaoyanshiByCenter, jiaoyanshiByIds));
         }
       } catch (error) {
         dispatch(appActions.setError(error));
@@ -29,42 +29,51 @@ export const actions = {
   },
 }
 
-const queryJiaosYanShi = async (centerId) => {
-  return await jiaoyanshiApi.queryJiaoyanshi(centerId);
+const shouldFetchJiaoyanshi = (state) => {
+  const jiaoyanshiByIds = getJiaoyanshi(state);
+  return !jiaoyanshiByIds || jiaoyanshiByIds.size === 0;
 }
 
-const shouldFetchJiaoyanshi = (centerId, state) => {
-  const jiaoyanshiIds = getJiaoyanshiByCenter(state, centerId);
-  return !jiaoyanshiIds;
-}
-
-const fetchJiaoyanshiSuccess = (centerId, jiaoyanshiIds, jiaoyanshiByIds) => {
+const fetchJiaoyanshiSuccess = (centerIds, centerByIds, jiaoyanshiByCenter, jiaoyanshiByIds) => {
   return ({
     type: types.FETCH_JIAOYANSHI,
-    centerId,
-    jiaoyanshiIds,
+    centerIds,
+    centerByIds,
+    jiaoyanshiByCenter,
     jiaoyanshiByIds
   })
 }
 
-const convertJiaoyanshiToPlain = (jiaoyanshi) => {
+const convertJiaoyanshiToPlain = (data) => {
   let jiaoyanshiByIds = {};
-  let jiaoyanshiIds = [];
-  console.log("Got JiaoYanShi data: "+JSON.stringify(jiaoyanshi));
-  jiaoyanshi.forEach(item => {
+  let jiaoyanshiByCenter = {};
+  let centerByIds = {};
+  let centerIds = [];
+  //console.log("Got JiaoYanShi data: "+JSON.stringify(data));
+  const jysList = data;
+  jysList.forEach(item => {
     jiaoyanshiByIds[item.id] = { ...item };
-    jiaoyanshiIds.push(item.id);
+    if (item.center_id > 0) {
+      if (!centerByIds[item.center_id]) {
+        centerByIds[item.center_id] = {id: item.center_id, name: item.department_center};
+        centerIds.push(""+item.center_id);
+      }
+      if (!jiaoyanshiByCenter[item.center_id]) {
+        jiaoyanshiByCenter[item.center_id] = [];
+      }
+      jiaoyanshiByCenter[item.center_id].push(""+item.id);
+    }
   });
   return {
+    centerByIds,
+    centerIds,
     jiaoyanshiByIds,
-    jiaoyanshiIds
+    jiaoyanshiByCenter
   };
 }
 // reducers
-const byIds = (state = Immutable.fromJS({}), action) => {
+const jiaoyanshiByIds = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
-    case centerTypes.FETCH_ALL_CENTERS:
-      return state.merge(action.jiaoyanshiByIds);
     case types.FETCH_JIAOYANSHI:
       return state.merge(action.jiaoyanshiByIds);
     default:
@@ -72,29 +81,74 @@ const byIds = (state = Immutable.fromJS({}), action) => {
   }
 }
 
-const byCenter = (state = Immutable.fromJS({}), action) => {
+const jiaoyanshiByCenter = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
-    case centerTypes.FETCH_ALL_CENTERS:
-      return state.merge(action.jiaoyanshiByCenter);
     case types.FETCH_JIAOYANSHI:
-      return state.merge({[action.centerId]: action.jiaoyanshiIds});
+      return state.merge(action.jiaoyanshiByCenter);
+    default:
+      return state;
+  }
+}
+
+const centerByIds = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.FETCH_JIAOYANSHI:
+      return state.merge(action.centerByIds);
+    default:
+      return state;
+  }
+}
+
+const centerIds = (state = Immutable.fromJS([]), action) => {
+  switch(action.type) {
+    case types.FETCH_JIAOYANSHI:
+      return Immutable.List(action.centerIds);
     default:
       return state;
   }
 }
 
 const reducer = combineReducers({
-  byIds,
-  byCenter,
+  jiaoyanshiByIds,
+  jiaoyanshiByCenter,
+  centerByIds,
+  centerIds
 });
 
 export default reducer;
 
 // selectors
-export const getJiaoyanshi = state => state.getIn(["jiaoyanshi", "byIds"]);
+export const getJiaoyanshi = state => state.getIn(["jiaoyanshi", "jiaoyanshiByIds"]);
 
-export const getJiaoyanshiById = (state, id) => state.getIn(["jiaoyanshi", "byIds", id]);
+export const getJiaoyanshiById = (state, id) => state.getIn(["jiaoyanshi", "jiaoyanshiByIds", id]);
 
-export const getJiaoyanshiByAllCenter = state => state.getIn(["jiaoyanshi", "byCenter"]);
+export const getJiaoyanshiByCenters = (state) => state.getIn(["jiaoyanshi", "jiaoyanshiByCenter"]);
 
-export const getJiaoyanshiByCenter = (state, centerId) => state.getIn(["jiaoyanshi", "byCenter", centerId]);
+export const getCenter = state => state.getIn(["jiaoyanshi", "centerByIds"]);
+
+export const getCenterById = (state, id) => state.getIn(["jiaoyanshi", "byIds", id]);
+
+export const getCenterIds = state => state.getIn(["jiaoyanshi", "centerIds"]);
+
+export const getJiaoyanshiOfAllCenters = createSelector(
+  [getCenterIds, getCenter, getJiaoyanshiByCenters, getJiaoyanshi],
+  (centerIds, centers, jysByCenters, jys) => {
+    let jysInfo = [];
+    if (!centerIds || !centers || !jysByCenters || !jys) {
+      return [];
+    }
+    centerIds.forEach(id => {
+      const center = centers.get(id);
+      const jysByCenter = jysByCenters.get(id);
+      //console.log("jysByCenters.get "+id);
+      let jysInfoByCenters = [];
+      jysByCenter.forEach(jysId => {
+        jysInfoByCenters.push(jys.get(jysId));
+      });
+      center["jiaoyanshi"] = jysInfoByCenters;
+      //console.log("build center: "+JSON.stringify(center));
+      jysInfo.push(center);
+    });
+    return jysInfo;
+  }
+);

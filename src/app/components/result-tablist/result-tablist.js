@@ -11,12 +11,35 @@ import {
 } from '@chakra-ui/core';
 
 class ResultTabList extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      tabIndex: 0
+    }
+  }
+
+  handleTabsChange = index => {
+    console.log("handleTabsChange, index: "+index);
+    this.setState({
+      tabIndex: index
+    });
+    if (this.props.onTabChange) {
+      this.props.onTabChange(index);
+    }
+  }
+
+  reset = () => {
+    this.setState({
+      tabIndex: 0
+    })
+  }
+
   render() {
     const { titles, tabHeight, pages, color, onTabChange, ...other_props } = this.props;
+    const { tabIndex } = this.state;
     return (
-      <Tabs variant="enclosed"  {...other_props}>
-        <TabList
-          onChange={onTabChange}>
+      <Tabs variant="enclosed" index={tabIndex} onChange={this.handleTabsChange} {...other_props}>
+        <TabList>
           {
             titles.map((title, index) => (
               <Tab

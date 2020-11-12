@@ -10,21 +10,19 @@ export const types = {
 };
 
 // colors
-export const colors = [
-  "red.400", "green.200", "blue.400",
-  "orange.300", "cyan.500", "blue.200",
-  "green.100", "green.300", "blue.400",
-  "purple.500",
+const colors = [
+  "red.400", "green.400", "blue.400",
+  "orange.300", "cyan.500", "purple.500",
 ];
 
 // actions
 export const actions = {
   fetchSubjects: (gradeTypeId, gradeId) => {
-    return (dispatch, getState) => {
+    return async (dispatch, getState) => {
       try {
         if (shouldFetchSubjects(gradeTypeId, gradeId, getState())) {
           dispatch(appActions.startRequest());
-          const data = subjectApi.querySubjects(gradeTypeId, gradeId);
+          const data = await subjectApi.querySubjects(gradeTypeId, gradeId);
           dispatch(appActions.finishRequest());
           const { subjectByIds, subjectIds } = convertSubjectsToPlain(data);
           dispatch(fetchSubjectsSuccess(gradeTypeId, gradeId, subjectIds, subjectByIds));
@@ -33,7 +31,7 @@ export const actions = {
         dispatch(appActions.setError(error));
       }
     }
-  },
+  }
 }
 
 const buildGradeInfoId = (gradeTypeId, gradeId) => {
@@ -41,8 +39,8 @@ const buildGradeInfoId = (gradeTypeId, gradeId) => {
 }
 
 const shouldFetchSubjects = (gradeTypeId, gradeId, state) => {
-  const subjectIds = getSubjectByGrade(state, gradeTypeId, gradeId);
-  return !subjectIds;
+  const subjects = getSubjectByGrade(state, gradeTypeId, gradeId);
+  return !subjects;
 }
 
 const fetchSubjectsSuccess = (gradeTypeId, gradeId, subjectIds, subjectByIds) => {
@@ -57,11 +55,12 @@ const fetchSubjectsSuccess = (gradeTypeId, gradeId, subjectIds, subjectByIds) =>
 
 const convertSubjectsToPlain = (subjects) => {
   let subjectByIds = {};
-  let subjectIds = [];
-  console.log("Got Subjects data: "+JSON.stringify(subjects));
-  subjects.forEach(item => {
-    subjectByIds[item.id] = { ...item };
-    subjectIds.push(item.id);
+  //console.log("Got Subjects data: "+JSON.stringify(subjects));
+  const subjectIds = Object.keys(subjects);
+  let colorIndex = 0;
+  subjectIds.forEach(subjectId => {
+    subjectByIds[subjectId] = { id: subjectId, title: subjects[subjectId], color: colors[colorIndex] };
+    colorIndex = (colorIndex+1) % colors.length;
   });
   return {
     subjectByIds,

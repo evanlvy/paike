@@ -13,7 +13,7 @@ class CommonRenderer extends Component {
     const { lineHeight, editable } = colDef;
     return (
       <div className="common-cell" style={{lineHeight: lineHeight+"px"}}>
-        {value.title == null ? value : value.title}
+        { value.title == null ? value : value.title }
         { editable && <Icon name="edit" marginLeft="2" />}
       </div>
     );

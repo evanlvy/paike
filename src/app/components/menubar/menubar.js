@@ -138,7 +138,7 @@ class MenuBarWrapped extends Component {
 
   onGradeGroupChanged = (menu_type, grade_type_index, grade_index) => {
     const { gradeTypes } = this.props;
-    const grade_info = gradeTypes.toJS();
+    const grade_info = gradeTypes;
     const grade_type = grade_info[grade_type_index];
     const grade = grade_type.grades[grade_index];
     console.log("onGradeChanged, menu type: "+menu_type+", education: "+grade_type.name+", grade: "+grade.name);

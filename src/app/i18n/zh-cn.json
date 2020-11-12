@@ -3,7 +3,8 @@
     "previous": "上一个",
     "next": "下一个",
     "cancel": "取消",
-    "ok": "确认"
+    "ok": "确认",
+    "no_data": "数据加载中..."
   },
   "alert": {
     "default_title": "警告",
@@ -38,7 +39,29 @@
     "basic_maintain_title": "基础数据维护"
   },
   "subjectBoard": {
-    "title_template": "请选择专业 [{{grade_info}}]"
+    "title_no_subject_template": "请选择专业 [{{grade_info}}]",
+    "title_template": "{{subject_name}} [{{grade_info}}]"
+  },
+  "kebiao": {
+    "zixi": "自习",
+    "semester_one_first": "第一学期1-9周",
+    "semester_one_second": "第一学期10-18周",
+    "semester_two_first": "第二学期1-9周",
+    "semester_two_second": "第二学期10-18周",
+    "banji_sched_title": "班级\\星期",
+    "sched_monday": "周一",
+    "sched_tuesday": "周二",
+    "sched_wednesday": "周三",
+    "sched_thursday": "周四",
+    "sched_friday": "周五",
+    "sched_saturday": "周六",
+    "sched_sunday": "周日",
+    "sched_12": "1,2",
+    "sched_34": "3,4",
+    "sched_67": "6,7",
+    "sched_89": "8,9",
+    "sched_1011": "10,11",
+    "sched_1213": "12,13"
   },
   "lilunKebiaoScreen": {
     "title_template": "{{grade_info}}总课表 ({{semester_info}})"

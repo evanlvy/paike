@@ -16,8 +16,8 @@ import {
 } from '../components';
 
 import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
-import { actions as gradeTypeActions, getGradesOfAllGradeTypes } from '../redux/modules/grade_type';
-import { actions as centerActions, getJiaoyanshiOfAllCenters } from '../redux/modules/center';
+import { actions as gradeActions, getGradesOfAllDegrees } from '../redux/modules/grade';
+import { actions as jysActions, getJiaoyanshiOfAllCenters } from '../redux/modules/jiaoyanshi';
 import { actions as labBuildingActions, getAllLabBuildingsInfo } from '../redux/modules/lab_building';
 
 import AsyncComponent from '../utils/AsyncComponent';
@@ -28,17 +28,9 @@ const AsyncBanJiKeBiaoScreen = connectRoute(AsyncComponent(() => import('../scre
 const AsyncShiXunKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/shixun-kebiao-screen')));
 
 class MainNavigatorWrapper extends Component {
-  constructor(props) {
-    super(props);
-    this.token = props.user.get("userToken");
-    this.state = {
-      needLogin: this.token == null
-    }
-  }
-
   componentDidMount() {
-    this.props.fetchAllGradeTypes();
-    this.props.fetchAllCenters();
+    this.props.fetchAllGradeInfo();
+    this.props.fetchJiaoyanshi();
     this.props.fetchLabBuildings();
   }
 
@@ -49,14 +41,22 @@ class MainNavigatorWrapper extends Component {
       case MenuType.LILUN:
         history.push('/kebiao/lilun', menu_params);
         break;
+      case MenuType.BANJI:
+        history.push('/kebiao/banji', menu_params);
+        break;
       default:
         break;
     }
   }
 
+  needLogin = () => {
+    const { user } = this.props;
+    const token = user.get("userToken");
+    return token == null;
+  }
+
   render() {
-    const { needLogin } = this.state;
-    if (needLogin) {
+    if (this.needLogin()) {
       return <Redirect to="/login" />;
     }
     const { gradeTypes, centers, labBuildings } = this.props;
@@ -73,10 +73,10 @@ class MainNavigatorWrapper extends Component {
   }
 }
 
-const mapStateToProps = (state, props) => {
+const mapStateToProps = (state) => {
   return {
     user: getLoggedUser(state),
-    gradeTypes: getGradesOfAllGradeTypes(state),
+    gradeTypes: getGradesOfAllDegrees(state),
     centers: getJiaoyanshiOfAllCenters(state),
     labBuildings: getAllLabBuildingsInfo(state),
   }
@@ -85,8 +85,8 @@ const mapStateToProps = (state, props) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     ...bindActionCreators(authActions, dispatch),
-    ...bindActionCreators(gradeTypeActions, dispatch),
-    ...bindActionCreators(centerActions, dispatch),
+    ...bindActionCreators(gradeActions, dispatch),
+    ...bindActionCreators(jysActions, dispatch),
     ...bindActionCreators(labBuildingActions, dispatch)
   }
 }
