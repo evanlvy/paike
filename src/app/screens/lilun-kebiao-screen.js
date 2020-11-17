@@ -65,6 +65,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
       {name: t("kebiao.sched_67"), field: "friday_67"},
       {name: t("kebiao.sched_89"), field: "friday_89"},
     ];
+    this.yearPages = [
+      {name: t("lilunKebiaoScreen.year_template", {year: 2019})},
+      {name: t("lilunKebiaoScreen.year_template", {year: 2020})}
+    ];
     this.kebiaoDataList = [];
     this.tableDataList = [];
     this.curDataIndex = 0;
@@ -132,13 +136,14 @@ class LiLunKeBiaoScreenWrapped extends Component {
   }
 
   loadData = () => {
-    const { selectWeek } = this.state;
     if (!this.subjectsData || this.subjectsData.length === 0) { // only get subjects when it's empty
-      const { edu, grd } = this.props.location.state;
-      this.props.fetchSubjects(edu.id, grd.id);
-    } else if (this.selectedSubject && !this.hasFetchBanji) {
+      this.loadSubjects();
+    }
+    if (this.selectedSubject && !this.hasFetchBanji) {
       this.loadBanji();
-    } else if (this.banjiData && !this.hasFetchKebiao) {
+    }
+    if (this.banjiData && !this.hasFetchKebiao) {
+      const { selectWeek } = this.state;
       this.loadKebiao(selectWeek);
     }
   }
@@ -196,6 +201,12 @@ class LiLunKeBiaoScreenWrapped extends Component {
     }
   }
 
+  loadSubjects = () => {
+    console.log("loadSubjects");
+    const { edu, grd } = this.props.location.state;
+    this.props.fetchSubjects(edu.id, grd.id);
+  }
+
   buildBanji = () => {
     const { grd } = this.props.location.state;
     const { banjiBySubject } = this.props;
@@ -209,10 +220,12 @@ class LiLunKeBiaoScreenWrapped extends Component {
   }
 
   loadBanji = () => {
-    const { grd } = this.props.location.state;
     if (!this.selectedSubject) {
       console.error("No selected subject defined");
+      return;
     }
+    console.log("loadBanji");
+    const { grd } = this.props.location.state;
     this.props.fetchBanji(grd.id, this.selectedSubject.id);
     this.tableDataList = [];
     this.kebiaoDataList = [];
@@ -277,6 +290,11 @@ class LiLunKeBiaoScreenWrapped extends Component {
   }
 
   loadKebiao = (selectWeek) => {
+    if (!this.banjiData) {
+      console.error("BanjiData not got yet");
+      return;
+    }
+    console.log("loadKebiao");
     let banjiIds = [];
     this.banjiData.forEach(banjiInfo => {
       banjiIds.push(banjiInfo.id);
@@ -303,6 +321,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
       selectWeek : weekIndex
     });
     this.loadKebiao(weekIndex);
+  }
+
+  onYearPageChanged = (index) => {
+    console.log("onYearPageChange: "+JSON.stringify(this.yearPages[index]));
   }
 
   onClassItemClicked = (index) => {
@@ -404,8 +426,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
     const { labs, selectedSubjectIndex } = this.state;
     this.buildData();
     const { teachers, groups, gradeInfo, subjectsData, subjectTitle,
-      tabTitles, tableHeaders, tableDataList, labCenters, labTimeSegments,
-      onSubjectClicked, onTabChanged,
+      tabTitles, tableHeaders, tableDataList, yearPages, labCenters, labTimeSegments,
+      onSubjectClicked, onTabChanged, onYearPageChanged,
       onKebiaoRowClicked, onChooseDate, onChooseLab, onChooseTeacher, onEditRemark, onSelectGroup,
       onChooseLabCenterChanged, onChooseLabTimeSegChanged, onChooseLabResult,
       onChooseTeacherCenterChanged, onChooseTeacherResult,
@@ -422,6 +444,11 @@ class LiLunKeBiaoScreenWrapped extends Component {
           color={LILUNKEBIAO_COLOR}
           headers={tableHeaders}
           data={tableDataList[i]}
+          pageNames={yearPages}
+          initPageIndex={1}
+          pagePrevCaption={t("lilunKebiaoScreen.prev_year")}
+          pageNextCaption={t("lilunKebiaoScreen.next_year")}
+          onResultPageIndexChanged={onYearPageChanged}
           onRowClicked={onKebiaoRowClicked} />);
       } else {
         pageTables[i] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);

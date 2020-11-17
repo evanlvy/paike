@@ -44,11 +44,13 @@
   },
   "kebiao": {
     "zixi": "自习",
+    "shizheng": "时政学习",
     "semester_one_first": "第一学期1-9周",
     "semester_one_second": "第一学期10-18周",
     "semester_two_first": "第二学期1-9周",
     "semester_two_second": "第二学期10-18周",
     "banji_sched_title": "班级\\星期",
+    "sched_title": "时间\\星期",
     "sched_monday": "周一",
     "sched_tuesday": "周二",
     "sched_wednesday": "周三",
@@ -58,13 +60,22 @@
     "sched_sunday": "周日",
     "sched_12": "1,2",
     "sched_34": "3,4",
+    "sched_5": "5",
     "sched_67": "6,7",
     "sched_89": "8,9",
     "sched_1011": "10,11",
-    "sched_1213": "12,13"
+    "sched_1213": "12,13",
+    "sched_unit": "节"
   },
   "lilunKebiaoScreen": {
-    "title_template": "{{grade_info}}总课表 ({{semester_info}})"
+    "title_template": "{{grade_info}}总课表 ({{semester_info}})",
+    "prev_year": "上一年",
+    "next_year": "下一年",
+    "year_template": "{{year}}年度"
+  },
+  "banjiKebiaoScreen": {
+    "prev_semester_page": "上一学习周期",
+    "next_semester_page": "下一学习周期"
   },
   "solveConflictModal": {
     "title": "处理冲突",

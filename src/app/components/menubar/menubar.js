@@ -27,19 +27,23 @@ import { Trans, withTranslation } from 'react-i18next';
 import { LabsMenu, GroupMenu } from './';
 
 function withMenu(WrappedMenuList) {
-  return class extends Component {
+  class withMenuComponent extends Component {
     render() {
-      const { title, icon, bgColor, menuType, menuListProps, ...otherProps } = this.props;
+      const { title, icon, bgColor, menuType, menuListProps, forwardedRef, ...otherProps } = this.props;
       return (
         <Menu>
           <MenuButton as={Button} leftIcon={icon} rightIcon="chevron-down" variantColor={bgColor}  {...otherProps} >
             <Trans>{title}</Trans>
           </MenuButton>
-          <WrappedMenuList menuType={menuType} {...menuListProps} />
+          <WrappedMenuList ref={forwardedRef} menuType={menuType} {...menuListProps} />
         </Menu>
       )
     }
   }
+  const forwardRef = (props, ref) => {
+    return React.createElement(withMenuComponent, Object.assign({}, props, { forwardedRef: ref }));
+  }
+  return React.forwardRef(forwardRef);
 }
 
 const MenuType = {
@@ -58,6 +62,14 @@ const MenuListType = {
 }
 
 class MenuBarWrapped extends Component {
+  constructor(props) {
+    super(props);
+
+    this.lilunMenuRef = React.createRef();
+    this.banjiMenuRef = React.createRef();
+    this.shixunMenuRef = React.createRef();
+  }
+
   initMenu = () => {
     this.initGrades();
     this.initLabs();
@@ -142,6 +154,34 @@ class MenuBarWrapped extends Component {
     const grade_type = grade_info[grade_type_index];
     const grade = grade_type.grades[grade_index];
     console.log("onGradeChanged, menu type: "+menu_type+", education: "+grade_type.name+", grade: "+grade.name);
+    switch(menu_type) {
+      case MenuType.LILUN:
+        if (this.banjiMenuRef.current) {
+          this.banjiMenuRef.current.reset();
+        }
+        if (this.shixunMenuRef.current) {
+          this.shixunMenuRef.current.reset();
+        }
+        break;
+      case MenuType.BANJI:
+        if (this.lilunMenuRef.current) {
+          this.lilunMenuRef.current.reset();
+        }
+        if (this.shixunMenuRef.current) {
+          this.shixunMenuRef.current.reset();
+        }
+        break;
+      case MenuType.SHIXUN:
+        if (this.lilunMenuRef.current) {
+          this.lilunMenuRef.current.reset();
+        }
+        if (this.banjiMenuRef.current) {
+          this.banjiMenuRef.current.reset();
+        }
+        break;
+      default:
+        break;
+    }
     this.notifyMenuSelected(menu_type, {edu: grade_type, grd: grade});
   }
 
@@ -175,11 +215,11 @@ class MenuBarWrapped extends Component {
     const { grade_info, lab_centers, lab_buildings, jiaoyanshi_centers, maintain_menus } = this;
     const menus = [
       { list_type: MenuListType.GROUP, type: MenuType.LILUN, title: "menuBar.lilunkebiao_title", icon: FiBookOpen, bgColor: "orange",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged } },
+              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.lilunMenuRef },
       { list_type: MenuListType.GROUP, type: MenuType.BANJI, title: "menuBar.banjikebiao_title", icon: FaCalendarDay, bgColor: "cyan",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged } },
+              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.banjiMenuRef },
       { list_type: MenuListType.GROUP, type: MenuType.SHIXUN, title: "menuBar.shixunkebiao_title", icon: AiTwotoneExperiment, bgColor: "green",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged} },
+              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged}, menu_ref: this.shixunMenuRef },
       { list_type: MenuListType.LAB, type: MenuType.SHIYANSHI, title: "menuBar.shiyanshi_anpai_title", icon: FaBuilding, bgColor: "blue",
               menuListProps: {labCenters: lab_centers ,labBuildings: lab_buildings, onLabChange: this.onLabChanged} },
       { list_type: MenuListType.GROUP, type: MenuType.JIAOYANSHI, title: "menuBar.jiaoyanshi_kebiao_title", icon: MdCollectionsBookmark, bgColor: "red",
@@ -206,6 +246,7 @@ class MenuBarWrapped extends Component {
               case MenuListType.GROUP:
                 return <GroupMenu
                   key={item.type}
+                  ref={item.menu_ref}
                   menuType={item.type}
                   mx={1}
                   width="11em"

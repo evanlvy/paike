@@ -38,6 +38,12 @@ class GroupMenuListWrapped extends Component {
     return groupValues;
   }
 
+  reset = () => {
+    this.setState({
+      group_values: this.initGroupValues()
+    });
+  }
+
   notifyGroupMenuChange = (group_index, value) => {
     const { onGroupMenuSelected } = this.props;
     if (onGroupMenuSelected) {
@@ -81,6 +87,6 @@ class GroupMenuListWrapped extends Component {
   }
 }
 
-const GroupMenu = withMenu(withTranslation()(GroupMenuListWrapped));
+const GroupMenu = withMenu(withTranslation("translation", {withRef: true})(GroupMenuListWrapped));
 
 export { GroupMenu };

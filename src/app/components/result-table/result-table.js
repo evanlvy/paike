@@ -4,8 +4,11 @@ import React, { Component } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import {
   Flex,
+  Text,
+  Button,
   Box,
 } from '@chakra-ui/core';
+import { withTranslation } from 'react-i18next';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
@@ -14,9 +17,13 @@ import './table.css';
 import { CommonRenderer } from "./common-renderer";
 import { ArrayDataRenderer } from "./arraydata-renderer";
 
-class ResultTable extends Component {
+class ResultTableWrapper extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      curPageIndex: props.initPageIndex ? props.initPageIndex : 0
+    };
+
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
       arrayDataRenderer: ArrayDataRenderer,
@@ -28,13 +35,16 @@ class ResultTable extends Component {
     this.buildUI(props);
   }
 
-  shouldComponentUpdate(nextProps) {
-    const { props } = this;
+  shouldComponentUpdate(nextProps, nextState) {
+    const { props, state } = this;
     // console.log("shouldComponentUpdate, orig props "+JSON.stringify(props));
     // console.log("shouldComponentUpdate, new props "+JSON.stringify(nextProps));
     if (nextProps.headers !== props.headers || nextProps.defaultColWidth !== props.defaultColWidth
     || nextProps.colLineHeight !== props.colLineHeight || nextProps.data !== props.data) {
       this.buildUI(nextProps);
+      return true;
+    }
+    if (nextState.curPageIndex !== state.curPageIndex) {
       return true;
     }
     return false;
@@ -96,31 +106,73 @@ class ResultTable extends Component {
     }
   }
 
+  onPagePrevClicked = () => {
+    const { curPageIndex } = this.state;
+    if (curPageIndex > 0) {
+      const newIndex = curPageIndex-1;
+      this.setState({
+        curPageIndex: newIndex
+      });
+      this.notifyPageIndexChanged(newIndex);
+    }
+  }
+
+  onPageNextClicked = () => {
+    const { curPageIndex } = this.state;
+    const { pageNames } = this.props;
+    if (curPageIndex < pageNames.length-1) {
+      const newIndex = curPageIndex+1;
+      this.setState({
+        curPageIndex: newIndex
+      });
+      this.notifyPageIndexChanged(newIndex);
+    }
+  }
+
+  notifyPageIndexChanged = (index) => {
+    const { onResultPageIndexChanged } = this.props;
+    if (onResultPageIndexChanged) {
+      onResultPageIndexChanged(index);
+    }
+  }
+
   render() {
-    const { frameworkComponents, columnDefs, defaultColDef, rowData, onGridSizeChanged, onCellClicked, onRowClicked } = this;
-    const { width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data,
-      onCellClicked: onCellClickedCallback,
-      onRowClicked: onRowClickedCallback,  ...other_props } = this.props;
+    const { frameworkComponents, columnDefs, defaultColDef, rowData, onGridSizeChanged, onCellClicked, onRowClicked, onPagePrevClicked, onPageNextClicked } = this;
+    const { t, width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data, pageNames, pagePrevCaption, pageNextCaption, initPageIndex,
+      onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onResultPageIndexChanged,
+      ...other_props } = this.props;
+    const { curPageIndex } = this.state;
     return (
       <Flex direction="column" width={width ? width : "100%"} {...other_props} >
-        <Box display="flex" bg={color+".400"} height={titleHeight} px={4} alignItems="center"
-          borderWidth={1} borderColor={color+".200"} roundedTop="md">{title}</Box>
+        <Box display="flex" flexDirection="row" bg={color+".400"} height={titleHeight} px={4} alignItems="center"
+          borderWidth={1} borderColor={color+".200"} roundedTop="md">
+          <Text width="100%">{title}</Text>
+          {
+            pageNames &&
+            <Flex direction="row" alignItems="center">
+              <Button variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
+              <Text whiteSpace="nowrap" mx={4}>{pageNames[curPageIndex].name}</Text>
+              <Button variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
+            </Flex>
+          }
+        </Box>
         <Box width="100%" height="100%" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
-        <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
-          <AgGridReact
-            onGridSizeChanged={onGridSizeChanged}
-            defaultColDef={defaultColDef}
-            frameworkComponents={frameworkComponents}
-            columnDefs={columnDefs}
-            rowData={rowData}
-            onCellClicked={onCellClicked}
-            onRowClicked={onRowClicked} >
-          </AgGridReact>
-        </div>
+          <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
+            <AgGridReact
+              onGridSizeChanged={onGridSizeChanged}
+              defaultColDef={defaultColDef}
+              frameworkComponents={frameworkComponents}
+              columnDefs={columnDefs}
+              rowData={rowData}
+              onCellClicked={onCellClicked}
+              onRowClicked={onRowClicked} >
+            </AgGridReact>
+          </div>
         </Box>
       </Flex>
     );
   }
 }
 
+const ResultTable = withTranslation("translation")(ResultTableWrapper);
 export { ResultTable };
