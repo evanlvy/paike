@@ -207,7 +207,6 @@ class BanJiKeBiaoScreen extends Component {
     const { kebiaoByBanjiSched } = this.props;
     const { selectWeek } = this.state;
     if (!this.selectedBanji) {
-      this.kebiaoData = null;
       return;
     }
 
@@ -219,8 +218,24 @@ class BanJiKeBiaoScreen extends Component {
     } else {
       this.tableDataList[this.curDataIndex] = [];
     }
-    //console.log("KebiaoData: "+JSON.stringify(kebiaoInfo));
     console.log("kebiaoTable: "+JSON.stringify(this.tableDataList[this.curDataIndex]));
+  }
+
+  buildLiLunName = (kebiaoHour) => {
+    let curName = kebiaoHour.curriculum;
+    if (kebiaoHour.theory_teachers && kebiaoHour.theory_teachers.length > 0) {
+      curName += " ("
+      kebiaoHour.theory_teachers.forEach(teacher => {
+        curName += teacher.name+" ";
+      });
+      curName.trim();
+      curName +=")"
+    }
+    return curName;
+  }
+
+  buildShiXunName = (kebiaoHour) => {
+    return kebiaoHour.labitem_name+" ("+kebiaoHour.lab_location+")";
   }
 
   buildKebiaoTableSched = (kebiaoInfo) => {
@@ -247,7 +262,7 @@ class BanJiKeBiaoScreen extends Component {
           resultList[j] = {};
           resultList[j][fields_names[0]] = row_names[j];
         }
-        let name = defaultName;
+        let names = [defaultName];
         let hourIndex = j;
         if (j === 2) {
           resultList[j][fields_names[i]] = shizhengName;
@@ -255,16 +270,22 @@ class BanJiKeBiaoScreen extends Component {
         } else if (j > 2) {
           hourIndex = j-1;
         }
-        const kebiaoHour = kebiaoDay ? kebiaoDay[hourIndex] : null;
-        if (kebiaoHour && kebiaoHour.curriculum) {
-          name = kebiaoHour.curriculum;
-          if (kebiaoHour.theory_teachers && kebiaoHour.theory_teachers.length > 0) {
-            kebiaoHour.theory_teachers.forEach(teacher => {
-              name += " "+teacher.name;
-            });
-          }
+        const kebiaoHourList = kebiaoDay ? kebiaoDay[hourIndex] : null;
+        if (kebiaoHourList && kebiaoHourList.length > 0) {
+          names = []; // reset name list
+          kebiaoHourList.forEach(kebiaoHour => {
+            let name;
+            if (kebiaoHour.is_lab === 1) {
+              name = this.buildShiXunName(kebiaoHour);
+            } else {
+              name = this.buildLiLunName(kebiaoHour);
+            }
+            if (name) {
+              names.push(name);
+            }
+          });
         }
-        resultList[j][fields_names[i]] = { title: name, data: kebiaoHour };
+        resultList[j][fields_names[i]] = { titles: names, data: kebiaoHourList };
       }
     }
     return resultList;
@@ -301,8 +322,8 @@ class BanJiKeBiaoScreen extends Component {
   }
 
   onSemesterPageChanged = (index) => {
-    const { tabTitles } = this;
-    console.log("onSemesterPageChanged: "+tabTitles[index]);
+    const { semesterPages } = this;
+    console.log("onSemesterPageChanged: "+semesterPages[index].name);
     const weekIndex = 5+9*index;
     this.setState({
       selectWeek : weekIndex
@@ -344,7 +365,7 @@ class BanJiKeBiaoScreen extends Component {
           color={BANJIKEBIAO_COLOR}
           title={subjectTitle}
           subjects={subjectsData}
-          initSubjectIndex={selectedSubjectIndex}
+          initSelectIndex={selectedSubjectIndex}
           onSubjectClicked={onSubjectClicked}
           enableSelect />
         {

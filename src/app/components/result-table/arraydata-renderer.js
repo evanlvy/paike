@@ -22,6 +22,12 @@ class ArrayDataRenderer extends Component {
   render() {
     const { value, colDef } = this.props;
     const { headerName, lineHeight } = colDef;
+    if (value == null) {
+      console.error(`The value of header: ${headerName} is undefined`);
+      return (
+        <CommonRenderer {...this.props} />
+      );
+    }
     if (value.array == null) {
       return (
         <CommonRenderer {...this.props} />

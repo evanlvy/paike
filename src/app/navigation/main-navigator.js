@@ -44,6 +44,9 @@ class MainNavigatorWrapper extends Component {
       case MenuType.BANJI:
         history.push('/kebiao/banji', menu_params);
         break;
+      case MenuType.SHIXUN:
+        history.push('/kebiao/shixun', menu_params);
+        break;
       default:
         break;
     }

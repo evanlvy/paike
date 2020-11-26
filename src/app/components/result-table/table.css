@@ -9,9 +9,11 @@
 
 .common-cell {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   margin: 5px 0 5px 0;
+  word-wrap: break-word;
   white-space: normal !important;
 }
 

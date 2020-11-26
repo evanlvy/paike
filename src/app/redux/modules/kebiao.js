@@ -3,7 +3,6 @@ import { combineReducers } from 'redux-immutable';
 import { createSelector } from 'reselect';
 
 import { actions as appActions } from './app';
-import { getJiaoyanshi } from './jiaoyanshi';
 import { api as kebiaoApi } from '../../services/kebiao';
 
 // action types
@@ -95,13 +94,16 @@ const convertKeBiaoByBanjiToPlain = (banjiInfoList, year) => {
         let kebiaoByWeek = [];
         const schedInfoWeek = schedInfo[weekKey];
         for (let i=1; i < 8; i++) {
-          let kebiaoByDay = [0, 0, 0, 0, 0, 0];
+          let kebiaoByDay = [];
           const schedInfoDay = schedInfoWeek["星期"+i];
           if (schedInfoDay) {
             schedInfoDay.forEach(kebiao => {
               kebiaoByIds[kebiao.id] = {...kebiao};
               const kebiaoIndex = (kebiao.index-1)/2
-              kebiaoByDay[kebiaoIndex] = ""+kebiao.id;
+              if (kebiaoByDay[kebiaoIndex] == null) {
+                kebiaoByDay[kebiaoIndex] = [];
+              }
+              kebiaoByDay[kebiaoIndex].push(""+kebiao.id);
             })
           }
           kebiaoByWeek.push(kebiaoByDay);
@@ -153,6 +155,7 @@ const shouldFetchShiXun = (jiaoyanshiIds, year, week, state) => {
       return true;
     }
   }
+  console.log("shouldFetchShiXun: no need fetch data");
   return false;
 }
 
@@ -285,8 +288,11 @@ export const getLiLunByAllBanjiSched = createSelector(
       if (kebiaoInWeek && kebiaoInWeek.length > 0) {
         kebiaoInWeek.forEach(kebiaoInDay => {
           let lilunInDay = [];
-          kebiaoInDay.forEach(lilunId => {
-            const lilunInfo = lilun.get(lilunId);
+          kebiaoInDay.forEach(lilunIds => {
+            let lilunInfo = null;
+            if (lilunIds && lilunIds.length > 0) {
+              lilunInfo = lilun.get(lilunIds[0]);
+            }
             //console.log(`Get lilun[${lilunId}] info: ${JSON.stringify(lilunInfo)}`);
             if (lilunInfo) {
               lilunInDay.push({...lilunInfo});
@@ -318,10 +324,16 @@ export const getKeBiaoByAllBanjiSched = createSelector(
       if (kebiaoInWeek && kebiaoInWeek.length > 0) {
         kebiaoInWeek.forEach(kebiaoInDay => {
           let inDay = [];
-          kebiaoInDay.forEach(kebiaoId => {
-            const kebiaoInfo = kebiao.get(kebiaoId);
-            if (kebiaoInfo) {
-              inDay.push({...kebiaoInfo});
+          kebiaoInDay.forEach(kebiaoIds => {
+            let inHour = [];
+            kebiaoIds.forEach(kebiaoId => {
+              const kebiaoInfo = kebiao.get(kebiaoId);
+              if (kebiaoInfo) {
+                inHour.push({...kebiaoInfo});
+              }
+            });
+            if (inHour.length > 0) {
+              inDay.push(inHour)
             } else {
               inDay.push(null);
             }
@@ -340,35 +352,38 @@ export const getShiXun = state => state.getIn(["kebiao", "shiXunByIds"]);
 export const getShiXunByJysSched = state => state.getIn(["kebiao", "shiXunByJiaoyanshiSched"]);
 
 export const getShiXunByJiaoyanshiSched = createSelector(
-  [getJiaoyanshi, getShiXun, getShiXunByJysSched],
-  (jys, shixun, shixunByJysSched) => {
+  [getShiXun, getShiXunByJysSched],
+  (shixun, shixunByJysSched) => {
     const jysSchedIds = Object.keys(shixunByJysSched.toJS());
     let result = {};
     jysSchedIds.forEach(jysSchedId => {
-      const { jysId } = parseJysSchedId(jysSchedId);
-      const jysInfo = jys.get(jysId);
       const kebiaoInWeek = shixunByJysSched.get(jysSchedId);
-      for (let i=0; i < kebiaoInWeek.length; i++) {
+      let inWeek = [];
+      for (let i=0; i < 7; i++) {
         const kebiaoInDay = kebiaoInWeek[i];
         if (kebiaoInDay == null || kebiaoInDay.length === 0) {
+          inWeek[i] = null;
           continue;
         }
-        for (let j=0; j < kebiaoInDay.length; j++) {
+        let inDay = [];
+        for (let j=0; j < 6; j++) {
           let kebiaoInHour = kebiaoInDay[j];
           if (kebiaoInHour == null || kebiaoInHour.length === 0) {
+            inDay[j] = null;
             continue;
           }
-          const key = `${i}_${j}`;
-          if (!result[key]) {
-            result[key] = [];
-          }
+          let inHour = [];
           kebiaoInHour.forEach(kebiaoId => {
             let shixunInfo = {...shixun.get(kebiaoId)};
-            shixunInfo["jys"] = jysInfo;
-            result[key].push(shixunInfo);
-          })
+            inHour.push(shixunInfo);
+          });
+          inDay[j] = inHour;
         }
+        inWeek[i] = inDay;
       }
+      result[jysSchedId] = inWeek;
     });
+    console.log("getShiXunByJiaoyanshiSched: "+JSON.stringify(result));
+    return result;
   }
 );

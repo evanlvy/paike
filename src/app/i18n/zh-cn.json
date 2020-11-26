@@ -40,7 +40,9 @@
   },
   "subjectBoard": {
     "title_no_subject_template": "请选择专业 [{{grade_info}}]",
-    "title_template": "{{subject_name}} [{{grade_info}}]"
+    "title_template": "{{subject_name}} [{{grade_info}}]",
+    "title_no_jys_template": "请选择分中心教研室",
+    "title_jys_template": "分中心教研室 [{{jys_info}}]"
   },
   "kebiao": {
     "zixi": "自习",
@@ -49,7 +51,14 @@
     "semester_one_second": "第一学期10-18周",
     "semester_two_first": "第二学期1-9周",
     "semester_two_second": "第二学期10-18周",
+    "jys": "教研室",
+    "banji": "班级",
+    "student_count": "人数",
+    "teacher": "教师",
+    "lab": "实验室",
+    "note": "备注",
     "banji_sched_title": "班级\\星期",
+    "shixun_sched_title": "时间\\课程详情",
     "sched_title": "时间\\星期",
     "sched_monday": "周一",
     "sched_tuesday": "周二",
@@ -65,7 +74,9 @@
     "sched_89": "8,9",
     "sched_1011": "10,11",
     "sched_1213": "12,13",
-    "sched_unit": "节"
+    "sched_unit": "节",
+    "shixun_content": "实验内容",
+    "shixun_teacher": "带教老师"
   },
   "lilunKebiaoScreen": {
     "title_template": "{{grade_info}}总课表 ({{semester_info}})",
@@ -76,6 +87,9 @@
   "banjiKebiaoScreen": {
     "prev_semester_page": "上一学习周期",
     "next_semester_page": "下一学习周期"
+  },
+  "shixunKebiaoScreen": {
+    "table_title_template": "实训中心实验汇总[{{jys_info}}]"
   },
   "solveConflictModal": {
     "title": "处理冲突",

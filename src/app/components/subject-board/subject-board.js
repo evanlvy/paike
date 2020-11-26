@@ -9,33 +9,58 @@ import { BallGrid } from '../common/ball-grid';
 
 class SubjectBoard extends PureComponent {
   constructor(props) {
-    super (props)
+    super (props);
     this.state = {
-      selectedIndex: props.initSubjectIndex,
+      selectedIndexList: this.buildInitSelectedIndexList(),
     }
   }
-  onSubjectClicked = (index) => {
-    const { onSubjectClicked: onSubjectClickedCallback, enableSelect } = this.props;
-    //console.log(`onSubjectClicked ${this.props.subjects[index].title}`);
-    if (onSubjectClickedCallback != null) {
-      onSubjectClickedCallback(index);
-    }
 
-    if (enableSelect) {
-      this.setState({
-        selectedIndex: index
-      })
+  buildInitSelectedIndexList = () => {
+    const { initSelectedIndexList, initSelectIndex } = this.props;
+    let selectedIndexList = [];
+    if (initSelectedIndexList !== undefined) {
+      selectedIndexList = [...initSelectedIndexList];
+    } else if (initSelectIndex !== undefined) {
+      selectedIndexList = [initSelectIndex];
     }
+    return selectedIndexList;
   }
 
   reset = () => {
     this.setState({
-      selectedIndex: this.props.initSubjectIndex
+      selectedIndexList: this.buildInitSelectedIndexList()
+    })
+  }
+
+  onSubjectClicked = (index) => {
+    const { onSubjectClicked: onSubjectClickedCallback, enableMultiSelect, enableSelect } = this.props;
+    //console.log(`onSubjectClicked ${this.props.subjects[index].title}`);
+    if (onSubjectClickedCallback != null) {
+      onSubjectClickedCallback(index);
+    }
+    let newIndexList = [];
+    if (enableMultiSelect) {
+      const { selectedIndexList: oldIndexList } = this.state;
+      oldIndexList.forEach(index_item => {
+        if (index_item !== index) {
+          newIndexList.push(index_item);
+        }
+      });
+      if (newIndexList.length === oldIndexList.length) { // nothing removed, it's a checked click
+        newIndexList.push(index);
+      }
+    } else if (enableSelect) {
+      newIndexList = [index];
+    } else {
+      return;
+    }
+    this.setState({
+      selectedIndexList: newIndexList
     })
   }
 
   render() {
-    const { selectedIndex } = this.state;
+    const { selectedIndexList } = this.state;
     const { subjects, color, title, initSubjectIndex, onSubjectClicked, ...other_props } = this.props;
     return (
       <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" {...other_props}>
@@ -45,7 +70,7 @@ class SubjectBoard extends PureComponent {
           balls={subjects}
           ballSize={100}
           height={250}
-          selectedBallIndex={selectedIndex}
+          selectedBallIndexList={selectedIndexList}
           onBallClicked={this.onSubjectClicked} />
       </Box>
     );

@@ -465,7 +465,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
           color={LILUNKEBIAO_COLOR}
           title={subjectTitle}
           subjects={subjectsData}
-          initSubjectIndex={selectedSubjectIndex}
+          initSelectIndex={selectedSubjectIndex}
           onSubjectClicked={onSubjectClicked}
           enableSelect />
         <ResultTabList
