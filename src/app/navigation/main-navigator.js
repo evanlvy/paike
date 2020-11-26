@@ -7,7 +7,8 @@ import {
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
 import {
-  Flex
+  Flex,
+  Progress,
 } from '@chakra-ui/core';
 
 import {
@@ -19,6 +20,7 @@ import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
 import { actions as gradeActions, getGradesOfAllDegrees } from '../redux/modules/grade';
 import { actions as jysActions, getJiaoyanshiOfAllCenters } from '../redux/modules/jiaoyanshi';
 import { actions as labBuildingActions, getAllLabBuildingsInfo } from '../redux/modules/lab_building';
+import { getRequestQuantity } from '../redux/modules/app';
 
 import AsyncComponent from '../utils/AsyncComponent';
 import connectRoute from '../utils/connectRoute';
@@ -62,15 +64,24 @@ class MainNavigatorWrapper extends Component {
     if (this.needLogin()) {
       return <Redirect to="/login" />;
     }
-    const { gradeTypes, centers, labBuildings } = this.props;
+    const { gradeTypes, centers, labBuildings, requestsCount } = this.props;
+    console.log("Request count: "+requestsCount);
     return (
-      <Flex px="10%" direction="column" justify="center" >
-        <MenuBar gradeTypes={gradeTypes} centers={centers} labBuildings={labBuildings} onMenuSelected={this.onMenuSelected}/>
-        <Switch>
-          <Route path="/kebiao/lilun" component={AsyncLiLunKeBiaoScreen} />
-          <Route path="/kebiao/banji" component={AsyncBanJiKeBiaoScreen} />
-          <Route path="/kebiao/shixun" component={AsyncShiXunKeBiaoScreen} />
-        </Switch>
+      <Flex>
+        <Flex px="10%" direction="column" justify="center" >
+          <MenuBar gradeTypes={gradeTypes} centers={centers} labBuildings={labBuildings} onMenuSelected={this.onMenuSelected}/>
+          <Switch>
+            <Route path="/kebiao/lilun" component={AsyncLiLunKeBiaoScreen} />
+            <Route path="/kebiao/banji" component={AsyncBanJiKeBiaoScreen} />
+            <Route path="/kebiao/shixun" component={AsyncShiXunKeBiaoScreen} />
+          </Switch>
+        </Flex>
+        {
+          requestsCount > 0 &&
+          <Flex position="absolute" w="100%" h="100%" bg="#aaaa" color="black" alignItems="center" justify="center">
+            <Progress width="50%" height="20px" rounded="4px" value={100} hasStripe isAnimated />
+          </Flex>
+        }
       </Flex>
     )
   }
@@ -82,6 +93,7 @@ const mapStateToProps = (state) => {
     gradeTypes: getGradesOfAllDegrees(state),
     centers: getJiaoyanshiOfAllCenters(state),
     labBuildings: getAllLabBuildingsInfo(state),
+    requestsCount: getRequestQuantity(state),
   }
 }
 

@@ -152,6 +152,7 @@ const shouldFetchShiXun = (jiaoyanshiIds, year, week, state) => {
     const jiaoyanshiId = jiaoyanshiIds[i];
     const shixunByJiaoyanshiSched = state.getIn(["kebiao", "shiXunByJiaoyanshiSched", buildJysSchedId(jiaoyanshiId, year, week)])
     if (shixunByJiaoyanshiSched == null) {
+      console.log(`shouldFetchShiXun, id: ${buildJysSchedId(jiaoyanshiId, year, week)}`);
       return true;
     }
   }
