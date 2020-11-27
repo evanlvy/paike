@@ -67,7 +67,7 @@ class MainNavigatorWrapper extends Component {
     const { gradeTypes, centers, labBuildings, requestsCount } = this.props;
     console.log("Request count: "+requestsCount);
     return (
-      <Flex>
+      <Flex justify="center">
         <Flex px="10%" direction="column" justify="center" >
           <MenuBar gradeTypes={gradeTypes} centers={centers} labBuildings={labBuildings} onMenuSelected={this.onMenuSelected}/>
           <Switch>

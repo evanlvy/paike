@@ -40,7 +40,7 @@ class ShiXunKeBiaoScreen extends Component {
     this.tableHeaders = [
       {name: t("kebiao.shixun_sched_title"), field: "sched_name"},
       {name: t("kebiao.jys"), field: "jys"},
-      //{name: t("kebiao.banji"), field: "banji"},
+      {name: t("kebiao.banji"), field: "banji"},
       //{name: t("kebiao.student_count"), field: "student_count"},
       {name: t("kebiao.shixun_content"), field: "shixun_name"},
       {name: t("kebiao.teacher"), field: "teacher"},
@@ -223,6 +223,7 @@ class ShiXunKeBiaoScreen extends Component {
               resultItem["sched_name"] = "";
             }
             resultItem["jys"] = kebiaoHour.jys.name;
+            resultItem["banji"] = kebiaoHour.class_name;
             resultItem["shixun_name"] = kebiaoHour.labitem_name;
             let teacherInfo = "";
             kebiaoHour.theory_teachers.forEach(teacher => {
