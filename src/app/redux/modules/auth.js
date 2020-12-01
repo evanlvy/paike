@@ -1,14 +1,10 @@
 import Immutable from 'immutable';
+import { combineReducers } from 'redux-immutable';
 import { actions as appActions } from './app';
 
 import { api as authApi } from '../../services/auth';
 
-// initial state
-const initialState = Immutable.fromJS({
-  userToken: null,
-  userName: null,
-});
-
+// types
 export const types = {
   LOGIN: "AUTH/LOGIN",
   LOGOUT: "AUTH/LOGOUT",
@@ -17,44 +13,82 @@ export const types = {
 // actions
 export const actions = {
   login: (username, password) => {
-    return (dispatch) => {
+    return async (dispatch) => {
       try {
         dispatch(appActions.startRequest());
-        const data = authApi.login(username, password);
-        console.log("login: Got data"+JSON.stringify(data));
+        const result = await authApi.login(username, password);
+        console.log("login: Got data"+JSON.stringify(result));
         dispatch(appActions.finishRequest());
-        dispatch(actions.setLoginInfo(data.token, data.username));
+        dispatch(loginSuccess(result));
       } catch (error) {
         dispatch(appActions.setError(error))
+        dispatch(loginSuccess({error: {message: error.message}}));
       }
     }
   },
   logout: () => ({
     type: types.LOGOUT
   }),
-  setLoginInfo : (token, username) => ({
+}
+
+const loginSuccess = (authResult) => {
+  let name = null;
+  let token = null;
+  if (authResult) {
+    token = authResult.api_token;
+    if (authResult.user) {
+      name = authResult.user.name;
+      if (authResult.user.firstName) {
+        name = authResult.user.firstName;
+      }
+      if (authResult.user.lastName) {
+        name += authResult.user.lastName;
+      }
+    }
+  }
+  return {
     type: types.LOGIN,
     userToken: token,
-    userName: username,
-  })
+    userName: name,
+    error: authResult.error,
+  }
 }
 
 // reducers
-const reducer = (state = initialState, action) => {
+const userInfo = (state = Immutable.fromJS({}), action) => {
   switch(action.type) {
     case types.LOGIN:
-      console.log("LOGIN: token: "+action.userToken+", name: "+action.userName);
-      return state.merge({ userToken: action.userToken, userName: action.userName });
+      return Immutable.fromJS({ token: action.userToken, name: action.userName });
     case types.LOGOUT:
-      return state.merge({ userToken: null, userName: null });
+      return Immutable.fromJS({ token: null, name: null });
     default:
       return state;
   }
 }
 
+const error = ( state = Immutable.fromJS({}), action) => {
+  switch(action.type) {
+    case types.LOGIN:
+      return action.error ? Immutable.fromJS(action.error) : Immutable.fromJS({});
+    case types.LOGOUT:
+      return Immutable.fromJS({});
+    default:
+      return state;
+  }
+}
+
+const reducer = combineReducers({
+  userInfo,
+  error,
+});
+
 export default reducer;
 
 // selectors
 export const getLoggedUser = state => {
-  return state.get("auth");
+  return state.getIn(["auth", "userInfo"]).toJS();
 };
+
+export const getLoggedError = state => {
+  return state.getIn(["auth", "error"]).toJS();
+}

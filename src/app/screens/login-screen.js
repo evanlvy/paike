@@ -11,6 +11,11 @@ import {
   FormErrorMessage,
   Input,
   Button,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  CloseButton
 } from '@chakra-ui/core';
 import {
   Formik,
@@ -18,35 +23,71 @@ import {
 } from 'formik';
 import { Trans, withTranslation } from 'react-i18next';
 
-import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
+import { actions as authActions, getLoggedUser, getLoggedError } from '../redux/modules/auth';
 
 class WrappedLoginScreen extends Component {
   constructor(props) {
     super(props);
-    this.oldToken = props.user.get("userToken");
+    this.oldToken = props.user.token;
+    this.redirectToReferer = false;
+    this.isNewRequest = false;
     this.state = {
-      redirectToReferer: false,
-    };
+      showError: false
+    }
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    const { user, error } = this.props;
+    const { showError } = this.state;
+
+    if (nextProps.user !== user || nextProps.error !== error) {
+      console.log("shouldComponentUpdate, props diff");
+      return true;
+    } else if (nextState.showError !== showError) {
+      console.log("shouldComponentUpdate, state diff");
+      return true;
+    }
+    return false;
   }
 
   componentDidUpdate() {
-    const token = this.props.user.get("userToken");
-    const isLoggedIn = token != null;
-    console.log("componentDidUpdate, isLoggedIn: "+isLoggedIn);
-    if (isLoggedIn && token !== this.oldToken) {
-      this.oldToken = token;
-      this.setState({
-        redirectToReferer: true
-      });
+    console.log("componentDidUpdate");
+    if (!this.redirectToReferer) {
+      this.checkError();
+      if (this.setSubmittingCb) {
+        this.setSubmittingCb(false);
+      }
     }
   }
 
-  onLogin = (values) => {
+  checkNeedRedirect = () => {
     const { user } = this.props;
-    if (user && user.userToken) {
+    if (user.token && user.token !== this.oldToken) {
+      this.oldToken = user.token;
+      this.redirectToReferer = true;
+    }
+  }
+
+  checkError = () => {
+    const { error } = this.props;
+    if (error.errorCode && this.isNewRequest && !this.state.showError) {
+      console.log("checkError, error: "+error.message);
+      this.setState({
+        showError: true
+      });
+      this.isNewRequest = false;
+    }
+  }
+
+  onLogin = (values, {setSubmitting}) => {
+    const { user } = this.props;
+    if (user && user.token) {
       this.props.logout();
     }
     this.props.login(values.name, values.password);
+    this.isNewRequest = true;
+    this.dismissAlert();
+    this.setSubmittingCb = setSubmitting;
   }
 
   validateName = (value) => {
@@ -67,16 +108,32 @@ class WrappedLoginScreen extends Component {
     return error;
   }
 
+  dismissAlert = () => {
+    this.setState({
+      showError: false
+    });
+  }
+
   render() {
-    const { t } = this.props;
     const { from } = this.props.location.state || { from: { pathname: "/"}};
-    const { redirectToReferer } = this.state;
-    if (redirectToReferer) {
+    this.checkNeedRedirect();
+    if (this.redirectToReferer) {
       console.log("redirect to "+from.pathname);
       return <Redirect to={from.pathname} />;
     }
+    const { t, error } = this.props;
+    const { showError } = this.state;
     return (
-      <Flex bg="green.50" height="100vh" align="center" justify="center">
+      <Flex direction="column" bg="green.50" height="100vh" align="center" justify="center">
+        {
+          showError &&
+          <Alert status="error" >
+            <AlertIcon />
+            <AlertTitle mr={2}>{t("loginScreen.auth_failure")}</AlertTitle>
+            <AlertDescription>{t("loginScreen.error_code_template", {error_code: error.errorCode})}</AlertDescription>
+            <CloseButton onClick={this.dismissAlert}/>
+          </Alert>
+        }
         <Formik initialValues={{name: '', password: ''}}
           onSubmit={this.onLogin}>
           {(props) => (
@@ -114,7 +171,8 @@ class WrappedLoginScreen extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    user: getLoggedUser(state)
+    user: getLoggedUser(state),
+    error: getLoggedError(state)
   }
 }
 

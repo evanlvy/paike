@@ -56,8 +56,7 @@ class MainNavigatorWrapper extends Component {
 
   needLogin = () => {
     const { user } = this.props;
-    const token = user.get("userToken");
-    return token == null;
+    return !user || !user.token;
   }
 
   render() {

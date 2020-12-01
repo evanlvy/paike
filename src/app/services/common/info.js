@@ -1,3 +1,4 @@
 export const server = {
-  url: '/school'
+  url: '/school',
+  debug: false
 };

@@ -27,7 +27,9 @@
     "username_error_empty": "用户名不能为空",
     "password": "密码",
     "password_placeholder": "请输入密码",
-    "password_error_empty": "密码不能为空"
+    "password_error_empty": "密码不能为空",
+    "auth_failure": "登录失败!",
+    "error_code_template": "错误代码：{{error_code}}"
   },
   "menuBar": {
     "lilunkebiao_title": "理论课总课表",
