@@ -21,6 +21,14 @@ class LabsMenuListWrapped extends Component {
     };
   }
 
+  reset = () => {
+    console.log("LabsMenu reset");
+    this.setState({
+      lab_center_value: -1,
+      lab_building_value: -1,
+    });
+  }
+
   notifyLabChange = (lab_type, lab_index) => {
     const { onLabChange } = this.props;
     if (onLabChange) {
@@ -33,7 +41,7 @@ class LabsMenuListWrapped extends Component {
       lab_center_value: value,
       lab_building_value: -1,
     })
-    this.notifyLabChange(LabType.BY_CENTER, this.props.labCenters[value]);
+    this.notifyLabChange(LabType.BY_CENTER, value);
   }
 
   onLabBuildingChanged = (value) => {
@@ -41,7 +49,7 @@ class LabsMenuListWrapped extends Component {
       lab_center_value: -1,
       lab_building_value: value,
     })
-    this.notifyLabChange(LabType.BY_BUILDING, this.props.labBuildings[value]);
+    this.notifyLabChange(LabType.BY_BUILDING, value);
   }
 
   render() {
@@ -50,25 +58,31 @@ class LabsMenuListWrapped extends Component {
     return (
       <MenuList>
         <MenuOptionGroup title={t("lab.by_center")} type="radio" value={lab_center_value} onChange={this.onLabCenterChanged}>
-          {
-            labCenters.map((item, index) => (
-              <MenuItemOption key={index} value={index}>{item.name}</MenuItemOption>
-            ))
-          }
+        {
+          labCenters.map((item, index) => (
+            <MenuItemOption key={index} value={index}>{item.name}</MenuItemOption>
+          ))
+        }
         </MenuOptionGroup>
-        <MenuDivider />
-        <MenuOptionGroup title={t("lab.by_building")} type="radio" value={lab_building_value} onChange={this.onLabBuildingChanged}>
+        {
+          labBuildings && labBuildings.length > 0 &&
+          <MenuDivider />
+        }
+        {
+          labBuildings && labBuildings.length > 0 &&
+          <MenuOptionGroup title={t("lab.by_building")} type="radio" value={lab_building_value} onChange={this.onLabBuildingChanged}>
           {
             labBuildings.map((item, index) => (
               <MenuItemOption key={index} value={index}>{item.name}</MenuItemOption>
             ))
           }
-        </MenuOptionGroup>
+          </MenuOptionGroup>
+        }
       </MenuList>
     );
   }
 }
 
-const LabsMenu = withMenu(withTranslation()(LabsMenuListWrapped));
+const LabsMenu = withMenu(withTranslation("translation", {withRef: true})(LabsMenuListWrapped));
 
 export { LabsMenu };

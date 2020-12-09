@@ -39,7 +39,7 @@ const reducer = (state = initialState, action) => {
     case types.FINISH_REQUEST:
       return state.merge({ requestsCount: state.get("requestsCount")-1 });
     case types.SET_ERROR:
-      return state.merge({ error: action.error });
+      return state.merge({ requestsCount: state.get("requestsCount")-1, error: action.error });
     case types.REMOVE_ERROR:
       return state.merge({ error: null });
     default:

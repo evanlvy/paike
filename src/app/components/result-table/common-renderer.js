@@ -19,10 +19,10 @@ class CommonRenderer extends Component {
     }
     return (
       <div className="common-cell" style={{lineHeight: lineHeight+"px"}}>
-        { !value.title && !value.titles && value }
-        { value.title && value.title }
+        { value.title == null && value.titles == null && value }
+        { value.title != null && value.title }
         {
-          value.titles &&
+          value.titles != null &&
           value.titles.map((title, index) => (
             <div key={index+""}>{title}</div>
           ))

@@ -24,6 +24,7 @@ import {
 } from 'react-icons/md';
 import { Trans, withTranslation } from 'react-i18next';
 
+import { LabType } from '../../models/lab';
 import { LabsMenu, GroupMenu } from './';
 
 function withMenu(WrappedMenuList) {
@@ -68,6 +69,7 @@ class MenuBarWrapped extends Component {
     this.lilunMenuRef = React.createRef();
     this.banjiMenuRef = React.createRef();
     this.shixunMenuRef = React.createRef();
+    this.labMenuRef = React.createRef();
   }
 
   initMenu = () => {
@@ -105,11 +107,13 @@ class MenuBarWrapped extends Component {
     });
     this.lab_centers = center_info;
     let building_info = [];
-    labBuildings.forEach((building) => {
-      let building_item = { name: building.name };
-      building_info.push(building_item);
-    });
-    this.lab_buildings = building_info;
+    if (labBuildings) {
+      labBuildings.forEach((building) => {
+        let building_item = { name: building.name };
+        building_info.push(building_item);
+      });
+      this.lab_buildings = building_info;
+    }
   }
 
   initJiaoYanShi = () => {
@@ -162,6 +166,9 @@ class MenuBarWrapped extends Component {
         if (this.shixunMenuRef.current) {
           this.shixunMenuRef.current.reset();
         }
+        if (this.labMenuRef.current) {
+          this.labMenuRef.current.reset();
+        }
         break;
       case MenuType.BANJI:
         if (this.lilunMenuRef.current) {
@@ -169,6 +176,9 @@ class MenuBarWrapped extends Component {
         }
         if (this.shixunMenuRef.current) {
           this.shixunMenuRef.current.reset();
+        }
+        if (this.labMenuRef.current) {
+          this.labMenuRef.current.reset();
         }
         break;
       case MenuType.SHIXUN:
@@ -178,6 +188,9 @@ class MenuBarWrapped extends Component {
         if (this.banjiMenuRef.current) {
           this.banjiMenuRef.current.reset();
         }
+        if (this.labMenuRef.current) {
+          this.labMenuRef.current.reset();
+        }
         break;
       default:
         break;
@@ -186,8 +199,25 @@ class MenuBarWrapped extends Component {
   }
 
   onLabChanged = (menu_type, by_type, lab_index) => {
+    const { centers, labBuildings } = this.props;
     console.log("onLabChanged, menu type: "+menu_type+", by type: "+by_type+", index: "+lab_index);
-    this.notifyMenuSelected(menu_type, {by: by_type, idx: lab_index});
+    // reset other menus
+    if (this.banjiMenuRef.current) {
+      this.banjiMenuRef.current.reset();
+    }
+    if (this.shixunMenuRef.current) {
+      this.shixunMenuRef.current.reset();
+    }
+    if (this.lilunMenuRef.current) {
+      this.lilunMenuRef.current.reset();
+    }
+    
+    if (by_type === LabType.BY_CENTER) {
+      const center = centers[lab_index];
+      this.notifyMenuSelected(menu_type, {center: {id: center.id, name: center.name}});
+    } else if (by_type === LabType.BY_BUILDING) {
+      this.notifyMenuSelected(menu_type, {building: labBuildings[lab_index]});
+    }
   }
 
   onJiaoYanShiChange = (menu_type, center_index, item_index) => {
@@ -221,7 +251,7 @@ class MenuBarWrapped extends Component {
       { list_type: MenuListType.GROUP, type: MenuType.SHIXUN, title: "menuBar.shixunkebiao_title", icon: AiTwotoneExperiment, bgColor: "green",
               menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged}, menu_ref: this.shixunMenuRef },
       { list_type: MenuListType.LAB, type: MenuType.SHIYANSHI, title: "menuBar.shiyanshi_anpai_title", icon: FaBuilding, bgColor: "blue",
-              menuListProps: {labCenters: lab_centers ,labBuildings: lab_buildings, onLabChange: this.onLabChanged} },
+              menuListProps: {labCenters: lab_centers ,labBuildings: lab_buildings, onLabChange: this.onLabChanged}, menu_ref: this.labMenuRef },
       { list_type: MenuListType.GROUP, type: MenuType.JIAOYANSHI, title: "menuBar.jiaoyanshi_kebiao_title", icon: MdCollectionsBookmark, bgColor: "red",
               menuListProps: {menuGroups: jiaoyanshi_centers, onGroupMenuSelected: this.onJiaoYanShiChange, height: 500} },
       { type: MenuType.JIAOSHI, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink", onClick: this.onJiaoShiPaiKeClicked},
@@ -236,6 +266,7 @@ class MenuBarWrapped extends Component {
               case MenuListType.LAB:
                 return <LabsMenu
                   key={item.type}
+                  ref={item.menu_ref}
                   menuType={item.type}
                   mx={1}
                   width="11em"

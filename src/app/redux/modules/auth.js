@@ -19,10 +19,10 @@ export const actions = {
         const result = await authApi.login(username, password);
         console.log("login: Got data"+JSON.stringify(result));
         dispatch(appActions.finishRequest());
-        dispatch(loginSuccess(result));
+        dispatch(loginResult(result));
       } catch (error) {
         dispatch(appActions.setError(error))
-        dispatch(loginSuccess({error: {message: error.message}}));
+        dispatch(loginResult({error: {message: error.message}}));
       }
     }
   },
@@ -31,7 +31,7 @@ export const actions = {
   }),
 }
 
-const loginSuccess = (authResult) => {
+const loginResult = (authResult) => {
   let name = null;
   let token = null;
   if (authResult) {

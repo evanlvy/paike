@@ -264,7 +264,7 @@ class BanJiKeBiaoScreen extends Component {
         }
         let names = [defaultName];
         let hourIndex = j;
-        if (j === 2) {
+        if (j === 2) { // all 5 are course "shizheng"
           resultList[j][fields_names[i]] = shizhengName;
           continue;
         } else if (j > 2) {
@@ -359,7 +359,7 @@ class BanJiKeBiaoScreen extends Component {
       }
     }
     return (
-      <Flex width="100%" direction="column" justify="center" align="center">
+      <Flex width="100%" minHeight={750} direction="column" justify="center" align="center">
         <SubjectBoard
           my={4}
           color={BANJIKEBIAO_COLOR}

@@ -459,7 +459,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
       curClass = this.banjiData[0].name;
     }
     return (
-      <Flex width="100%" direction="column" justify="center" align="center">
+      <Flex width="100%" minHeight={750} direction="column" justify="center" align="center">
         <SubjectBoard
           my={4}
           color={LILUNKEBIAO_COLOR}
@@ -472,6 +472,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
           ref={this.tabsListRef}
           my={4}
           width="100%"
+          maxWidth={1444}
           tabHeight={50}
           color={LILUNKEBIAO_COLOR}
           titles={tabTitles}

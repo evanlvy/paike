@@ -1,7 +1,5 @@
 /* @flow */
 
-/* @flow */
-
 import React, { Component } from 'react';
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
@@ -312,7 +310,7 @@ class ShiXunKeBiaoScreen extends Component {
       pageTables[0] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
     }
     return (
-      <Flex width="100%" direction="column" justify="center" align="center">
+      <Flex width="100%" minHeight={750} direction="column" justify="center" align="center">
         <SubjectBoard
           my={4}
           color={SHIXUNKEBIAO_COLOR}

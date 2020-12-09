@@ -7,19 +7,28 @@ class Api {
     this.baseUrl = server.url + "/api/v1";
   }
 
-  queryLabs = async (centerId) => {
+  queryLabs = async (centerId, stage_id, week) => {
     try {
-      const url = this.baseUrl+"/labs";
-      console.log("Request url "+url+" with center: "+centerId);
+      const url = this.baseUrl+"/lab";
+      console.log("Request url "+url+" with center: "+centerId+", stage_id: "+stage_id+", week: "+week);
       let request_param = {
-        center: centerId,
+        stage_id: stage_id,
+        dep_id: centerId,
+        begin: {
+          week: week,
+          day: 1,
+        },
+        end: {
+          week: week,
+          day: 7,
+        }
       };
       let response = await axios.post(url, request_param);
       const { success, data, message } = response.data;
       if (!success) {
         throw new Error(message.message);
       }
-      return data;
+      return data.labs;
     } catch (error) {
       throw error;
     }

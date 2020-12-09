@@ -5,6 +5,8 @@ import { createSelector } from 'reselect';
 import { actions as appActions } from './app';
 import { api as kebiaoApi } from '../../services/kebiao';
 
+import { types as labTypes } from './lab';
+
 // action types
 export const types = {
   FETCH_LILUN_BY_BANJI: "KEBIAO/FETCH_LILUN_BY_BANJI",
@@ -247,6 +249,8 @@ const shiXunByIds = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_SHIXUN:
       return state.merge(action.shixunByIds)
+    case labTypes.FETCH_LABS:
+      return state.merge(action.shixunByIds);
     default:
       return state;
   }

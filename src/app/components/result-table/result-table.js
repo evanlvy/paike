@@ -5,6 +5,7 @@ import { AgGridReact } from 'ag-grid-react';
 import {
   Flex,
   Text,
+  Input,
   Button,
   Box,
 } from '@chakra-ui/core';
@@ -21,7 +22,8 @@ class ResultTableWrapper extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      curPageIndex: props.initPageIndex ? props.initPageIndex : 0
+      curPageIndex: props.initPageIndex ? props.initPageIndex : 0,
+      editPageNum: ""
     };
 
     this.frameworkComponents = {
@@ -48,6 +50,10 @@ class ResultTableWrapper extends Component {
       return true;
     }
     return false;
+  }
+
+  componentWillUnmount() {
+    this.clearEditTimer();
   }
 
   buildUI = (props) => {
@@ -129,6 +135,29 @@ class ResultTableWrapper extends Component {
     }
   }
 
+  onEditPageNum = (event) => {
+    this.clearEditTimer();
+
+    const { pageNames } = this.props;
+    const newIndex = parseInt(event.target.value);
+    if (isNaN(newIndex) || newIndex < 1 || newIndex > pageNames.length) {
+      return;
+    }
+    this.setState({
+      curPageIndex: newIndex-1
+    });
+    this.editTimer = setTimeout(() => {
+      this.notifyPageIndexChanged(newIndex-1);
+    }, 1000);
+  }
+
+  clearEditTimer = () => {
+    if (this.editTimer) {
+      clearTimeout(this.editTimer);
+      this.editTimer = null;
+    }
+  }
+
   notifyPageIndexChanged = (index) => {
     const { onResultPageIndexChanged } = this.props;
     if (onResultPageIndexChanged) {
@@ -137,8 +166,9 @@ class ResultTableWrapper extends Component {
   }
 
   render() {
-    const { frameworkComponents, columnDefs, defaultColDef, rowData, onGridSizeChanged, onCellClicked, onRowClicked, onPagePrevClicked, onPageNextClicked } = this;
-    const { t, width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data, pageNames, pagePrevCaption, pageNextCaption, initPageIndex,
+    const { frameworkComponents, columnDefs, defaultColDef, rowData, onGridSizeChanged, onCellClicked, onRowClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
+    const { t, width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data,
+      pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption,
       onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onResultPageIndexChanged,
       ...other_props } = this.props;
     const { curPageIndex } = this.state;
@@ -150,9 +180,17 @@ class ResultTableWrapper extends Component {
           {
             pageNames &&
             <Flex direction="row" alignItems="center">
-              <Button variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
-              <Text whiteSpace="nowrap" mx={4}>{pageNames[curPageIndex].name}</Text>
-              <Button variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
+              {
+                pageInputCaption &&
+                <Flex direction="row" alignItems="center">
+                  <Text ml={2} whiteSpace="nowrap">{pageInputCaption[0]}</Text>
+                  <Input width="3rem" px="4px" textAlign="center" mx={2} size="md" value={curPageIndex+1} onChange={onEditPageNum} />
+                  <Text mr={2} whiteSpace="nowrap">{pageInputCaption[1]}</Text>
+                </Flex>
+              }
+              <Button mr={2} variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
+              { !pageInputCaption && <Text whiteSpace="nowrap" mx={2}>{pageNames[curPageIndex].name}</Text> }
+              <Button ml={2} variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
             </Flex>
           }
         </Box>

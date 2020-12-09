@@ -8,7 +8,9 @@
   },
   "alert": {
     "default_title": "警告",
-    "default_positive_btn_caption": "$t(common.ok)"
+    "default_positive_btn_caption": "$t(common.ok)",
+    "request_failure": "网络请求失败",
+    "request_failure_detail": "失败信息: {{error_msg}}"
   },
   "grade": {
     "college": "大专",
@@ -44,7 +46,9 @@
     "title_no_subject_template": "请选择专业 [{{grade_info}}]",
     "title_template": "{{subject_name}} [{{grade_info}}]",
     "title_no_jys_template": "请选择分中心教研室",
-    "title_jys_template": "分中心教研室 [{{jys_info}}]"
+    "title_jys_template": "分中心教研室 [{{jys_info}}]",
+    "title_no_lab_template": "请选择实验室 [{{center_info}}]",
+    "title_lab_template": "实验室{{lab_name}} [{{center_info}}]"
   },
   "kebiao": {
     "zixi": "自习",
@@ -53,6 +57,11 @@
     "semester_one_second": "第一学期10-18周",
     "semester_two_first": "第二学期1-9周",
     "semester_two_second": "第二学期10-18周",
+    "semester_week_template": "第{{week_index}}周",
+    "prev_semester_week": "上一周",
+    "next_semester_week": "下一周",
+    "input_semester_week_prefix": "第",
+    "input_semester_week_suffix": "周",
     "jys": "教研室",
     "banji": "班级",
     "student_count": "人数",
@@ -92,6 +101,10 @@
   },
   "shixunKebiaoScreen": {
     "table_title_template": "实训中心实验汇总[{{jys_info}}]"
+  },
+  "centerLabScreen": {
+    "all_labs": "全部实验室",
+    "table_title_template": "{{lab_info}} 时间表"
   },
   "solveConflictModal": {
     "title": "处理冲突",
