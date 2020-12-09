@@ -42,7 +42,7 @@ class ShiXunKeBiaoScreen extends Component {
       //{name: t("kebiao.student_count"), field: "student_count"},
       {name: t("kebiao.shixun_content"), field: "shixun_name"},
       {name: t("kebiao.teacher"), field: "teacher"},
-      //{name: t("kebiao.shixun_teacher"), field: "shixun_teacher"},
+      {name: t("kebiao.shixun_teacher"), field: "shixun_teacher"},
       {name: t("kebiao.lab"), field: "lab"},
       {name: t("kebiao.note"), field: "note"},
     ];
@@ -228,6 +228,7 @@ class ShiXunKeBiaoScreen extends Component {
               teacherInfo += teacher.name+" ";
             });
             resultItem["teacher"] = teacherInfo.trim();
+            resultItem["shixun_teacher"] = kebiaoHour.lab_teacher;
             resultItem["lab"] = kebiaoHour.lab_location;
             resultItem["note"] = "";
             resultItem["data"] = kebiaoHour;
