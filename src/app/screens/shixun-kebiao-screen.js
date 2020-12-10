@@ -18,6 +18,8 @@ import {
 import { actions as jysActions, getAllJiaoyanshi } from '../redux/modules/jiaoyanshi';
 import { actions as kebiaoActions, buildJysSchedId, getShiXunByJiaoyanshiSched } from '../redux/modules/kebiao';
 
+import { SEMESTER_WEEK_COUNT } from './common/info';
+
 const SHIXUNKEBIAO_COLOR = "green";
 class ShiXunKeBiaoScreen extends Component {
   constructor(props) {
@@ -25,15 +27,11 @@ class ShiXunKeBiaoScreen extends Component {
     const { t } = props;
     this.state = {
       selectedJysIndexList: [0],
-      selectWeek: 5,
+      selectWeek: 1,
     };
 
-    this.semesterPages = [
-      {name: t("kebiao.semester_one_first")},
-      {name: t("kebiao.semester_one_second")},
-      {name: t("kebiao.semester_two_first")},
-      {name: t("kebiao.semester_two_second")}
-    ];
+    this.semesterPages = [];
+
     this.tabTitles = [];
     this.tableHeaders = [
       {name: t("kebiao.shixun_sched_title"), field: "sched_name"},
@@ -99,8 +97,19 @@ class ShiXunKeBiaoScreen extends Component {
   }
 
   buildData = () => {
+    this.buildSemester();
     this.buildJysList();
     this.buildKebiao();
+  }
+
+  buildSemester = () => {
+    const { t } = this.props;
+    const { semesterPages } = this;
+    if (semesterPages.length === 0) {
+      for (let i=0; i < SEMESTER_WEEK_COUNT; i++) {
+        semesterPages.push({ name: t("kebiao.semester_week_template", {week_index: i+1}) });
+      }
+    }
   }
 
   loadJysList = () => {
@@ -278,7 +287,7 @@ class ShiXunKeBiaoScreen extends Component {
   onSemesterPageChanged = (index) => {
     const { semesterPages } = this;
     console.log("onSemesterPageChanged: "+semesterPages[index].name);
-    const weekIndex = 5+9*index;
+    const weekIndex = index+1;
     this.setState({
       selectWeek : weekIndex
     });
@@ -304,14 +313,15 @@ class ShiXunKeBiaoScreen extends Component {
         headers={tableHeaders}
         data={tableData}
         pageNames={semesterPages}
-        pagePrevCaption={t("banjiKebiaoScreen.prev_semester_page")}
-        pageNextCaption={t("banjiKebiaoScreen.next_semester_page")}
-        onResultPageIndexChanged={onSemesterPageChanged} />);
+        pagePrevCaption={t("kebiao.prev_semester_week")}
+        pageNextCaption={t("kebiao.next_semester_week")}
+        onResultPageIndexChanged={onSemesterPageChanged}
+        pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]} />);
     } else {
       pageTables[0] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
     }
     return (
-      <Flex width="100%" minHeight={750} direction="column" justify="center" align="center">
+      <Flex width="100%" minHeight={750} direction="column" align="center">
         <SubjectBoard
           my={4}
           color={SHIXUNKEBIAO_COLOR}

@@ -18,6 +18,8 @@ import {
 import { actions as labActions, buildLabSchedId, getLabsByAllCenter, getShiXunByLabSched } from '../redux/modules/lab';
 import { getShiXun } from '../redux/modules/kebiao';
 
+import { SEMESTER_WEEK_COUNT } from './common/info';
+
 const CENTER_LAB_COLOR = "blue";
 const LAB_ITEM_COLOR = "gray.400";
 class CenterLabScreen extends Component {
@@ -121,7 +123,7 @@ class CenterLabScreen extends Component {
     const { t } = this.props;
     const { semesterPages } = this;
     if (semesterPages.length === 0) {
-      for (let i=0; i < 36; i++) {
+      for (let i=0; i < SEMESTER_WEEK_COUNT; i++) {
         semesterPages.push({ name: t("kebiao.semester_week_template", {week_index: i+1}) });
       }
     }
@@ -333,7 +335,7 @@ class CenterLabScreen extends Component {
     }
 
     return (
-      <Flex width="100%" minHeight={750} direction="column" justify="center" align="center">
+      <Flex width="100%" minHeight={750} direction="column" align="center">
         {
           labList && labList.length > 0 &&
           <SubjectBoard

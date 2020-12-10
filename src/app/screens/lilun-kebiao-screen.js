@@ -459,7 +459,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
       curClass = this.banjiData[0].name;
     }
     return (
-      <Flex width="100%" minHeight={750} direction="column" justify="center" align="center">
+      <Flex width="100%" minHeight={750} direction="column" align="center">
         <SubjectBoard
           my={4}
           color={LILUNKEBIAO_COLOR}

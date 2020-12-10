@@ -2,6 +2,7 @@ import Immutable from 'immutable';
 import { combineReducers } from 'redux-immutable';
 import { createSelector } from 'reselect';
 
+import { DATA_EXPIRATION_TIME } from './common/info';
 import { actions as appActions } from './app';
 import { api as kebiaoApi } from '../../services/kebiao';
 
@@ -72,8 +73,10 @@ const shouldFetchKebiaoData = (dataName, banjiIds, year, weekStart, weekEnd, sta
   for(let i=0; i < banjiIds.length; i++) {
     const banjiId = banjiIds[i];
     for (let week=weekStart; week < weekEnd; week++) {
-      const kebiaoByBanjiSched = state.getIn(["kebiao", dataName, buildBanjiSchedId(banjiId, year, week)])
-      if (kebiaoByBanjiSched == null) {
+      const banjiSchedId = buildBanjiSchedId(banjiId, year, week);
+      const kebiaoByBanjiSched = state.getIn(["kebiao", dataName, banjiSchedId])
+      if (!kebiaoByBanjiSched || Date.now() - kebiaoByBanjiSched.update > DATA_EXPIRATION_TIME) {
+        console.log(`shouldFetchKebiaoData, dataName:${dataName}, id: ${banjiSchedId}`);
         return true;
       }
     }
@@ -110,7 +113,7 @@ const convertKeBiaoByBanjiToPlain = (banjiInfoList, year) => {
           }
           kebiaoByWeek.push(kebiaoByDay);
         }
-        kebiaoByBanjiSched[banjiSchedId] = kebiaoByWeek;
+        kebiaoByBanjiSched[banjiSchedId] = { schedules: kebiaoByWeek, update: Date.now() };
       }
     });
   })
@@ -152,9 +155,10 @@ export const parseJysSchedId = (jysShedId) => {
 const shouldFetchShiXun = (jiaoyanshiIds, year, week, state) => {
   for(let i=0; i < jiaoyanshiIds.length; i++) {
     const jiaoyanshiId = jiaoyanshiIds[i];
-    const shixunByJiaoyanshiSched = state.getIn(["kebiao", "shiXunByJiaoyanshiSched", buildJysSchedId(jiaoyanshiId, year, week)])
-    if (shixunByJiaoyanshiSched == null) {
-      console.log(`shouldFetchShiXun, id: ${buildJysSchedId(jiaoyanshiId, year, week)}`);
+    const jiaoyanshiSchedId =  buildJysSchedId(jiaoyanshiId, year, week);
+    const shixunByJiaoyanshiSched = state.getIn(["kebiao", "shiXunByJiaoyanshiSched", jiaoyanshiSchedId])
+    if (!shixunByJiaoyanshiSched || Date.now() - shixunByJiaoyanshiSched.update > DATA_EXPIRATION_TIME) {
+      console.log(`shouldFetchShiXun, id: ${jiaoyanshiSchedId}`);
       return true;
     }
   }
@@ -190,7 +194,7 @@ const convertShiXunByJiaoyanshiToPlain = (jiaoyanshiInfoList, year) => {
           }
           kebiaoByWeek.push(kebiaoByDay);
         }
-        kebiaoByJiaoyanshiSched[jiaoyanshiSchedId] = kebiaoByWeek;
+        kebiaoByJiaoyanshiSched[jiaoyanshiSchedId] = { schedules: kebiaoByWeek, update: Date.now() };
       }
     });
   });
@@ -288,7 +292,8 @@ export const getLiLunByAllBanjiSched = createSelector(
     const banjiSchedIds = Object.keys(lilunByBanjiSched.toJS());
     let result = {};
     banjiSchedIds.forEach(banjiSchedId => {
-      const kebiaoInWeek = lilunByBanjiSched.get(banjiSchedId);
+      const lilunByBanjiSchedId = lilunByBanjiSched.get(banjiSchedId);
+      const kebiaoInWeek = lilunByBanjiSchedId ? lilunByBanjiSchedId.schedules : null;
       let lilunInWeek = [];
       if (kebiaoInWeek && kebiaoInWeek.length > 0) {
         kebiaoInWeek.forEach(kebiaoInDay => {
@@ -324,7 +329,8 @@ export const getKeBiaoByAllBanjiSched = createSelector(
     const banjiSchedIds = Object.keys(kebiaoByBanjiSched.toJS());
     let result = {};
     banjiSchedIds.forEach(banjiSchedId => {
-      const kebiaoInWeek = kebiaoByBanjiSched.get(banjiSchedId);
+      const kebiaoByBanjiSchedId = kebiaoByBanjiSched.get(banjiSchedId);
+      const kebiaoInWeek = kebiaoByBanjiSchedId ? kebiaoByBanjiSchedId.schedules : null;
       let inWeek = [];
       if (kebiaoInWeek && kebiaoInWeek.length > 0) {
         kebiaoInWeek.forEach(kebiaoInDay => {
@@ -362,7 +368,8 @@ export const getShiXunByJiaoyanshiSched = createSelector(
     const jysSchedIds = Object.keys(shixunByJysSched.toJS());
     let result = {};
     jysSchedIds.forEach(jysSchedId => {
-      const kebiaoInWeek = shixunByJysSched.get(jysSchedId);
+      const shixunByJysSchedId = shixunByJysSched.get(jysSchedId);
+      const kebiaoInWeek = shixunByJysSchedId.schedules;
       let inWeek = [];
       for (let i=0; i < 7; i++) {
         const kebiaoInDay = kebiaoInWeek[i];

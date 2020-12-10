@@ -19,6 +19,8 @@ import { actions as subjectActions, getSubjectByGrade } from '../redux/modules/s
 import { actions as banjiActions, buildGradeSubjectId, getBanjiBySubject } from '../redux/modules/banji';
 import { actions as kebiaoActions, buildBanjiSchedId, getKeBiaoByAllBanjiSched } from '../redux/modules/kebiao';
 
+import { SEMESTER_WEEK_COUNT } from './common/info';
+
 const BANJIKEBIAO_COLOR = "blue";
 class BanJiKeBiaoScreen extends Component {
   constructor(props) {
@@ -27,15 +29,10 @@ class BanJiKeBiaoScreen extends Component {
     this.state = {
       selectedSubjectIndex: 0,
       selectedBanjiIndex: 0,
-      selectWeek: 5
+      selectWeek: 1
     };
 
-    this.semesterPages = [
-      {name: t("kebiao.semester_one_first")},
-      {name: t("kebiao.semester_one_second")},
-      {name: t("kebiao.semester_two_first")},
-      {name: t("kebiao.semester_two_second")}
-    ];
+    this.semesterPages = [];
     this.tabTitles = [];
     this.tableHeaders = [
       {name: t("kebiao.sched_title"), field: "sched_name"},
@@ -104,15 +101,28 @@ class BanJiKeBiaoScreen extends Component {
     this.hasFetchKebiao = false;
     this.curDataIndex = 0;
     this.setState({
-      selectWeek: 5,
+      selectedSubjectIndex: 0,
+      selectedBanjiIndex: 0,
+      selectWeek: 1
     });
   }
 
   buildData = () => {
+    this.buildSemester();
     this.buildGradeInfo();
     this.buildSubjects();
     this.buildBanji();
     this.buildKebiao();
+  }
+
+  buildSemester = () => {
+    const { t } = this.props;
+    const { semesterPages } = this;
+    if (semesterPages.length === 0) {
+      for (let i=0; i < SEMESTER_WEEK_COUNT; i++) {
+        semesterPages.push({ name: t("kebiao.semester_week_template", {week_index: i+1}) });
+      }
+    }
   }
 
   buildGradeInfo = () => {
@@ -199,8 +209,12 @@ class BanJiKeBiaoScreen extends Component {
     this.props.fetchBanji(grd.id, this.selectedSubject.id);
     this.banjiData = null;
     this.tableDataList = [];
+    this.curDataIndex = 0;
     this.hasFetchBanji = true;
     this.hasFetchKebiao = false;
+    if (this.tabsListRef.current) {
+      this.tabsListRef.current.reset();
+    }
   }
 
   buildKebiao = () => {
@@ -305,14 +319,15 @@ class BanJiKeBiaoScreen extends Component {
   onSubjectClicked = (index) => {
     console.log(`onSubjectClicked ${this.subjectsData[index].title}`);
     this.setState({
-      selectedSubjectIndex: index
+      selectedSubjectIndex: index,
+      selectedBanjiIndex: 0
     });
     this.setSubjectSelectedIndex(index);
     this.loadBanji();
   }
 
   onTabChanged = (index) => {
-    console.log(`onTabChanged ${this.banjiData[index].title}`);
+    console.log(`onTabChanged ${this.banjiData[index].name}`);
     this.setState({
       selectedBanjiIndex: index
     });
@@ -324,7 +339,7 @@ class BanJiKeBiaoScreen extends Component {
   onSemesterPageChanged = (index) => {
     const { semesterPages } = this;
     console.log("onSemesterPageChanged: "+semesterPages[index].name);
-    const weekIndex = 5+9*index;
+    const weekIndex = index+1;
     this.setState({
       selectWeek : weekIndex
     });
@@ -351,15 +366,16 @@ class BanJiKeBiaoScreen extends Component {
           headers={tableHeaders}
           data={tableDataList[i]}
           pageNames={semesterPages}
-          pagePrevCaption={t("banjiKebiaoScreen.prev_semester_page")}
-          pageNextCaption={t("banjiKebiaoScreen.next_semester_page")}
-          onResultPageIndexChanged={onSemesterPageChanged} />);
+          pagePrevCaption={t("kebiao.prev_semester_week")}
+          pageNextCaption={t("kebiao.next_semester_week")}
+          onResultPageIndexChanged={onSemesterPageChanged}
+          pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]} />);
       } else {
         pageTables[i] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
       }
     }
     return (
-      <Flex width="100%" minHeight={750} direction="column" justify="center" align="center">
+      <Flex width="100%" minHeight={750} direction="column" align="center">
         <SubjectBoard
           my={4}
           color={BANJIKEBIAO_COLOR}
