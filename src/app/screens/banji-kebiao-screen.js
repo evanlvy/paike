@@ -45,6 +45,7 @@ class BanJiKeBiaoScreen extends Component {
       {name: t("kebiao.sched_sunday"), field: "sunday"},
     ];
     this.tableDataList = [];
+    this.banjiSelectWeeks = [];
     this.curDataIndex = 0;
 
     this.tabsListRef = React.createRef();
@@ -85,23 +86,38 @@ class BanJiKeBiaoScreen extends Component {
       this.loadBanji();
     }
     if (this.selectedBanji && !this.hasFetchKebiao) {
-      const { selectWeek } = this.state;
-      this.loadKebiao(selectWeek);
+      const { banjiSelectWeek } = this;
+      this.loadKebiao(banjiSelectWeek);
     }
   }
 
   resetData = () => {
     console.log("reset kebiao data");
-    this.tabsListRef.current.reset();
+    this.resetSubjectData();
+    this.resetBanjiData();
+  }
+
+  resetSubjectData = () => {
     this.subjectsData = null;
     this.selectedSubject = null;
     this.hasFetchBanji = false;
-    this.banjiData = null;
-    this.selectedBanji = null;
-    this.hasFetchKebiao = false;
-    this.curDataIndex = 0;
     this.setState({
       selectedSubjectIndex: 0,
+    });
+  }
+
+  resetBanjiData = () => {
+    this.banjiData = null;
+    this.selectedBanji = null;
+    this.banjiSelectWeeks = [];
+    this.banjiSelectWeek = 1;
+    this.tableDataList = [];
+    this.curDataIndex = 0;
+    this.hasFetchKebiao = false;
+    if (this.tabsListRef.current) {
+      this.tabsListRef.current.reset();
+    }
+    this.setState({
       selectedBanjiIndex: 0,
       selectWeek: 1
     });
@@ -194,6 +210,11 @@ class BanJiKeBiaoScreen extends Component {
   setBanjiSelectedIndex = (index) => {
     if (this.banjiData && index < this.banjiData.length) {
       this.selectedBanji = this.banjiData[index];
+      let selectWeek = this.banjiSelectWeeks[index];
+      if (selectWeek == null) { // not set week index of this banji, reset it
+        this.banjiSelectWeeks[index] = 1;
+      }
+      this.banjiSelectWeek = this.banjiSelectWeeks[index];
     } else {
       this.selectedBanji = null;
     }
@@ -207,27 +228,22 @@ class BanJiKeBiaoScreen extends Component {
     console.log("loadBanji");
     const { grd } = this.props.location.state;
     this.props.fetchBanji(grd.id, this.selectedSubject.id);
-    this.banjiData = null;
-    this.tableDataList = [];
-    this.curDataIndex = 0;
     this.hasFetchBanji = true;
-    this.hasFetchKebiao = false;
-    if (this.tabsListRef.current) {
-      this.tabsListRef.current.reset();
-    }
+    this.resetBanjiData();
   }
 
   buildKebiao = () => {
     const { kebiaoByBanjiSched } = this.props;
-    const { selectWeek } = this.state;
+    const { banjiSelectWeek } = this;
     if (!this.selectedBanji) {
       return;
     }
 
-    const banjiSchedId = buildBanjiSchedId(this.selectedBanji.id, 3, selectWeek);
+    const banjiSchedId = buildBanjiSchedId(this.selectedBanji.id, 3, banjiSelectWeek);
     console.log("Get kebiaoInfo of "+banjiSchedId);
     const kebiaoInfo = kebiaoByBanjiSched[banjiSchedId];
     if (kebiaoInfo) {
+      console.log("KebiaoInfo: "+JSON.stringify(kebiaoInfo));
       this.tableDataList[this.curDataIndex] = this.buildKebiaoTableSched(kebiaoInfo);
     } else {
       this.tableDataList[this.curDataIndex] = [];
@@ -320,7 +336,6 @@ class BanJiKeBiaoScreen extends Component {
     console.log(`onSubjectClicked ${this.subjectsData[index].title}`);
     this.setState({
       selectedSubjectIndex: index,
-      selectedBanjiIndex: 0
     });
     this.setSubjectSelectedIndex(index);
     this.loadBanji();
@@ -328,32 +343,35 @@ class BanJiKeBiaoScreen extends Component {
 
   onTabChanged = (index) => {
     console.log(`onTabChanged ${this.banjiData[index].name}`);
-    this.setState({
-      selectedBanjiIndex: index
-    });
     this.curDataIndex = index;
     this.setBanjiSelectedIndex(index);
-    this.loadKebiao(this.state.selectWeek);
+    this.loadKebiao(this.banjiSelectWeek);
+    this.setState({
+      selectedBanjiIndex: index,
+      selectWeek: this.banjiSelectWeek
+    });
   }
 
   onSemesterPageChanged = (index) => {
     const { semesterPages } = this;
     console.log("onSemesterPageChanged: "+semesterPages[index].name);
-    const weekIndex = index+1;
+    this.banjiSelectWeek = index+1;
+    this.banjiSelectWeeks[this.state.selectedBanjiIndex] = this.banjiSelectWeek;
     this.setState({
-      selectWeek : weekIndex
+      selectWeek : this.banjiSelectWeek
     });
-    this.loadKebiao(weekIndex);
+    this.loadKebiao(this.banjiSelectWeek);
   }
 
   render() {
     const { t } = this.props;
     const { selectedSubjectIndex } = this.state;
     this.buildData();
-    const { subjectsData, subjectTitle, banjiName,
+    const { subjectsData, subjectTitle, banjiName, banjiSelectWeek,
       tabTitles, tableHeaders, tableDataList, semesterPages,
       onSubjectClicked, onTabChanged, onSemesterPageChanged } = this;
     const pageTables = [];
+    console.log("render: banjiSelectWeek: "+banjiSelectWeek);
     for (let i=0; i < tabTitles.length; i++) {
       if (tableDataList[i]) {
         pageTables[i] = (<ResultTable
@@ -369,6 +387,7 @@ class BanJiKeBiaoScreen extends Component {
           pagePrevCaption={t("kebiao.prev_semester_week")}
           pageNextCaption={t("kebiao.next_semester_week")}
           onResultPageIndexChanged={onSemesterPageChanged}
+          initPageIndex={banjiSelectWeek-1}
           pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]} />);
       } else {
         pageTables[i] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);

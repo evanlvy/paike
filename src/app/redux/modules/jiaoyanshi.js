@@ -68,7 +68,7 @@ const convertJiaoyanshiToPlain = (data) => {
       if (!centerByIds[item.center_id]) {
         item_color = colors[colorIndex];
         colorIndex = (colorIndex+1) % colors.length;
-        centerByIds[item.center_id] = {id: item.center_id, name: item.department_center, color: item_color};
+        centerByIds[item.center_id] = {id: item.center_id, name: item.department_center, title: item.department_center, color: item_color};
         centerIds.push(""+item.center_id);
       } else {
         item_color = centerByIds[item.center_id].color;

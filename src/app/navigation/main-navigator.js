@@ -31,6 +31,7 @@ const AsyncLiLunKeBiaoScreen = connectRoute(AsyncComponent(() => import('../scre
 const AsyncBanJiKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/banji-kebiao-screen')));
 const AsyncShiXunKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/shixun-kebiao-screen')));
 const AsyncCenterLabScreen = connectRoute(AsyncComponent(() => import('../screens/center-lab-screen')));
+const AsyncPaikeScreen = connectRoute(AsyncComponent(() => import('../screens/paike-screen')));
 
 class MainNavigatorWrapper extends PureComponent {
   constructor(props) {
@@ -66,6 +67,9 @@ class MainNavigatorWrapper extends PureComponent {
         break;
       case MenuType.SHIYANSHI:
         history.push('/labs', menu_params);
+        break;
+      case MenuType.JIAOSHI:
+        history.push('/paike', menu_params);
         break;
       default:
         break;
@@ -105,6 +109,7 @@ class MainNavigatorWrapper extends PureComponent {
             <Route path="/kebiao/banji" component={AsyncBanJiKeBiaoScreen} />
             <Route path="/kebiao/shixun" component={AsyncShiXunKeBiaoScreen} />
             <Route path="/labs" component={AsyncCenterLabScreen} />
+            <Route path="/paike" component={AsyncPaikeScreen} />
           </Switch>
         </Flex>
         {

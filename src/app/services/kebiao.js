@@ -44,7 +44,7 @@ class Api {
       if (!success) {
         throw new Error(message.message);
       }
-      //console.log("Response of queryLiLunByBanji: "+JSON.stringify(data["schedules"]));
+      //console.log("Response of queryKeBiaoByBanji: "+JSON.stringify(data["schedules"]));
       return data["schedules"];
     } catch (error) {
       throw error;
@@ -65,7 +65,7 @@ class Api {
       if (!success) {
         throw new Error(message.message);
       }
-      console.log("Response of queryShiXunByJiaoyanshi: "+JSON.stringify(data["schedules"]));
+      //console.log("Response of queryShiXunByJiaoyanshi: "+JSON.stringify(data["schedules"]));
       return data["schedules"];
     } catch (error) {
       throw error;

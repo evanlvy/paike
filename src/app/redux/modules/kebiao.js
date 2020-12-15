@@ -99,12 +99,12 @@ const convertKeBiaoByBanjiToPlain = (banjiInfoList, year) => {
         let kebiaoByWeek = [];
         const schedInfoWeek = schedInfo[weekKey];
         for (let i=1; i < 8; i++) {
-          let kebiaoByDay = [];
+          let kebiaoByDay = [null, null, null, null, null, null];
           const schedInfoDay = schedInfoWeek["星期"+i];
           if (schedInfoDay) {
             schedInfoDay.forEach(kebiao => {
               kebiaoByIds[kebiao.id] = {...kebiao};
-              const kebiaoIndex = (kebiao.index-1)/2
+              const kebiaoIndex = (kebiao.index-1)/2;
               if (kebiaoByDay[kebiaoIndex] == null) {
                 kebiaoByDay[kebiaoIndex] = [];
               }
@@ -180,7 +180,7 @@ const convertShiXunByJiaoyanshiToPlain = (jiaoyanshiInfoList, year) => {
         let kebiaoByWeek = [];
         const schedInfoWeek = schedInfo[weekKey];
         for (let i=1; i < 8; i++) {
-          let kebiaoByDay = [];
+          let kebiaoByDay = [null, null, null, null, null, null];
           const schedInfoDay = schedInfoWeek["星期"+i];
           if (schedInfoDay) {
             schedInfoDay.forEach(kebiao => {
@@ -337,12 +337,14 @@ export const getKeBiaoByAllBanjiSched = createSelector(
           let inDay = [];
           kebiaoInDay.forEach(kebiaoIds => {
             let inHour = [];
-            kebiaoIds.forEach(kebiaoId => {
-              const kebiaoInfo = kebiao.get(kebiaoId);
-              if (kebiaoInfo) {
-                inHour.push({...kebiaoInfo});
-              }
-            });
+            if (kebiaoIds) {
+              kebiaoIds.forEach(kebiaoId => {
+                const kebiaoInfo = kebiao.get(kebiaoId);
+                if (kebiaoInfo) {
+                  inHour.push({...kebiaoInfo});
+                }
+              });
+            }
             if (inHour.length > 0) {
               inDay.push(inHour)
             } else {

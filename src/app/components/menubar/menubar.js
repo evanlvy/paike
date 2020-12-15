@@ -211,7 +211,7 @@ class MenuBarWrapped extends Component {
     if (this.lilunMenuRef.current) {
       this.lilunMenuRef.current.reset();
     }
-    
+
     if (by_type === LabType.BY_CENTER) {
       const center = centers[lab_index];
       this.notifyMenuSelected(menu_type, {center: {id: center.id, name: center.name}});
@@ -230,6 +230,7 @@ class MenuBarWrapped extends Component {
 
   onJiaoShiPaiKeClicked = () => {
     console.log("onJiaoShiPaiKeClicked");
+    this.notifyMenuSelected(MenuType.JIAOSHI, null);
   }
 
   onMaintainMenuSelected = (menu_type, main_index, sub_index) => {

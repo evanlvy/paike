@@ -85,7 +85,7 @@ const convertLabsToPlain = (year, week, labs) => {
             const hourIndex = (shixun.index-1)/2;
             let shixunInWeek = shixunByLabSchedList[labSchedId].schedules;
             if (shixunInWeek[shixun.day_in_week-1] == null) {
-              shixunInWeek[shixun.day_in_week-1] = [];
+              shixunInWeek[shixun.day_in_week-1] = [null, null, null, null, null, null];
             }
             let shixunInDay = shixunInWeek[shixun.day_in_week-1];
             if (shixunInDay[hourIndex] == null) {

@@ -40,9 +40,13 @@ class ResultTableWrapper extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     const { props, state } = this;
     // console.log("shouldComponentUpdate, orig props "+JSON.stringify(props));
-    // console.log("shouldComponentUpdate, new props "+JSON.stringify(nextProps));
+    //console.log("shouldComponentUpdate, initPageIndex: "+props.initPageIndex+"->"+nextProps.initPageIndex);
     if (nextProps.headers !== props.headers || nextProps.defaultColWidth !== props.defaultColWidth
-    || nextProps.colLineHeight !== props.colLineHeight || nextProps.data !== props.data) {
+    || nextProps.colLineHeight !== props.colLineHeight || nextProps.data !== props.data
+    || nextProps.initPageIndex !== props.initPageIndex) {
+      if (nextProps.initPageIndex !== props.initPageIndex) {
+        this.needCorrectPageIndex = true;
+      }
       this.buildUI(nextProps);
       return true;
     }
@@ -52,7 +56,18 @@ class ResultTableWrapper extends Component {
     return false;
   }
 
+  componentDidUpdate() {
+    //console.log("componentDidUpdate, state.curPageIndex: "+this.state.curPageIndex+", props.initPageIndex: "+this.props.initPageIndex+", need correct: "+this.needCorrectPageIndex);
+    if (this.needCorrectPageIndex) {
+      this.setState({
+        curPageIndex: this.props.initPageIndex
+      });
+      this.needCorrectPageIndex = false;
+    }
+  }
+
   componentWillUnmount() {
+    console.log("componentWillUnmount");
     this.clearEditTimer();
   }
 
@@ -172,6 +187,7 @@ class ResultTableWrapper extends Component {
       onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onResultPageIndexChanged,
       ...other_props } = this.props;
     const { curPageIndex } = this.state;
+    //console.log("render: curPageIndex: "+curPageIndex);
     return (
       <Flex direction="column" width={width ? width : "100%"} {...other_props} >
         <Box display="flex" flexDirection="row" bg={color+".400"} height={titleHeight} px={4} alignItems="center"
