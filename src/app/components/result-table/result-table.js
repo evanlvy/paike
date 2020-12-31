@@ -33,7 +33,13 @@ class ResultTableWrapper extends Component {
 
     this.defaultColDef = {
       autoHeight: true,
-    }
+    };
+
+    this.rowClassRules = {
+      'conflict-warning': (params) => {
+          return params.data.is_conflict;
+      },
+    };
     this.buildUI(props);
   }
 
@@ -181,7 +187,7 @@ class ResultTableWrapper extends Component {
   }
 
   render() {
-    const { frameworkComponents, columnDefs, defaultColDef, rowData, onGridSizeChanged, onCellClicked, onRowClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
+    const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, onCellClicked, onRowClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data,
       pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption,
       onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onResultPageIndexChanged,
@@ -218,6 +224,7 @@ class ResultTableWrapper extends Component {
               frameworkComponents={frameworkComponents}
               columnDefs={columnDefs}
               rowData={rowData}
+              rowClassRules={rowClassRules}
               onCellClicked={onCellClicked}
               onRowClicked={onRowClicked} >
             </AgGridReact>

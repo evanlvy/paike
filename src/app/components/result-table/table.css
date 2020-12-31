@@ -17,6 +17,18 @@
   white-space: normal !important;
 }
 
+.disabled-cell {
+  background-color: rgba(100, 100, 100, 0.5) !important;
+}
+
+.selected-cell {
+  background-color: rgba(255, 0, 0, 0.5) !important;
+}
+
+.conflict-warning {
+  background-color: rgba(255, 0, 0, 0.5) !important;
+}
+
 /* .ag-header-cell-label {
    justify-content: center;
 } */

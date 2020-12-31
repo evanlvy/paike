@@ -13,34 +13,41 @@ import { CommonRenderer } from "./common-renderer";
 class EditableTable extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      columnDefs: [],
-      rowData: []
-    };
-
     this.defaultColDef = {
       autoHeight: true,
     }
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
     }
+    this.buildUI(props);
   }
 
-  componentDidMount() {
-    this.initUI();
+  shouldComponentUpdate(nextProps) {
+    const { props } = this;
+    // console.log("shouldComponentUpdate, orig props "+JSON.stringify(props));
+    if (nextProps.headers !== props.headers || nextProps.data !== props.data) {
+      this.buildUI(nextProps);
+      return true;
+    }
+    if (nextProps.defaultColWidth !== props.defaultColWidth
+    || nextProps.colLineHeight !== props.colLineHeight) {
+      return true;
+    }
+    return false;
   }
 
-  initUI = () => {
-    const columns = this.initColDef();
-    const rows = this.initData();
-    this.setState({
-      columnDefs: columns,
-      rowData: rows
-    });
+  buildUI = (props) => {
+    const columns = this.buildColDef(props);
+    const rows = this.buildData(props);
+    this.columnDefs = columns;
+    this.rowData = rows;
+    if (this.gridApi) {
+      this.gridApi.refreshCells();
+    }
   }
 
-  initColDef = () => {
-    const { headers, defaultColWidth, colLineHeight } = this.props;
+  buildColDef = (props) => {
+    const { headers, defaultColWidth, colLineHeight, cellClassRules } = props;
     const columnDefs = [];
     for (let i=0; i < headers.length; i++) {
       columnDefs[i] = {
@@ -49,6 +56,7 @@ class EditableTable extends Component {
         field: headers[i].field,
         width: headers[i].width == null ? defaultColWidth : headers[i].width,
         lineHeight: colLineHeight,
+        cellClassRules: cellClassRules,
         cellRenderer: "commonRenderer",
         editable: headers[i].editable,
       };
@@ -56,8 +64,8 @@ class EditableTable extends Component {
     return columnDefs;
   }
 
-  initData = () => {
-    const { data } = this.props;
+  buildData = (props) => {
+    const { data } = props;
     const rowData = [];
     for (let i=0; i < data.length; i++) {
       rowData[i] = data[i];
@@ -65,11 +73,30 @@ class EditableTable extends Component {
     return rowData;
   }
 
+  onCellClicked = (event) => {
+    const { onCellClicked: onCellClickedCallback } = this.props;
+    //console.log("onCellClicked, row: "+event.rowIndex+" col: "+event.colDef.index+" field: "+event.colDef.field+" value: "+event.value);
+    let e = {
+      row: event.rowIndex,
+      col: event.colDef.index,
+      field: event.colDef.field,
+      value: event.value,
+      event: event,
+    }
+    if (onCellClickedCallback != null) {
+      onCellClickedCallback(e);
+    }
+  }
+
+  onGridReady = (params) => {
+    this.gridApi = params.api;
+  };
+
   render() {
-    const { defaultColDef, frameworkComponents } = this;
-    const { width, defaultColWidth, headers, data,
+    const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onCellClicked } = this;
+    const { width, defaultColWidth, cellClassRules, headers, data,
       onCellClicked: onCellClickedCallback, ...other_props } = this.props;
-    const { columnDefs, rowData } = this.state;
+    //console.log("RowData: "+JSON.stringify(rowData));
     return (
       <Flex direction="column" width={width ? width : "100%"} {...other_props} >
         <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
@@ -78,7 +105,8 @@ class EditableTable extends Component {
             frameworkComponents={frameworkComponents}
             columnDefs={columnDefs}
             rowData={rowData}
-            onCellClicked={onCellClickedCallback} >
+            onGridReady={onGridReady}
+            onCellClicked={onCellClicked} >
           </AgGridReact>
         </div>
       </Flex>

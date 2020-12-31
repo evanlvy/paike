@@ -9,13 +9,13 @@ import {
 
 const DEFAULT_CHECK_ICON_COLOR = "blue.500";
 function BallGrid(props) {
-  const { height, balls, ballSize, colCount, selectedBallIndexList, onBallClicked } = props;
+  const { height, maxHeight, balls, ballSize, colCount, selectedBallIndexList, onBallClicked } = props;
   let { checkIconColor } = props;
   if (checkIconColor == null) {
     checkIconColor = DEFAULT_CHECK_ICON_COLOR;
   }
   return (
-    <Flex height={height == null ? "100%" : height} overflowY="scroll">
+    <Flex height={height == null ? "100%" : height} maxHeight={maxHeight} overflowY="scroll">
       <SimpleGrid width="100%" columns={colCount} spacing={6}>
         {
           balls.map((ball, index) => (

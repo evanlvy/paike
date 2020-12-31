@@ -10,6 +10,7 @@ import { api as labApi } from '../../services/lab';
 // action types
 export const types = {
   FETCH_LABS: "LAB/FETCH_LABS",
+  FETCH_LABS_BY_ITEM: "LAB/FETCH_LABS_BY_ITEM",
 };
 
 // actions
@@ -28,7 +29,34 @@ export const actions = {
         dispatch(appActions.setError(error));
       }
     }
+  },
+  fetchLabsByLabItem: (labItemId, year, week) => {
+    return async (dispatch, getState) => {
+      try {
+        if (shouldFetchLabsByLabItem(labItemId, year, week, getState())) {
+          dispatch(appActions.startRequest());
+          const data = await labApi.queryLabsByLabItem(labItemId, year, week);
+          dispatch(appActions.finishRequest());
+          const { labByIds, labIds, shixunByLabSchedList, shixunByIds } =  convertLabsToPlain(year, week, data);
+          dispatch(fetchLabsByLabItemSuccess(labItemId, labIds, labByIds, shixunByLabSchedList, shixunByIds));
+        }
+      } catch (error) {
+        dispatch(appActions.setError(error));
+      }
+    }
   }
+}
+
+const shouldFetchLabSchedInfo = (labIds, year, week, state) => {
+  for (let i=0; i < labIds.length; i++) {
+    const labId = labIds[i];
+    const shixunWeekInfo = state.getIn(["lab", "shixunByLabSched", buildLabSchedId(labId, year, week)]);
+    if (!shixunWeekInfo || Date.now()-shixunWeekInfo.update > DATA_EXPIRATION_TIME) {
+      console.log(`shouldFetchLabSchedInfo, id: ${buildLabSchedId(labId, year, week)}`);
+      return true;
+    }
+  };
+  return false;
 }
 
 const shouldFetchLabs = (centerId, year, week, state) => {
@@ -37,15 +65,25 @@ const shouldFetchLabs = (centerId, year, week, state) => {
     console.log("shouldFetchLabs, no labs exists");
     return true;
   }
-  for (let i=0; i < labIds.length; i++) {
-    const labId = labIds[i];
-    const shixunWeekInfo = state.getIn(["lab", "shixunByLabSched", buildLabSchedId(labId, year, week)]);
-    if (!shixunWeekInfo || Date.now()-shixunWeekInfo.update > DATA_EXPIRATION_TIME) {
-      console.log(`shouldFetchLabs, id: ${buildLabSchedId(labId, year, week)}`);
-      return true;
-    }
-  };
+  if (shouldFetchLabSchedInfo(labIds, year, week, state)) {
+    console.log("shouldFetchLabs, need more labSchedInfo");
+    return true;
+  }
   console.log("shouldFetchLabs: no need fetch data");
+  return false;
+}
+
+const shouldFetchLabsByLabItem = (labItemId, year, week, state) => {
+  const labIds = state.getIn(["lab", "byLabItem", ""+labItemId]);
+  if (!labIds) {
+    console.log("shouldFetchLabsByLabItem, no labs exists");
+    return true;
+  }
+  if (shouldFetchLabSchedInfo(labIds, year, week, state)) {
+    console.log("shouldFetchLabsByLabItem, need more labSchedInfo");
+    return true;
+  }
+  console.log("shouldFetchLabsByLabItem: no need fetch data");
   return false;
 }
 
@@ -53,6 +91,17 @@ const fetchLabsSuccess = (centerId, labIds, labByIds, shixunByLabSchedList, shix
   return ({
     type: types.FETCH_LABS,
     centerId,
+    labIds,
+    labByIds,
+    shixunByLabSchedList,
+    shixunByIds,
+  })
+}
+
+const fetchLabsByLabItemSuccess = (labItemId, labIds, labByIds, shixunByLabSchedList, shixunByIds) => {
+  return ({
+    type: types.FETCH_LABS_BY_ITEM,
+    labItemId,
     labIds,
     labByIds,
     shixunByLabSchedList,
@@ -109,6 +158,7 @@ const convertLabsToPlain = (year, week, labs) => {
 const byIds = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_LABS:
+    case types.FETCH_LABS_BY_ITEM:
       return state.merge(action.labByIds);
     default:
       return state;
@@ -124,9 +174,19 @@ const byCenter = (state = Immutable.fromJS({}), action) => {
   }
 }
 
+const byLabItem = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.FETCH_LABS_BY_ITEM:
+      return state.merge({[action.labItemId]: action.labIds});
+    default:
+      return state;
+  }
+}
+
 const shixunByLabSched = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_LABS:
+    case types.FETCH_LABS_BY_ITEM:
       return state.merge(action.shixunByLabSchedList);
     default:
       return state;
@@ -136,6 +196,7 @@ const shixunByLabSched = (state = Immutable.fromJS({}), action) => {
 const reducer = combineReducers({
   byIds,
   byCenter,
+  byLabItem,
   shixunByLabSched,
 });
 
@@ -145,6 +206,8 @@ export default reducer;
 export const getLabs = state => state.getIn(["lab", "byIds"]);
 
 export const getLabsByCenters = state => state.getIn(["lab", "byCenter"]);
+
+export const getLabsByLabItem = state => state.getIn(["lab", "byLabItem"]);
 
 export const getShiXunByLabSched = state => state.getIn(["lab", "shixunByLabSched"]);
 
@@ -171,5 +234,27 @@ export const getLabsByAllCenter = createSelector(
       }
     });
     return centersInfo;
+  }
+)
+
+export const getLabsByAllLabItem = createSelector(
+  [getLabsByLabItem, getLabs],
+  (labsByLabItems, labs) => {
+    let labItemsInfo = {};
+    if (!labsByLabItems || labsByLabItems.size === 0 || !labs) {
+      return labItemsInfo;
+    }
+    const labItemIds = labsByLabItems.keySeq();
+    //console.log("build with labItemIds: "+JSON.stringify(labItemIds));
+    labItemIds.forEach(labItemId => {
+      const labIds = labsByLabItems.get(labItemId);
+      const labInfoList = [];
+      labIds.forEach(labId => {
+        const labInfo = labs.get(labId+"");
+        labInfoList.push({id: labInfo.id, title: labInfo.location});
+      });
+      labItemsInfo[labItemId] = labInfoList;
+    });
+    return labItemsInfo;
   }
 )

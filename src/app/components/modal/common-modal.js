@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Trans, withTranslation } from 'react-i18next';
 import {
+  Flex,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -51,20 +52,30 @@ class CommonModalWrapped extends PureComponent {
     this.dismiss();
   }
 
+  onCancelBtnClicked = () => {
+    this.onClose();
+  }
+
   render() {
     const { isOpen } = this.state;
-    const { title, titleBgColor, children, ...other_props } = this.props;
+    const { title, titleBgColor, children, withCancel, onResult, minWidth, ...other_props } = this.props;
     return (
-      <Modal isOpen={isOpen} onClose={this.onClose} {...other_props}>
+      <Modal isOpen={isOpen} onClose={this.onClose} closeOnOverlayClick={false} {...other_props}>
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent minWidth={minWidth}>
           <ModalHeader display="flex" flexDirection="row" alignItems="center" backgroundColor={titleBgColor}>
             <Text width="100%" whiteSpace="nowrap">{title}</Text>
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody padding={3} display="flex" flexDirection="row" alignItems="center">
-              { children }
-              <Button onClick={this.onOKBtnClicked} variantColor="green" width="100px" height="44px" ml="3"><Trans>common.ok</Trans></Button>
+              <Flex width="100%" direction="column">
+                { children }
+                <Flex my="2" alignItems="center">
+                  <Flex flex="1" />
+                  { withCancel && <Button onClick={this.onCancelBtnClicked} mr="5" variantColor="gray" width="100px" height="44px"><Trans>common.cancel</Trans></Button> }
+                  <Button onClick={this.onOKBtnClicked} variantColor="green" width="100px" height="44px"><Trans>common.ok</Trans></Button>
+                </Flex>
+              </Flex>
           </ModalBody>
         </ModalContent>
       </Modal>

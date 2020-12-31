@@ -397,7 +397,7 @@ export const getShiXunByJiaoyanshiSched = createSelector(
       }
       result[jysSchedId] = inWeek;
     });
-    console.log("getShiXunByJiaoyanshiSched: "+JSON.stringify(result));
+    //console.log("getShiXunByJiaoyanshiSched: "+JSON.stringify(result));
     return result;
   }
 );

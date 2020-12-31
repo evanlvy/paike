@@ -1,1 +1,1 @@
-export const SEMESTER_WEEK_COUNT = 36;  // 36 weeks in one semester
+export const SEMESTER_WEEK_COUNT = 20;  // 20 weeks in one semester

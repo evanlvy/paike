@@ -34,6 +34,33 @@ class Api {
     }
   }
 
+  queryLabsByLabItem = async (labItemId, stage_id, week) => {
+    try {
+      const url = this.baseUrl+"/lab";
+      console.log("Request url "+url+" with labItem: "+labItemId+", stage_id: "+stage_id+", week: "+week);
+      let request_param = {
+        stage_id: stage_id,
+        item_id: labItemId,
+        begin: {
+          week: week,
+          day: 1,
+        },
+        end: {
+          week: week,
+          day: 7,
+        }
+      };
+      let response = await axios.post(url, request_param);
+      const { success, data, message } = response.data;
+      if (!success) {
+        throw new Error(message.message);
+      }
+      return data.labs;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   queryLabBuildings = () => {
     const data = [
       {id: "1", name: "A栋"},

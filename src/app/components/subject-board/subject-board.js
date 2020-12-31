@@ -69,7 +69,7 @@ class SubjectBoard extends PureComponent {
           colCount={6}
           balls={subjects}
           ballSize={100}
-          height={250}
+          maxHeight={250}
           selectedBallIndexList={selectedIndexList}
           onBallClicked={this.onSubjectClicked} />
       </Box>
