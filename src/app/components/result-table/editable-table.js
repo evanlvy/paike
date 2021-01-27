@@ -19,31 +19,23 @@ class EditableTable extends Component {
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
     }
-    this.buildUI(props);
+    this.buildColDef(props);
+    this.buildData(props);
   }
 
   shouldComponentUpdate(nextProps) {
     const { props } = this;
     // console.log("shouldComponentUpdate, orig props "+JSON.stringify(props));
-    if (nextProps.headers !== props.headers || nextProps.data !== props.data) {
-      this.buildUI(nextProps);
+    if (nextProps.headers !== props.headers || nextProps.defaultColWidth !== props.defaultColWidth
+    || nextProps.colLineHeight !== props.colLineHeight) {
+      this.buildColDef(nextProps);
       return true;
     }
-    if (nextProps.defaultColWidth !== props.defaultColWidth
-    || nextProps.colLineHeight !== props.colLineHeight) {
-      return true;
+    if (nextProps.data !== props.data) {
+      this.buildData(nextProps);
+      return false;
     }
     return false;
-  }
-
-  buildUI = (props) => {
-    const columns = this.buildColDef(props);
-    const rows = this.buildData(props);
-    this.columnDefs = columns;
-    this.rowData = rows;
-    if (this.gridApi) {
-      this.gridApi.refreshCells();
-    }
   }
 
   buildColDef = (props) => {
@@ -61,7 +53,7 @@ class EditableTable extends Component {
         editable: headers[i].editable,
       };
     }
-    return columnDefs;
+    this.columnDefs = columnDefs;
   }
 
   buildData = (props) => {
@@ -70,7 +62,11 @@ class EditableTable extends Component {
     for (let i=0; i < data.length; i++) {
       rowData[i] = data[i];
     }
-    return rowData;
+    this.rowData = rowData;
+    //console.log("EditTable BuildData: "+JSON.stringify(rowData));
+    if (this.gridApi) {
+      this.gridApi.setRowData(rowData);
+    }
   }
 
   onCellClicked = (event) => {

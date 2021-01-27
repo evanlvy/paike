@@ -57,7 +57,7 @@ class ChooseItemModalWrapped extends PureComponent {
     return itemsData;
   }
 
-  show = (selectedIndex) => {
+  show = (selectedIndex = -1) => {
     this.setState({
       isOpen: true,
       selectedItemIndex: selectedIndex,
@@ -133,7 +133,7 @@ class ChooseItemModalWrapped extends PureComponent {
               ballSize={100}
               balls={itemsData}
               checkIconColor={checkIconColor}
-              selectedBallIndex={selectedItemIndex}
+              selectedBallIndexList={[selectedItemIndex]}
               onBallClicked={this.onItemSelected} />
             {
               (withOK || withCancel || centers != null) &&

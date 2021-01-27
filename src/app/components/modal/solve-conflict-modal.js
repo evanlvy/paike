@@ -13,16 +13,24 @@ import {
   Icon,
 } from "@chakra-ui/core";
 
+import { Alert } from '../alert/alert-dialog';
 import { EditItemModal } from './edit-item-modal';
 import { ChooseItemModal } from './choose-item-modal';
 import { SchedTableModal } from './sched-table-modal';
 import { EditableTable } from '../result-table/editable-table';
 
+import { buildBanjiSchedId } from '../../redux/modules/kebiao';
 import { buildLabSchedId } from '../../redux/modules/lab';
+import { buildTeacherSchedId } from '../../redux/modules/teacher';
 
-const CHOOSE_TIME_TITLE_BG = "orange.400";
+import { SEMESTER_WEEK_COUNT } from '../../screens/common/info';
+
+const CHOOSE_SCHED_TITLE_BG = "orange.400";
 const CHOOSE_LAB_TITLE_BG = "blue.500";
 
+const SCHED_TABLE_TYPE_NONE = 0;
+const SCHED_TABLE_TYPE_KEBIAO = 1;
+const SCHED_TABLE_TYPE_LAB = 2;
 class SolveConflictModalWrapped extends Component {
   constructor(props) {
     super(props);
@@ -30,9 +38,11 @@ class SolveConflictModalWrapped extends Component {
     this.state = {
       isOpen: false,
       selectItem: null,
+      selectWeek: 0,
       schedTableTitle: "",
-      schedTableTitleBg: CHOOSE_TIME_TITLE_BG,
-      schedTableData: [],
+      schedTableTitleBg: CHOOSE_SCHED_TITLE_BG,
+      enableSchedTableMultiSelect: false,
+      schedTableMultiSelectRange: 1,
     }
 
     this.tableHeaders = [
@@ -50,7 +60,14 @@ class SolveConflictModalWrapped extends Component {
 
     this.conflictList = [];
     this.labList = [];
+    this.schedTableType = SCHED_TABLE_TYPE_NONE;
+    this.schedTableData = [];
+    this.schedTableLoading = false;
 
+    this.weekdayNames = [
+      t("kebiao.sched_monday"), t("kebiao.sched_tuesday"), t("kebiao.sched_wednesday"),
+      t("kebiao.sched_thursday"), t("kebiao.sched_friday"), t("kebiao.sched_saturday"), t("kebiao.sched_sunday")
+    ];
     this.schedTableFieldNames = [
       "sched_name", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
     ];
@@ -64,8 +81,10 @@ class SolveConflictModalWrapped extends Component {
     ];
 
     this.editRemarkModalRef = React.createRef();
+    this.chooseTeacherModalRef = React.createRef();
     this.chooseLabModalRef = React.createRef();
     this.schedTableModalRef = React.createRef();
+    this.doubleConfirmDialog = React.createRef();
   }
 
   showConflict = (weekIndex, selectItem, conflictList) => {
@@ -74,7 +93,6 @@ class SolveConflictModalWrapped extends Component {
       return;
     }
     console.log("Solve conflict: "+JSON.stringify(selectItem));
-    this.selectWeek = weekIndex;
     this.selectItemIndex = 0;
     if (conflictList) {
       this.selectItemIndex = conflictList.findIndex(item => item.data.id === selectItem.data.id);
@@ -83,6 +101,7 @@ class SolveConflictModalWrapped extends Component {
       this.conflictList = [selectItem];
     }
     this.setState({
+      selectWeek: weekIndex,
       selectItem: selectItem
     });
     this.show();
@@ -124,11 +143,12 @@ class SolveConflictModalWrapped extends Component {
 
   buildData = () => {
     this.buildLabList();
+    this.buildTeacherList();
+    this.buildSchedTable();
   }
 
   buildLabList = () => {
-    const { selectWeek } = this;
-    const { selectItem } = this.state;
+    const { selectWeek, selectItem } = this.state;
     const { labs, labSched } = this.props;
     if (!labs || labs.length === 0) {
       return;
@@ -140,14 +160,63 @@ class SolveConflictModalWrapped extends Component {
           const selectItemData = selectItem.data;
           // console.log("labSchedInfo: "+JSON.stringify(labSchedInfo));
           // console.log("selectItemData: "+JSON.stringify(selectItemData));
-          const schedInDay = labSchedInfo.schedules[selectItemData.week_day_index];
-          if (schedInDay && schedInDay[selectItemData.hour_index] && schedInDay[selectItemData.hour_index].length > 0) {
+          const schedInDay = labSchedInfo.schedules[selectItemData.day_in_week-1];
+          if (schedInDay && schedInDay[(selectItemData.index-1)/2] && schedInDay[(selectItemData.index-1)/2].length > 0) {
             labInfo.occupied = "";
+          } else {
+            labInfo.occupied = null;
           }
         }
         return labInfo;
     });
     //console.log("LabList: "+JSON.stringify(this.labList));
+  }
+
+  checkTeacherFree = (teacherId) => {
+    const { selectWeek, selectItem } = this.state;
+    const { teacherSched } = this.props;
+    const teacherSchedId = buildTeacherSchedId(teacherId, 3, selectWeek);
+    const teacherSchedInfo = teacherSched.get(teacherSchedId);
+    if (teacherSchedInfo) {
+      const selectItemData = selectItem.data;
+      //console.log("teacher: "+teacherInfo.title+" schedInfo: "+JSON.stringify(teacherSchedInfo));
+      const schedInDay = teacherSchedInfo.schedules[selectItemData.day_in_week-1];
+      return !(schedInDay && schedInDay[(selectItemData.index-1)/2] && schedInDay[(selectItemData.index-1)/2].length > 0);
+    }
+    return true;
+  }
+
+  buildTeacherList = () => {
+    const { teachers } = this.props;
+    if (!teachers || teachers.length === 0) {
+      return;
+    }
+    this.teacherList = teachers.map(teacherInfo => {
+      if (!this.checkTeacherFree(teacherInfo.id)) {
+        teacherInfo.occupied = "";
+      } else {
+        teacherInfo.occupied = null;
+      }
+      return teacherInfo;
+    });
+    //console.log("TeacherList: "+JSON.stringify(this.teacherList));
+  }
+
+  buildSchedTable = () => {
+    const { schedTableType, selectLab } = this;
+    const { selectItem } = this.state;
+    console.log("buildSchedTable, type: "+schedTableType);
+    switch(schedTableType) {
+      case SCHED_TABLE_TYPE_KEBIAO:
+        this.schedTableData = this.buildBanjiSchedTable(selectItem.data.class_id);
+        break;
+      case SCHED_TABLE_TYPE_LAB:
+        this.schedTableData = this.buildLabSchedTable(selectLab);
+        break;
+      default:
+        this.schedTableData = [];
+        break;
+    }
   }
 
   // Event
@@ -159,10 +228,11 @@ class SolveConflictModalWrapped extends Component {
     }
     switch (colDef.field) {
       case "date":
+      case "time":
+        this.onEditSched();
         break;
       case "shixun_teacher":
-        break;
-      case "time":
+        this.onEditTeacher();
         break;
       case "lab":
         this.onEditLab();
@@ -202,6 +272,177 @@ class SolveConflictModalWrapped extends Component {
       }
     }
   }
+  // Alert Dialog
+  showDoubleConfirmDialog = (onConfirmCb) => {
+    const { t } = this.props;
+    const title = t("solveConflictModal.confirm_conflict_title");
+    const message= t("solveConflictModal.confirm_conflict_message");
+    this.onDoubleConfirmResultCb = onConfirmCb;
+    this.doubleConfirmDialog.current.show(title, message);
+  }
+
+  onDoubleConfirmResult = (confirm) => {
+    if (this.onDoubleConfirmResultCb) {
+      this.onDoubleConfirmResultCb(confirm);
+    }
+    return true;
+  }
+
+  // Edit Schedule
+  onEditSched = () => {
+    const { selectItem } = this.state;
+    const { t } = this.props;
+
+    console.log("onEditSched: "+JSON.stringify(selectItem));
+
+    this.schedTableType = SCHED_TABLE_TYPE_KEBIAO;
+    this.schedTableModalResultCb = this.onConfirmSchedChooseResult;
+    this.schedTableModalBackRef = null;
+    this.setState({
+      schedTableTitle: t("chooseSchedModal.title_template", {banji_name: selectItem.banji}),
+      schedTableTitleBg: CHOOSE_SCHED_TITLE_BG,
+      enableSchedTableMultiSelect: true,
+      schedTableMultiSelectRange: selectItem.data.hours/2,
+      schedNavItemsInfo: {
+        onNavItemChange: this.onSchedWeekChanged,
+        titleTemplate: "kebiao.semester_week_template",
+        prevCaption: t("kebiao.prev_semester_week"),
+        nextCaption: t("kebiao.next_semester_week"),
+        maxCount: SEMESTER_WEEK_COUNT
+      }
+    });
+    this.schedTableModalRef.current.show(selectItem.data.week-1);
+  }
+
+  buildKebiaoName = (kebiaoInfo) => {
+    const { t } = this.props;
+    if (kebiaoInfo.is_lab) {
+      return t("chooseSchedModal.shiyan");
+    } else {
+      return t("chooseSchedModal.lilun");
+    }
+  }
+
+  buildBanjiSchedTable = (banjiId) => {
+    const { t, banjiSched } = this.props;
+    const { selectWeek } = this.state;
+    const { schedTableFieldNames, schedTableRowNames} = this;
+    const banjiSchedId = buildBanjiSchedId(banjiId, 3, selectWeek);
+    console.log("Get kebiaoInfo of "+banjiSchedId);
+    const kebiaoInfo = banjiSched[banjiSchedId];
+    this.schedTableLoading = !kebiaoInfo;
+    //console.log("kebiaoInfo: "+JSON.stringify(kebiaoInfo));
+    let resultList = [];
+    for (let i=1; i < schedTableFieldNames.length; i++) {
+      const kebiaoInDay = kebiaoInfo ? kebiaoInfo[i-1] : null;
+      for (let j=0; j < schedTableRowNames.length; j++) {
+        if (!resultList[j]) {
+          resultList[j] = {};
+          resultList[j][schedTableFieldNames[0]] = schedTableRowNames[j];
+        }
+        let names = [];
+        let hourIndex = j;
+        const kebiaoHourList = kebiaoInDay ? kebiaoInDay[hourIndex] : [];
+        if (kebiaoHourList && kebiaoHourList.length > 0) {
+          kebiaoHourList.forEach(kebiao => {
+            let name = this.buildKebiaoName(kebiao);
+            if (name) {
+              names.push(name);
+            }
+          });
+        } else {
+          names.push(t("common.null"));
+        }
+        resultList[j][schedTableFieldNames[i]] = { titles: names, data: kebiaoHourList };
+      }
+    }
+    //console.log("ResultList: "+JSON.stringify(resultList));
+    return resultList;
+  }
+
+  onSchedWeekChanged = (weekIndex) => {
+    //console.log("onSchedWeekChanged, index: "+weekIndex);
+    this.setState({
+      selectWeek: weekIndex+1
+    });
+    this.schedTableModalRef.current.resetSelection();
+    const { onSchedWeekChange } = this.props;
+    if (onSchedWeekChange) {
+      onSchedWeekChange(weekIndex);
+    }
+  }
+
+  onConfirmSchedChooseResult = (confirm, result) => {
+    console.log("onConfirmSchedChooseResult, confirm: "+confirm+", result: "+JSON.stringify(result));
+    this.schedTableType = SCHED_TABLE_TYPE_NONE;
+    const { schedTableData, schedTableFieldNames} = this;
+    if (confirm) {
+      this.schedChooseResult = result;
+      const schedData = schedTableData[result.hour_index][schedTableFieldNames[result.weekday_index+1]].data;
+      if (schedData && schedData.length > 0) { // There is sched items in the chosen position
+        this.showDoubleConfirmDialog(this.onDoubleConfirmSchedResult);
+      } else {
+        this.onDoubleConfirmSchedResult(true);
+      }
+    }
+    return true;
+  }
+
+  onDoubleConfirmSchedResult = (confirm) => {
+    console.log("onDoubleConfirmSchedResult, confirm: "+confirm);
+    if (confirm) {
+      const { schedChooseResult: result } = this;
+      console.log("onDoubleConfirmSchedResult, result: "+JSON.stringify(result));
+      const { selectWeek } = this.state;
+      const { weekdayNames, schedTableRowNames } = this;
+      let selItem = {...this.state.selectItem};
+      const selectData = selItem.data;
+      selItem.date = weekdayNames[result.weekday_index];
+      selItem.time = schedTableRowNames[result.hour_index];
+      selectData.week = selectWeek;
+      selectData.index = result.hour_index*2+1;
+      selectData.day_in_week = result.weekday_index+1;
+      selectData.hours = result.range*2;
+      this.setState({
+        selectItem: selItem
+      });
+    }
+  }
+
+  // Edit Teacher
+  onEditTeacher = () => {
+    if (this.chooseTeacherModalRef.current) {
+      this.chooseTeacherModalRef.current.show();
+    }
+  }
+
+  onConfirmTeacherChooseResult = (confirm, index) => {
+    console.log("onConfirmTeacherChooseResult, confirm: "+confirm+", index: "+index);
+    if (confirm) {
+      this.selectTeacher = this.teacherList[index];
+      if (!this.checkTeacherFree(this.selectTeacher.id)) {
+        this.showDoubleConfirmDialog(this.onDoubleConfirmTeacherResult);
+      } else {
+        this.onDoubleConfirmTeacherResult(true);
+      }
+    }
+    return true;
+  }
+
+  onDoubleConfirmTeacherResult = (confirm) => {
+    console.log("onDoubleConfirmTeacherResult, confirm: "+confirm);
+    if (confirm) {
+      const { selectTeacher } = this;
+      let selItem = {...this.state.selectItem};
+      const selectData = selItem.data;
+      selItem.shixun_teacher = selectTeacher.title;
+      selectData.lab_teacher = selectTeacher.title;
+      selectData.lab_teacher_id = selectTeacher.id;
+      this.setState({
+        selectItem: selItem
+      });
+    }
+  }
 
   // Edit Lab
   onEditLab = () => {
@@ -212,29 +453,33 @@ class SolveConflictModalWrapped extends Component {
     const { t, labs } = this.props;
     this.selectLab = labs[index];
     console.log("onLabSelect: "+this.selectLab.title);
-    const labSchedTable = this.buildLabSchedTable(this.selectLab);
 
+    this.schedTableType = SCHED_TABLE_TYPE_LAB;
+    this.schedTableModalResultCb = this.onConfirmLabChooseResult;
+    this.schedTableModalBackRef = this.chooseLabModalRef;
     this.setState({
       schedTableTitle: t("chooseLabModal.title_labinfo_template", {lab_name: this.selectLab.title}),
       schedTableTitleBg: CHOOSE_LAB_TITLE_BG,
-      schedTableData: labSchedTable
+      enableSchedTableMultiSelect: false,
+      schedTableMultiSelectRange: 1,
+      schedNavItemsInfo: {}
     });
-    this.schedTableModalRef.current.show();
-    this.schedTableModalResultCb = this.onConfirmLabChooseResult;
-    this.schedTableModalBackRef = this.chooseLabModalRef;
-    this.chooseLabModalRef.current.dismiss();
+    if (this.schedTableModalRef.current) {
+      this.schedTableModalRef.current.show();
+      this.chooseLabModalRef.current.dismiss();
+    }
   }
 
   buildShiXunName = (shixunId) => {
-    const { shixunByIds } = this.props;
-    const shixunInfo = shixunByIds.get(shixunId)
+    const { kebiaoByIds } = this.props;
+    const shixunInfo = kebiaoByIds.get(shixunId)
     return shixunInfo.labitem_name+" ("+shixunInfo.lab_teacher+")";
   }
 
   buildLabSchedTable = (lab) => {
     const { t, labSched } = this.props;
-    const { selectWeek, schedTableFieldNames, schedTableRowNames} = this;
-    const { selectItem } = this.state;
+    const { schedTableFieldNames, schedTableRowNames } = this;
+    const { selectWeek, selectItem } = this.state;
     const selectConflictData = selectItem.data;
     const labSchedId = buildLabSchedId(lab.id, 3, selectWeek);
     console.log("Get shixunInfo of "+labSchedId);
@@ -260,7 +505,7 @@ class SolveConflictModalWrapped extends Component {
         } else {
           names.push(t("common.null"));
         }
-        const needDisabled = (selectConflictData.week_day_index !== i-1 || selectConflictData.hour_index !== hourIndex);
+        const needDisabled = (selectConflictData.day_in_week !== i || (selectConflictData.index-1)/2 !== hourIndex);
         resultList[j][schedTableFieldNames[i]] = { titles: names, disabled: needDisabled, data: shixunHourList };
       }
     }
@@ -269,6 +514,26 @@ class SolveConflictModalWrapped extends Component {
   }
 
   onConfirmLabChooseResult = (confirm) => {
+    this.schedTableType = SCHED_TABLE_TYPE_NONE;
+    if (confirm) {
+      const { schedTableData, schedTableFieldNames } = this;
+      const { selectItem } = this.state;
+      const selectItemData = selectItem.data;
+      const schedData = schedTableData[(selectItemData.index-1)/2][schedTableFieldNames[selectItemData.day_in_week]].data;
+      if (schedData && schedData.length > 0) {
+        this.showDoubleConfirmDialog(this.onDoubleConfirmLabResult);
+      } else {
+        this.onDoubleConfirmLabResult(true);
+      }
+    } else {
+      if (this.schedTableModalBackRef) {
+        this.schedTableModalBackRef.current.show();
+      }
+    }
+    return true;
+  }
+
+  onDoubleConfirmLabResult = (confirm) => {
     if (confirm) {
       let selItem = {...this.state.selectItem};
       const { selectLab } = this;
@@ -284,13 +549,14 @@ class SolveConflictModalWrapped extends Component {
         this.schedTableModalBackRef.current.show();
       }
     }
-    return true;
   }
 
   // Edit Remark
   onEditRemark = () => {
     const { selectItem } = this.state;
-    this.editRemarkModalRef.current.show(selectItem.note);
+    if (this.editRemarkModalRef.current) {
+      this.editRemarkModalRef.current.show(selectItem.note);
+    }
   }
 
   onEditRemarkResult = (confirm, result) => {
@@ -298,6 +564,7 @@ class SolveConflictModalWrapped extends Component {
       console.log("onEditRemarkResult: "+result);
       const selItem = {...this.state.selectItem};
       selItem.note = result;
+      selItem.data.comments = result;
       this.setState({
         selectItem: selItem
       })
@@ -306,12 +573,12 @@ class SolveConflictModalWrapped extends Component {
   }
 
   render() {
-    const { isOpen, selectItem, schedTableTitle, schedTableTitleBg, schedTableData } = this.state;
-    const { t, curCenter, labs, labSched, banjiSched, onConflictChanged, ...other_props } = this.props;
+    const { isOpen, selectItem, schedTableTitle, schedTableTitleBg, schedNavItemsInfo, enableSchedTableMultiSelect, schedTableMultiSelectRange } = this.state;
+    const { t, curCenter, labs, labSched, banjiSched, teachers, teacherDepList, onTeacherDepartmentChange, onSchedWeekChange, onConflictChanged, ...other_props } = this.props;
     this.buildData();
-    const { tableHeaders, selectItemIndex, conflictList, labList,
-      onCellClicked, onPrevConflict, onNextConflict,
-      onEditRemarkResult, onLabSelect, schedTableModalResultCb } = this;
+    const { tableHeaders, selectItemIndex, conflictList, labList, teacherList, schedTableData, schedTableLoading,
+      onCellClicked, onPrevConflict, onNextConflict, onDoubleConfirmResult,
+      onEditRemarkResult, onLabSelect, onConfirmTeacherChooseResult, schedTableModalResultCb } = this;
     const tableData = [selectItem];
     //console.log("Conflict Select Item: "+JSON.stringify(selectItem));
     return (
@@ -358,6 +625,20 @@ class SolveConflictModalWrapped extends Component {
             withOK={false}
             onItemSelect={onLabSelect} />
         }
+        {
+          teacherList && teacherList.length > 0 &&
+          <ChooseItemModal
+            ref={this.chooseTeacherModalRef}
+            title={t("chooseTeacherModal.title_template", {shixun_name: selectItem.shixun_name})}
+            items={teacherList}
+            centers={teacherDepList}
+            emptyColor="pink.400"
+            checkIconColor="blue.500"
+            withOK
+            withCancel
+            onCenterChanged={onTeacherDepartmentChange}
+            onResult={onConfirmTeacherChooseResult} />
+        }
         <EditItemModal
           ref={this.editRemarkModalRef}
           title={t("solveConflictModal.remark")}
@@ -370,8 +651,16 @@ class SolveConflictModalWrapped extends Component {
           titleBgColor={schedTableTitleBg}
           withCancel
           title={schedTableTitle}
+          loading={schedTableLoading}
+          navItemsInfo={schedNavItemsInfo}
           tableData={schedTableData}
+          multiSelect={enableSchedTableMultiSelect}
+          multiSelectRange={schedTableMultiSelectRange}
           onResult={schedTableModalResultCb} />
+        <Alert
+          ref={this.doubleConfirmDialog}
+          negativeBtnCaption={t("common.cancel")}
+          onResult={onDoubleConfirmResult} />
       </Flex>
     );
   }

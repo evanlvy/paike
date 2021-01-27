@@ -16,7 +16,7 @@ import {
 } from '../components';
 
 import { actions as labActions, buildLabSchedId, getLabsByAllCenter, getShiXunByLabSched } from '../redux/modules/lab';
-import { getShiXun } from '../redux/modules/kebiao';
+import { getKebiao } from '../redux/modules/kebiao';
 
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
@@ -124,7 +124,7 @@ class CenterLabScreen extends Component {
     const { semesterPages } = this;
     if (semesterPages.length === 0) {
       for (let i=0; i < SEMESTER_WEEK_COUNT; i++) {
-        semesterPages.push({ name: t("kebiao.semester_week_template", {week_index: i+1}) });
+        semesterPages.push({ name: t("kebiao.semester_week_template", {index: i+1}) });
       }
     }
   }
@@ -368,7 +368,7 @@ const mapStateToProps = (state) => {
   return {
     labsByCenter: getLabsByAllCenter(state),
     shixunByLabSched: getShiXunByLabSched(state),
-    shixunByIds:getShiXun(state),
+    shixunByIds:getKebiao(state),
   }
 }
 

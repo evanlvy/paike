@@ -12,13 +12,7 @@ import {
 import {
   SubjectBoard,
   ResultTabList,
-  ResultTable,
-  SolveConflictModal,
-  DatePickerModal,
-  ChooseItemModal,
-  EditItemModal,
-  SelectItemModal,
-  Alert,
+  ResultTable
 } from '../components';
 
 import { actions as subjectActions, getSubjectByGrade } from '../redux/modules/subject';
@@ -73,39 +67,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
     this.tableDataList = [];
     this.curDataIndex = 0;
 
-    this.labCenters = [
-      {name: "基础分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E218"}, {title: "E214", occupied: "张磊"}]},
-      {name: "护理分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E318"}, {title: "E214", occupied: "张磊"}]},
-      {name: "影像分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E418"}, {title: "E214", occupied: "张磊"}]},
-      {name: "临床分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E118"}, {title: "E214", occupied: "张磊"}]},
-      {name: "药学分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E518"}, {title: "E214", occupied: "张磊"}]},
-      {name: "医疗技术分中心", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "E618"}, {title: "E214", occupied: "张磊"}]},
-      {name: "社科部", labs:[{title: "E201"}, {title: "E211", occupied: "张倩"}, {title: "E212", occupied: "莫迪"}, {title: "E213", occupied: "苏畅"}, {title: "E214", occupied: "张磊"}, {title: "E212", occupied: "莫迪"}, {title: "B118"}, {title: "E214", occupied: "张磊"}]},
-    ];
-    this.labTimeSegments = [
-      { name: "1,2节" },
-      { name: "3,4节" },
-      { name: "6,7节" },
-      { name: "8,9节" },
-    ];
-
-    this.teachers = [
-      {title: "王欣"}, {title: "张倩", occupied: "E211"}, {title: "莫迪", occupied: "E212"}, {title: "苏畅", occupied: "E213"}, {title: "张磊", occupied: "E214"}, {title: "邱丽"}, {title: "周佳", occupied: "F301"}, {title: "刘燕", occupied: "F302"}
-    ];
-
-    this.groups = [
-      {name: "第一批 1-30号"}, {name: "第二批 31-60号"}, {name: "第三批 61-80号"}
-    ]
-
     this.tabsListRef = React.createRef();
-
-    this.conflictModal = React.createRef();
-    this.chooseDateModal = React.createRef();
-    this.chooseLabModal = React.createRef();
-    this.chooseTeacherModal = React.createRef();
-    this.editRemarkModal = React.createRef();
-    this.selectGroupModal = React.createRef();
-    this.confirmConflictDialog = React.createRef();
   }
 
   componentDidMount() {
@@ -327,111 +289,13 @@ class LiLunKeBiaoScreenWrapped extends Component {
     console.log("onYearPageChange: "+JSON.stringify(this.yearPages[index]));
   }
 
-  onClassItemClicked = (index) => {
-    console.log("onClassItemClicked, index: "+index);
-  }
-
-  onKebiaoRowClicked = (index) => {
-    console.log("onKebiaoRowClicked, index: "+index);
-    if (index === 2) {
-      this.conflictModal.current.show();
-    }
-  }
-
-  // Choose Date
-  onChooseDate = () => {
-    this.chooseDateModal.current.show();
-  }
-
-  onChooseDateResult = (newDate) => {
-    console.log("onChooseDateResult, date: "+newDate);
-    return true;
-  }
-
-  // Choose Lab
-  onChooseLab = () => {
-    this.chooseLabModal.current.show();
-  }
-
-  onChooseLabCenterChanged = (index) => {
-    this.setState({
-      labs: this.labCenters[index].labs
-    })
-  }
-
-  onChooseLabTimeSegChanged = (index) => {
-    console.log("onChooseLabTimeSegChanged index: "+index);
-  }
-
-  onChooseLabResult = (confirm, labIndex) => {
-    const { t } = this.props;
-    if (confirm) {
-      console.log("onChooseLabResult: "+JSON.stringify(this.state.labs[labIndex]));
-      this.showConfirmConflictDialog(t("solveConflictModal.confirm_conflict_title"), t("solveConflictModal.confirm_conflict_message"));
-    }
-    return true;
-  }
-  // Choose Teacher
-  onChooseTeacher = () => {
-    this.chooseTeacherModal.current.show();
-  }
-
-  onChooseTeacherCenterChanged = (index) => {
-    console.log("onChooseTeacherCenterChanged, center: "+this.labCenters[index].name);
-  }
-
-  onChooseTeacherResult = (confirm, index) => {
-    if (confirm) {
-      console.log("onChooseTeacherResult: "+JSON.stringify(this.teachers[index]));
-    }
-    return true;
-  }
-  // Edit Remark
-  onEditRemark = () => {
-    console.log("onEditRemark");
-    this.editRemarkModal.current.show();
-  }
-
-  onEditRemarkResult =  (confirm, result) => {
-    if (confirm) {
-      console.log("onEditRemarkResult: "+result);
-    }
-    return true;
-  }
-  // Select Group
-  onSelectGroup = () => {
-    console.log("onSelectGroup");
-    this.selectGroupModal.current.show();
-  }
-
-  onSelectGroupResult = (confirm, index) => {
-    if (confirm) {
-      console.log("onEditRemarkResult: "+JSON.stringify(this.groups[index]));
-    }
-    return true;
-  }
-
-  // Alert Dialog
-  showConfirmConflictDialog = (title, message) => {
-    this.confirmConflictDialog.current.show(title, message);
-  }
-
-  onConfirmConflict = (confirmed) => {
-    console.log("onConfirmConflict, confirmed: "+confirmed);
-    return true;
-  }
-
   render() {
     const { t } = this.props;
-    const { labs, selectedSubjectIndex } = this.state;
+    const { selectedSubjectIndex } = this.state;
     this.buildData();
-    const { teachers, groups, gradeInfo, subjectsData, subjectTitle,
-      tabTitles, tableHeaders, tableDataList, yearPages, labCenters, labTimeSegments,
-      onSubjectClicked, onTabChanged, onYearPageChanged,
-      onKebiaoRowClicked, onChooseDate, onChooseLab, onChooseTeacher, onEditRemark, onSelectGroup,
-      onChooseLabCenterChanged, onChooseLabTimeSegChanged, onChooseLabResult,
-      onChooseTeacherCenterChanged, onChooseTeacherResult,
-      onEditRemarkResult, onSelectGroupResult, onChooseDateResult, onConfirmConflict } = this;
+    const { gradeInfo, subjectsData, subjectTitle,
+      tabTitles, tableHeaders, tableDataList, yearPages,
+      onSubjectClicked, onTabChanged, onYearPageChanged} = this;
     const pageTables = [];
     for (let i=0; i < tabTitles.length; i++) {
       if (tableDataList[i]) {
@@ -448,15 +312,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
           initPageIndex={1}
           pagePrevCaption={t("lilunKebiaoScreen.prev_year")}
           pageNextCaption={t("lilunKebiaoScreen.next_year")}
-          onResultPageIndexChanged={onYearPageChanged}
-          onRowClicked={onKebiaoRowClicked} />);
+          onResultPageIndexChanged={onYearPageChanged} />);
       } else {
         pageTables[i] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
       }
-    }
-    let curClass = "";
-    if (this.banjiData && this.banjiData.length > 0) {
-      curClass = this.banjiData[0].name;
     }
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center">
@@ -478,53 +337,6 @@ class LiLunKeBiaoScreenWrapped extends Component {
           titles={tabTitles}
           onTabChange={onTabChanged}
           pages={pageTables} />
-        <SolveConflictModal
-          ref={this.conflictModal}
-          isCentered
-          onChooseDate={onChooseDate}
-          onChooseLab={onChooseLab}
-          onChooseTeacher={onChooseTeacher}
-          onEditRemark={onEditRemark}
-          onSelectGroup={onSelectGroup} />
-        <DatePickerModal
-          ref={this.chooseDateModal}
-          title={t("solveConflictModal.choose_date")}
-          titleBgColor="orange.500"
-          onResult={onChooseDateResult} />
-        <ChooseItemModal
-          ref={this.chooseLabModal}
-          centers={labCenters}
-          items={labs}
-          checkIconColor="red.500"
-          occupiedSuffix={t("chooseLabModal.occupied_suffix")}
-          timeSegments={labTimeSegments}
-          onCenterChanged={onChooseLabCenterChanged}
-          onTimeSegChanged={onChooseLabTimeSegChanged}
-          onResult={onChooseLabResult} />
-        <ChooseItemModal
-          ref={this.chooseTeacherModal}
-          centers={labCenters}
-          items={teachers}
-          emptyColor="pink.200"
-          occupiedSuffix={t("chooseLabModal.occupied_suffix")}
-          onCenterChanged={onChooseTeacherCenterChanged}
-          onResult={onChooseTeacherResult} />
-        <EditItemModal
-          ref={this.editRemarkModal}
-          title={t("solveConflictModal.remark")}
-          placeholder={t("solveConflictModal.remark_placeholder")}
-          titleBgColor="orange.500"
-          onResult={onEditRemarkResult} />
-        <SelectItemModal
-          ref={this.selectGroupModal}
-          title={t("solveConflictModal.group")+"["+curClass+"]"}
-          titleBgColor="orange.500"
-          choices={groups}
-          onResult={onSelectGroupResult} />
-        <Alert
-          ref={this.confirmConflictDialog}
-          negativeBtnCaption={t("common.cancel")}
-          onResult={onConfirmConflict}/>
       </Flex>
     );
   }

@@ -37,8 +37,16 @@ class SchedTableModalWrapped extends PureComponent {
     this.commonModalRef = React.createRef();
   }
 
-  show = () => {
-    this.commonModalRef.current.show();
+  show = (initWeekIndex = 0) => {
+    this.resetSelection();
+    this.commonModalRef.current.show(initWeekIndex);
+  }
+
+  resetSelection = () => {
+    this.setState({
+      selItem: { row: -1, col: -1 },
+      secSelItem: { row: -1, col: -1 }
+    });
   }
 
   buildData = () => {
@@ -49,8 +57,9 @@ class SchedTableModalWrapped extends PureComponent {
       this.rowData = this.buildSingleSelectData();
     } else {
       this.rowData = this.props.tableData;
+      this.enableOK = true;
     }
-    //console.log("buildData "+JSON.stringify(this.rowData));
+    //console.log("SchedTable, buildData "+JSON.stringify(this.rowData));
   }
 
   buildSingleSelectData = () => {
@@ -64,6 +73,7 @@ class SchedTableModalWrapped extends PureComponent {
         rowData[i][tableHeaders[j].field].highlight = (selItem.row === i && selItem.col === j);
       }
     }
+    this.enableOK = selItem.row >= 0 && selItem.col >= 0;
     return rowData;
   }
 
@@ -71,8 +81,8 @@ class SchedTableModalWrapped extends PureComponent {
     const { tableHeaders } = this;
     const { tableData, multiSelectRange = 1 } = this.props;
     const { selItem, secSelItem } = this.state;
-    let enableRowStart = 0, enableRowEnd = tableData.length-1;
-    let enableColStart = 0, enableColEnd = tableHeaders.length-1;
+    let enableRowStart = 0, enableRowEnd = tableData.length;
+    let enableColStart = 0, enableColEnd = tableHeaders.length;
     let highlightCol = -1, highlightRowStart = -1, highlightRowEnd = -1;
     if (selItem.col > 0 && selItem.row >= 0) {
       enableRowStart = selItem.row;
@@ -89,12 +99,13 @@ class SchedTableModalWrapped extends PureComponent {
 
     let rowData = [];
     for (let i=0; i < tableData.length; i++) {
-      this.rowData[i] = tableData[i];
+      rowData[i] = tableData[i];
       for (let j=1; j < tableHeaders.length; j++) {
         rowData[i][tableHeaders[j].field].disabled = (i < enableRowStart || i >= enableRowEnd || j < enableColStart || j >= enableColEnd);
-        rowData[i][tableHeaders[j].field].highlight = (i >= highlightRowStart && i <highlightRowEnd && j === highlightCol);
+        rowData[i][tableHeaders[j].field].highlight = (i >= highlightRowStart && i < highlightRowEnd && j === highlightCol);
       }
     }
+    this.enableOK = selItem.row >= 0 && selItem.col >= 0 && ((secSelItem.row >= 0 && secSelItem.col >= 0) || multiSelectRange === 1);
     return rowData;
   }
 
@@ -102,16 +113,12 @@ class SchedTableModalWrapped extends PureComponent {
     const { onResult } = this.props;
     let result = null;
     if (confirm) {
-      const { multiSelect, singleSelect } = this.props;
       const { selItem, secSelItem } = this.state;
       if (selItem.row >= 0 && selItem.col > 0) {
-        result = { row: selItem.row, col: selItem.col, range: 1 };
+        result = { hour_index: selItem.row, weekday_index: selItem.col-1, range: 1 };
         if (secSelItem.row >=0 && secSelItem.col > 0) {
           result.range = secSelItem.row - selItem.row + 1;
         }
-      } else if (multiSelect || singleSelect) {
-        // no selection, warning user
-        return false;
       }
     }
     if (onResult != null) {
@@ -141,7 +148,7 @@ class SchedTableModalWrapped extends PureComponent {
     });
   }
 
-  onMulitCellClicked = (e) => {
+  onMultiCellClicked = (e) => {
     const { selItem, secSelItem } = this.state;
     let { multiSelectRange = 1 } = this.props;
     if (multiSelectRange === 2 && selItem.row === 1) {
@@ -169,15 +176,16 @@ class SchedTableModalWrapped extends PureComponent {
   }
 
   render() {
-    const { title, titleBgColor, tableData, withCancel, ...other_props } = this.props;
+    const { title, titleBgColor, tableData, withCancel, onResult, ...other_props } = this.props;
     this.buildData();
-    const { tableHeaders, rowData, cellClassRules, onCellClicked } = this;
+    const { tableHeaders, rowData, cellClassRules, enableOK, onCellClicked } = this;
     return (
       <CommonModal
         ref={this.commonModalRef}
         title={title}
         titleBgColor={titleBgColor}
         withCancel={withCancel}
+        disableOK={!enableOK}
         onResult={this.onResult}
         { ...other_props }>
         <EditableTable

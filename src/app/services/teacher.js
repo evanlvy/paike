@@ -7,19 +7,21 @@ class Api {
     this.baseUrl = server.url + "/api/v1";
   }
 
-  queryTeachers = async (jiaoyanshiId) => {
+  queryTeachers = async (jysId, stage_id, week) => {
     try {
-      const url = this.baseUrl+"/teachers";
-      console.log("Request url "+url+" with jiaoyanshi: "+jiaoyanshiId);
+      const url = this.baseUrl+"/teacher_jobs";
+      console.log("Request url "+url+" with jys: "+jysId+", stage_id: "+stage_id+", week: "+week);
       let request_param = {
-        jiaoyanshi: jiaoyanshiId,
+        dep_id: jysId,
+        stage_id: stage_id,
+        week: week,
       };
       let response = await axios.post(url, request_param);
       const { success, data, message } = response.data;
       if (!success) {
         throw new Error(message.message);
       }
-      return data;
+      return data.teachers;
     } catch (error) {
       throw error;
     }

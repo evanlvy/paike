@@ -106,7 +106,7 @@ class ShiXunKeBiaoScreen extends Component {
     const { semesterPages } = this;
     if (semesterPages.length === 0) {
       for (let i=0; i < SEMESTER_WEEK_COUNT; i++) {
-        semesterPages.push({ name: t("kebiao.semester_week_template", {week_index: i+1}) });
+        semesterPages.push({ name: t("kebiao.semester_week_template", {index: i+1}) });
       }
     }
   }
@@ -238,7 +238,7 @@ class ShiXunKeBiaoScreen extends Component {
             resultItem["teacher"] = teacherInfo.trim();
             resultItem["shixun_teacher"] = kebiaoHour.lab_teacher;
             resultItem["lab"] = kebiaoHour.lab_location;
-            resultItem["note"] = "";
+            resultItem["note"] = kebiaoHour.comments;
             resultItem["data"] = kebiaoHour;
             resultList.push(resultItem);
           });

@@ -5,6 +5,7 @@ import { createSelector } from 'reselect';
 import { DATA_EXPIRATION_TIME } from './common/info';
 import { actions as appActions } from './app';
 import { getCenter, getCenterIds } from './jiaoyanshi';
+import { types as kebiaoTypes } from './kebiao';
 import { api as labApi } from '../../services/lab';
 
 // action types
@@ -120,7 +121,7 @@ const convertLabsToPlain = (year, week, labs) => {
   let shixunByIds = {};
   //console.log("Got Labs data: "+JSON.stringify(labs));
   labs.forEach(lab => {
-    labByIds[lab.id] = { ...lab, used: lab.used && lab.used.length > 0 };
+    labByIds[lab.id] = { ...lab };
     labIds.push(lab.id);
     const labSchedId = buildLabSchedId(lab.id, year, week);
     if (shixunByLabSchedList[labSchedId] == null) {
@@ -188,6 +189,8 @@ const shixunByLabSched = (state = Immutable.fromJS({}), action) => {
     case types.FETCH_LABS:
     case types.FETCH_LABS_BY_ITEM:
       return state.merge(action.shixunByLabSchedList);
+    case kebiaoTypes.UPDATE_KEBIAO:
+      return Immutable.fromJS({}); // reset shixunByLabSched when we updated the kebiao
     default:
       return state;
   }

@@ -7,12 +7,14 @@ import { actions as appActions } from './app';
 import { api as kebiaoApi } from '../../services/kebiao';
 
 import { types as labTypes } from './lab';
+import { types as teacherTypes } from './teacher';
 
 // action types
 export const types = {
   FETCH_LILUN_BY_BANJI: "KEBIAO/FETCH_LILUN_BY_BANJI",
   FETCH_KEBIAO_BY_BANJI: "KEBIAO/FETCH_KEBIAO_BY_BANJI",
-  FETCH_SHIXUN: "KEBIAO/FETCH_SHIXUN"
+  FETCH_SHIXUN: "KEBIAO/FETCH_SHIXUN",
+  UPDATE_KEBIAO: "KEBIAO/UPDATE_KEBIAO",
 };
 
 // actions
@@ -54,9 +56,22 @@ export const actions = {
           dispatch(appActions.startRequest());
           const data = await kebiaoApi.queryShiXunByJiaoyanshi(jiaoyanshiIds, year, week);
           dispatch(appActions.finishRequest());
-          const { kebiaoByJiaoyanshiSched, kebiaoByIds } = convertShiXunByJiaoyanshiToPlain(data, year, week);
+          const { kebiaoByJiaoyanshiSched, kebiaoByIds } = convertShiXunByJiaoyanshiToPlain(data, year);
           dispatch(fetchShiXunByJiaoyanshiSuccess(kebiaoByJiaoyanshiSched, kebiaoByIds));
         }
+      } catch (error) {
+        dispatch(appActions.setError(error));
+      }
+    }
+  },
+  updateKebiao: (kebiao) => {
+    return async (dispatch) => {
+      try {
+        dispatch(appActions.startRequest());
+        const data = await kebiaoApi.updateKebiao(kebiao);
+        dispatch(appActions.finishRequest());
+        const { kebiaoByIds } = convertKebiaoToPlain(data);
+        dispatch(updateKebiaoSuccess( kebiaoByIds));
       } catch (error) {
         dispatch(appActions.setError(error));
       }
@@ -212,11 +227,37 @@ const fetchShiXunByJiaoyanshiSuccess = (shixunByJiaoyanshiShedList, shixunByIds)
   };
 }
 
+const convertKebiaoToPlain = (kebiaoList) => {
+  let kebiaoByIds = {};
+  kebiaoList.forEach(kebiao => {
+    kebiaoByIds[kebiao.id] = {...kebiao};
+  });
+  return {
+    kebiaoByIds
+  };
+}
+
+const updateKebiaoSuccess = (kebiaoByIds) => {
+  return {
+    type: types.UPDATE_KEBIAO,
+    kebiaoByIds,
+  };
+}
+
 // reducers
-const liLunByIds = (state = Immutable.fromJS({}), action) => {
+const kebiaoByIds = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_LILUN_BY_BANJI:
       return state.merge(action.lilunByIds);
+    case types.FETCH_KEBIAO_BY_BANJI:
+    case teacherTypes.FETCH_TEACHERS:
+      return state.merge(action.kebiaoByIds);
+    case types.UPDATE_KEBIAO:
+      return state.merge(action.kebiaoByIds);
+    case types.FETCH_SHIXUN:
+    case labTypes.FETCH_LABS:
+    case labTypes.FETCH_LABS_BY_ITEM:
+      return state.merge(action.shixunByIds);
     default:
       return state;
   }
@@ -231,30 +272,12 @@ const liLunByBanjiSched = (state = Immutable.fromJS({}), action) => {
   }
 }
 
-const kebiaoByIds = (state = Immutable.fromJS({}), action) => {
-  switch (action.type) {
-    case types.FETCH_KEBIAO_BY_BANJI:
-      return state.merge(action.kebiaoByIds);
-    default:
-      return state;
-  }
-}
-
 const kebiaoByBanjiSched = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_KEBIAO_BY_BANJI:
       return state.merge(action.kebiaoByBanjiSchedList);
-    default:
-      return state;
-  }
-}
-
-const shiXunByIds = (state = Immutable.fromJS({}), action) => {
-  switch (action.type) {
-    case types.FETCH_SHIXUN:
-      return state.merge(action.shixunByIds)
-    case labTypes.FETCH_LABS:
-      return state.merge(action.shixunByIds);
+    case types.UPDATE_KEBIAO:
+      return Immutable.fromJS({}); // reset data after UPDATE_KEBIAO
     default:
       return state;
   }
@@ -264,29 +287,28 @@ const shiXunByJiaoyanshiSched = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_SHIXUN:
       return state.merge(action.shixunByJiaoyanshiShedList);
+    case types.UPDATE_KEBIAO:
+      return Immutable.fromJS({}); // reset data after UPDATE_KEBIAO  
     default:
       return state;
   }
 }
 
 const reducer = combineReducers({
-  liLunByIds,
-  liLunByBanjiSched,
   kebiaoByIds,
+  liLunByBanjiSched,
   kebiaoByBanjiSched,
-  shiXunByIds,
   shiXunByJiaoyanshiSched
 });
 
 export default reducer;
 
 // selectors
-export const getLiLun = state => state.getIn(["kebiao", "liLunByIds"]);
+export const getKebiao = state => state.getIn(["kebiao", "kebiaoByIds"]);
 
 export const getLiLunByBanjiSched = state => state.getIn(["kebiao", "liLunByBanjiSched"]);
-
 export const getLiLunByAllBanjiSched = createSelector(
-  [getLiLun, getLiLunByBanjiSched],
+  [getKebiao, getLiLunByBanjiSched],
   (lilun, lilunByBanjiSched) => {
     //console.log("getLiLunByAllBanjiSched: "+JSON.stringify(lilun)+", "+JSON.stringify(lilunByBanjiSched));
     const banjiSchedIds = Object.keys(lilunByBanjiSched.toJS());
@@ -319,10 +341,7 @@ export const getLiLunByAllBanjiSched = createSelector(
   }
 );
 
-export const getKebiao = state => state.getIn(["kebiao", "kebiaoByIds"]);
-
 export const getKebiaoByBanjiSched = state => state.getIn(["kebiao", "kebiaoByBanjiSched"]);
-
 export const getKeBiaoByAllBanjiSched = createSelector(
   [getKebiao, getKebiaoByBanjiSched],
   (kebiao, kebiaoByBanjiSched) => {
@@ -360,12 +379,9 @@ export const getKeBiaoByAllBanjiSched = createSelector(
   }
 );
 
-export const getShiXun = state => state.getIn(["kebiao", "shiXunByIds"]);
-
 export const getShiXunByJysSched = state => state.getIn(["kebiao", "shiXunByJiaoyanshiSched"]);
-
 export const getShiXunByJiaoyanshiSched = createSelector(
-  [getShiXun, getShiXunByJysSched],
+  [getKebiao, getShiXunByJysSched],
   (shixun, shixunByJysSched) => {
     const jysSchedIds = Object.keys(shixunByJysSched.toJS());
     let result = {};

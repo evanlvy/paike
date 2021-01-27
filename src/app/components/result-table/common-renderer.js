@@ -17,6 +17,7 @@ class CommonRenderer extends Component {
         <div className="common-cell" style={{lineHeight: lineHeight+"px"}}></div>
       );
     }
+    //console.log("CommonRenderer render: value: "+JSON.stringify(value));
     return (
       <div className="common-cell" style={{lineHeight: lineHeight+"px"}}>
         { value.title == null && value.titles == null && value }

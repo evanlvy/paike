@@ -136,7 +136,7 @@ class BanJiKeBiaoScreen extends Component {
     const { semesterPages } = this;
     if (semesterPages.length === 0) {
       for (let i=0; i < SEMESTER_WEEK_COUNT; i++) {
-        semesterPages.push({ name: t("kebiao.semester_week_template", {week_index: i+1}) });
+        semesterPages.push({ name: t("kebiao.semester_week_template", {index: i+1}) });
       }
     }
   }

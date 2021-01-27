@@ -59,7 +59,7 @@
     "semester_one_second": "第一学期10-18周",
     "semester_two_first": "第二学期1-9周",
     "semester_two_second": "第二学期10-18周",
-    "semester_week_template": "第{{week_index}}周",
+    "semester_week_template": "第{{index}}周",
     "prev_semester_week": "上一周",
     "next_semester_week": "下一周",
     "input_semester_week_prefix": "第",
@@ -128,6 +128,14 @@
     "next_time": "下一时段",
     "occupied_suffix": "有课",
     "title_labinfo_template": "实验室占用情况 [{{lab_name}}]"
+  },
+  "chooseSchedModal": {
+    "title_template": "选择时间 [{{banji_name}}]",
+    "lilun": "理论",
+    "shiyan": "实验"
+  },
+  "chooseTeacherModal": {
+    "title_template": "选择教师 [{{shixun_name}}]",
+    "shixun_center": "实训中心"
   }
-
 }
