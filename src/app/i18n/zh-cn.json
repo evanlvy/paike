@@ -50,7 +50,9 @@
     "title_jys_template": "分中心教研室 [{{jys_info}}]",
     "title_no_lab_template": "请选择实验室 [{{center_info}}]",
     "title_lab_template": "实验室{{lab_name}} [{{center_info}}]",
-    "title_no_center_template": "请选择实训分中心"
+    "title_no_center_template": "请选择实训分中心",
+    "title_no_teacher_template": "请选择教师 [{{jys_name}}教研室]",
+    "title_teacher_template": "{{teacher_name}} [{{jys_name}}教研室]"
   },
   "kebiao": {
     "zixi": "自习",
@@ -109,6 +111,10 @@
   "centerLabScreen": {
     "all_labs": "全部实验室",
     "table_title_template": "{{lab_info}} 时间表"
+  },
+  "jysKebiaoScreen": {
+    "all_teachers": "全教研室",
+    "table_title_template": "{{teacher_info}} 排班表"
   },
   "paikeScreen": {
     "table_title_template": "{{center_info}}实验汇总表"

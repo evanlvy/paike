@@ -53,7 +53,7 @@ const MenuType = {
   SHIXUN: 3,
   SHIYANSHI: 4,
   JIAOYANSHI: 5,
-  JIAOSHI: 6,
+  PAIKE: 6,
   BASIC_MAINTAIN: 7,
 };
 
@@ -70,6 +70,9 @@ class MenuBarWrapped extends Component {
     this.banjiMenuRef = React.createRef();
     this.shixunMenuRef = React.createRef();
     this.labMenuRef = React.createRef();
+    this.jysMenuRef = React.createRef();
+
+    this.menuRefs = [this.lilunMenuRef, this.banjiMenuRef, this.shixunMenuRef, this.labMenuRef, this.jysMenuRef, null, null];
   }
 
   initMenu = () => {
@@ -77,6 +80,18 @@ class MenuBarWrapped extends Component {
     this.initLabs();
     this.initJiaoYanShi();
     this.initMaintainMenu();
+  }
+
+  resetMenu = (withoutIndex) => {
+    for (let i=0; i < this.menuRefs.length; i++) {
+      if (i === withoutIndex) {
+        continue;
+      }
+      const menuRef = this.menuRefs[i];
+      if (menuRef && menuRef.current) {
+        menuRef.current.reset();
+      }
+    }
   }
 
   initGrades = () => {
@@ -122,7 +137,7 @@ class MenuBarWrapped extends Component {
     centers.forEach((center) => {
       let jysList = [];
       center.jiaoyanshi.forEach((jys) => {
-        let jys_item = { name: jys.name };
+        let jys_item = { id: jys.id, name: jys.name };
         jysList.push(jys_item);
       });
       let center_item = {
@@ -160,37 +175,9 @@ class MenuBarWrapped extends Component {
     console.log("onGradeChanged, menu type: "+menu_type+", education: "+grade_type.name+", grade: "+grade.name);
     switch(menu_type) {
       case MenuType.LILUN:
-        if (this.banjiMenuRef.current) {
-          this.banjiMenuRef.current.reset();
-        }
-        if (this.shixunMenuRef.current) {
-          this.shixunMenuRef.current.reset();
-        }
-        if (this.labMenuRef.current) {
-          this.labMenuRef.current.reset();
-        }
-        break;
       case MenuType.BANJI:
-        if (this.lilunMenuRef.current) {
-          this.lilunMenuRef.current.reset();
-        }
-        if (this.shixunMenuRef.current) {
-          this.shixunMenuRef.current.reset();
-        }
-        if (this.labMenuRef.current) {
-          this.labMenuRef.current.reset();
-        }
-        break;
       case MenuType.SHIXUN:
-        if (this.lilunMenuRef.current) {
-          this.lilunMenuRef.current.reset();
-        }
-        if (this.banjiMenuRef.current) {
-          this.banjiMenuRef.current.reset();
-        }
-        if (this.labMenuRef.current) {
-          this.labMenuRef.current.reset();
-        }
+        this.resetMenu(menu_type-1);
         break;
       default:
         break;
@@ -202,15 +189,7 @@ class MenuBarWrapped extends Component {
     const { centers, labBuildings } = this.props;
     console.log("onLabChanged, menu type: "+menu_type+", by type: "+by_type+", index: "+lab_index);
     // reset other menus
-    if (this.banjiMenuRef.current) {
-      this.banjiMenuRef.current.reset();
-    }
-    if (this.shixunMenuRef.current) {
-      this.shixunMenuRef.current.reset();
-    }
-    if (this.lilunMenuRef.current) {
-      this.lilunMenuRef.current.reset();
-    }
+    this.resetMenu(MenuType.SHIYANSHI-1);
 
     if (by_type === LabType.BY_CENTER) {
       const center = centers[lab_index];
@@ -225,12 +204,16 @@ class MenuBarWrapped extends Component {
     const center = jiaoyanshi_centers[center_index];
     const item = center.items[item_index];
     console.log("onJiaoYanShiChange, center: "+center.name+", item: "+item.name);
-    this.notifyMenuSelected(menu_type, {center: center, item: item});
+    // reset other menus
+    this.resetMenu(MenuType.JIAOYANSHI-1);
+    this.notifyMenuSelected(menu_type, {jys: {id: item.id, name: item.name}});
   }
 
   onJiaoShiPaiKeClicked = () => {
     console.log("onJiaoShiPaiKeClicked");
-    this.notifyMenuSelected(MenuType.JIAOSHI, null);
+    // reset other menus
+    this.resetMenu(MenuType.PAIKE-1);
+    this.notifyMenuSelected(MenuType.PAIKE, null);
   }
 
   onMaintainMenuSelected = (menu_type, main_index, sub_index) => {
@@ -238,6 +221,8 @@ class MenuBarWrapped extends Component {
     const main_menu = maintain_menus[main_index];
     const sub_menu = main_menu.items[sub_index];
     console.log("onMaintainMenuSelected, main menu: "+main_menu.name+", sub menu: "+sub_menu.name);
+    // reset other menus
+    this.resetMenu(MenuType.BASIC_MAINTAIN-1);
     this.notifyMenuSelected(menu_type, {main: main_menu, sub: sub_menu});
   }
 
@@ -254,8 +239,8 @@ class MenuBarWrapped extends Component {
       { list_type: MenuListType.LAB, type: MenuType.SHIYANSHI, title: "menuBar.shiyanshi_anpai_title", icon: FaBuilding, bgColor: "blue",
               menuListProps: {labCenters: lab_centers ,labBuildings: lab_buildings, onLabChange: this.onLabChanged}, menu_ref: this.labMenuRef },
       { list_type: MenuListType.GROUP, type: MenuType.JIAOYANSHI, title: "menuBar.jiaoyanshi_kebiao_title", icon: MdCollectionsBookmark, bgColor: "red",
-              menuListProps: {menuGroups: jiaoyanshi_centers, onGroupMenuSelected: this.onJiaoYanShiChange, height: 500} },
-      { type: MenuType.JIAOSHI, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink", onClick: this.onJiaoShiPaiKeClicked},
+              menuListProps: {menuGroups: jiaoyanshi_centers, onGroupMenuSelected: this.onJiaoYanShiChange, height: 500}, menu_ref: this.jysMenuRef },
+      { type: MenuType.PAIKE, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink", onClick: this.onJiaoShiPaiKeClicked},
       { list_type: MenuListType.GROUP, type: MenuType.BASIC_MAINTAIN, title: "menuBar.basic_maintain_title", icon: FaUserCog, bgColor: "purple",
               menuListProps: {menuGroups: maintain_menus, onGroupMenuSelected: this.onMaintainMenuSelected, height: 500} },
     ]

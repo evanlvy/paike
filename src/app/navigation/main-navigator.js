@@ -21,7 +21,6 @@ import {
 import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
 import { actions as gradeActions, getGradesOfAllDegrees } from '../redux/modules/grade';
 import { actions as jysActions, getJiaoyanshiOfAllCenters } from '../redux/modules/jiaoyanshi';
-//import { actions as labBuildingActions, getAllLabBuildingsInfo } from '../redux/modules/lab_building';
 import { actions as requestActions, getRequestQuantity, getError } from '../redux/modules/app';
 
 import AsyncComponent from '../utils/AsyncComponent';
@@ -31,6 +30,7 @@ const AsyncLiLunKeBiaoScreen = connectRoute(AsyncComponent(() => import('../scre
 const AsyncBanJiKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/banji-kebiao-screen')));
 const AsyncShiXunKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/shixun-kebiao-screen')));
 const AsyncCenterLabScreen = connectRoute(AsyncComponent(() => import('../screens/center-lab-screen')));
+const AsyncJysKebiaoScreen = connectRoute(AsyncComponent(() => import('../screens/jys-kebiao-screen')));
 const AsyncPaikeScreen = connectRoute(AsyncComponent(() => import('../screens/paike-screen')));
 
 class MainNavigatorWrapper extends PureComponent {
@@ -42,7 +42,6 @@ class MainNavigatorWrapper extends PureComponent {
   componentDidMount() {
     this.props.fetchAllGradeInfo();
     this.props.fetchJiaoyanshi();
-    //this.props.fetchLabBuildings();
   }
 
   componentDidUpdate() {
@@ -68,7 +67,10 @@ class MainNavigatorWrapper extends PureComponent {
       case MenuType.SHIYANSHI:
         history.push('/labs', menu_params);
         break;
-      case MenuType.JIAOSHI:
+      case MenuType.JIAOYANSHI:
+        history.push('/jys', menu_params);
+        break;
+      case MenuType.PAIKE:
         history.push('/paike', menu_params);
         break;
       default:
@@ -109,6 +111,7 @@ class MainNavigatorWrapper extends PureComponent {
             <Route path="/kebiao/banji" component={AsyncBanJiKeBiaoScreen} />
             <Route path="/kebiao/shixun" component={AsyncShiXunKeBiaoScreen} />
             <Route path="/labs" component={AsyncCenterLabScreen} />
+            <Route path="/jys" component={AsyncJysKebiaoScreen} />
             <Route path="/paike" component={AsyncPaikeScreen} />
           </Switch>
         </Flex>
@@ -131,7 +134,6 @@ const mapStateToProps = (state) => {
     user: getLoggedUser(state),
     gradeTypes: getGradesOfAllDegrees(state),
     centers: getJiaoyanshiOfAllCenters(state),
-    //labBuildings: getAllLabBuildingsInfo(state),
     requestsCount: getRequestQuantity(state),
     requestError: getError(state),
   }
@@ -143,7 +145,6 @@ const mapDispatchToProps = (dispatch) => {
     ...bindActionCreators(authActions, dispatch),
     ...bindActionCreators(gradeActions, dispatch),
     ...bindActionCreators(jysActions, dispatch),
-    //...bindActionCreators(labBuildingActions, dispatch)
   }
 }
 
