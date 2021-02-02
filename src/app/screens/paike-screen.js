@@ -383,14 +383,14 @@ class PaikeScreen extends Component {
   onKebiaoRowClicked = (index) => {
     console.log("onKebiaoRowClicked, index: "+index);
     const rowData = {...this.tableData[index]};
-    if (rowData.is_conflict) {
+    //if (rowData.is_conflict) {
       const { selectWeek } = this.state;
-      this.conflictList = [];
-      this.tableData.forEach(row => {
-        if (row.is_conflict) {
-          this.conflictList.push({...row});
-        }
-      });
+      this.conflictList = [rowData];
+      // this.tableData.forEach(row => {
+      //   if (row.is_conflict) {
+      //     this.conflictList.push({...row});
+      //   }
+      // });
       this.setState({
         selectConflict : rowData
       });
@@ -398,7 +398,7 @@ class PaikeScreen extends Component {
       this.loadTeacherSched(selectWeek);
       this.loadBanjiSched(this.conflictList, selectWeek);
       this.conflictModalRef.current.showConflict(selectWeek, rowData, this.conflictList);
-    }
+    //}
   }
 
   onSchedWeekChanged = (weekIndex) => {

@@ -147,25 +147,34 @@ class SolveConflictModalWrapped extends Component {
     this.buildSchedTable();
   }
 
-  buildLabList = () => {
+  checkLabFree = (labId) => {
     const { selectWeek, selectItem } = this.state;
-    const { labs, labSched } = this.props;
+    const { labSched } = this.props;
+    const selectItemData = selectItem.data;
+    if (labId === selectItemData.lab_id) {
+      return true;
+    }
+    const labSchedId = buildLabSchedId(labId, 3, selectWeek);
+    const labSchedInfo = labSched.get(labSchedId);
+    if (labSchedInfo) {
+      // console.log("labSchedInfo: "+JSON.stringify(labSchedInfo));
+      // console.log("selectItemData: "+JSON.stringify(selectItemData));
+      const schedInDay = labSchedInfo.schedules[selectItemData.day_in_week-1];
+      return !(schedInDay && schedInDay[(selectItemData.index-1)/2] && schedInDay[(selectItemData.index-1)/2].length > 0);
+    }
+    return true;
+  }
+
+  buildLabList = () => {
+    const { labs } = this.props;
     if (!labs || labs.length === 0) {
       return;
     }
     this.labList = labs.map(labInfo => {
-        const labSchedId = buildLabSchedId(labInfo.id, 3, selectWeek);
-        const labSchedInfo = labSched.get(labSchedId);
-        if (labSchedInfo) {
-          const selectItemData = selectItem.data;
-          // console.log("labSchedInfo: "+JSON.stringify(labSchedInfo));
-          // console.log("selectItemData: "+JSON.stringify(selectItemData));
-          const schedInDay = labSchedInfo.schedules[selectItemData.day_in_week-1];
-          if (schedInDay && schedInDay[(selectItemData.index-1)/2] && schedInDay[(selectItemData.index-1)/2].length > 0) {
-            labInfo.occupied = "";
-          } else {
-            labInfo.occupied = null;
-          }
+        if (!this.checkLabFree(labInfo.id)) {
+          labInfo.occupied = "";
+        } else {
+          labInfo.occupied = null;
         }
         return labInfo;
     });
@@ -175,10 +184,13 @@ class SolveConflictModalWrapped extends Component {
   checkTeacherFree = (teacherId) => {
     const { selectWeek, selectItem } = this.state;
     const { teacherSched } = this.props;
+    const selectItemData = selectItem.data;
+    if (teacherId === selectItemData.lab_teacher_id) {
+      return true;
+    }
     const teacherSchedId = buildTeacherSchedId(teacherId, 3, selectWeek);
     const teacherSchedInfo = teacherSched.get(teacherSchedId);
     if (teacherSchedInfo) {
-      const selectItemData = selectItem.data;
       //console.log("teacher: "+teacherInfo.title+" schedInfo: "+JSON.stringify(teacherSchedInfo));
       const schedInDay = teacherSchedInfo.schedules[selectItemData.day_in_week-1];
       return !(schedInDay && schedInDay[(selectItemData.index-1)/2] && schedInDay[(selectItemData.index-1)/2].length > 0);
@@ -311,7 +323,9 @@ class SolveConflictModalWrapped extends Component {
         maxCount: SEMESTER_WEEK_COUNT
       }
     });
-    this.schedTableModalRef.current.show(selectItem.data.week-1);
+    if (this.schedTableModalRef.current) {
+      this.schedTableModalRef.current.show(selectItem.data.week-1);
+    }
   }
 
   buildKebiaoName = (kebiaoInfo) => {
@@ -446,7 +460,9 @@ class SolveConflictModalWrapped extends Component {
 
   // Edit Lab
   onEditLab = () => {
-    this.chooseLabModalRef.current.show();
+    if (this.chooseLabModalRef.current) {
+      this.chooseLabModalRef.current.show();
+    }
   }
 
   onLabSelect = (index) => {
@@ -516,11 +532,8 @@ class SolveConflictModalWrapped extends Component {
   onConfirmLabChooseResult = (confirm) => {
     this.schedTableType = SCHED_TABLE_TYPE_NONE;
     if (confirm) {
-      const { schedTableData, schedTableFieldNames } = this;
-      const { selectItem } = this.state;
-      const selectItemData = selectItem.data;
-      const schedData = schedTableData[(selectItemData.index-1)/2][schedTableFieldNames[selectItemData.day_in_week]].data;
-      if (schedData && schedData.length > 0) {
+      const { selectLab } = this;
+      if (!this.checkLabFree(selectLab.id)) {
         this.showDoubleConfirmDialog(this.onDoubleConfirmLabResult);
       } else {
         this.onDoubleConfirmLabResult(true);
