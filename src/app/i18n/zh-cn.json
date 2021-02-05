@@ -96,7 +96,7 @@
     "shixun_teacher": "带教老师"
   },
   "lilunKebiaoScreen": {
-    "title_template": "{{grade_info}}总课表 ({{semester_info}})",
+    "title": "总课表",
     "prev_year": "上一年",
     "next_year": "下一年",
     "year_template": "{{year}}年度"
