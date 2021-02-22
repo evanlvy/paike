@@ -190,7 +190,7 @@ const shixunByLabSched = (state = Immutable.fromJS({}), action) => {
     case types.FETCH_LABS_BY_ITEM:
       return state.merge(action.shixunByLabSchedList);
     case kebiaoTypes.UPDATE_KEBIAO:
-      return Immutable.fromJS({}); // reset shixunByLabSched when we updated the kebiao
+      return state.merge(action.kebiaoByLabSched);
     default:
       return state;
   }

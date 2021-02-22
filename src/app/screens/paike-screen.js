@@ -32,7 +32,7 @@ class PaikeScreen extends Component {
     this.state = {
       selectedCenterIndex: 0,
       selectWeek: 1,
-      selectSchedWeekIndex: 0,
+      selectSchedWeekIndex: 1,
       selectDepIndex: 0,
       selectConflict: null,
     };
@@ -375,7 +375,7 @@ class PaikeScreen extends Component {
     const weekIndex = index+1;
     this.setState({
       selectWeek : weekIndex,
-      selectSchedWeekIndex: index
+      selectSchedWeekIndex: weekIndex
     });
     this.loadKebiao(weekIndex);
   }
@@ -394,6 +394,7 @@ class PaikeScreen extends Component {
       this.setState({
         selectConflict : rowData
       });
+      this.selectOriginConflict = this.tableData[index];
       this.loadLabSched(selectWeek);
       this.loadTeacherSched(selectWeek);
       this.loadBanjiSched(this.conflictList, selectWeek);
@@ -401,14 +402,15 @@ class PaikeScreen extends Component {
     //}
   }
 
-  onSchedWeekChanged = (weekIndex) => {
-    console.log("onSchedWeekChanged, weekIndex: "+weekIndex);
+  onSchedWeekChanged = (index) => {
+    console.log("onSchedWeekChanged, index: "+index);
+    const weekIndex = index+1;
     this.setState({
       selectSchedWeekIndex: weekIndex
     });
-    this.loadLabSched(weekIndex+1);
-    this.loadTeacherSched(weekIndex+1);
-    this.loadBanjiSched(this.conflictList, weekIndex+1);
+    this.loadLabSched(weekIndex);
+    this.loadTeacherSched(weekIndex);
+    this.loadBanjiSched(this.conflictList, weekIndex);
   }
 
   onTeacherDepChanged = (index) => {
@@ -417,14 +419,16 @@ class PaikeScreen extends Component {
       selectDepIndex: index
     });
     this.selectTeacherDepartment = this.teacherDepList[index];
-    const { selectWeek } = this.state;
-    this.loadTeacherSched(selectWeek);
+    const { selectSchedWeekIndex } = this.state;
+    this.loadTeacherSched(selectSchedWeekIndex);
   }
 
   onSolveConflictResult = (confirm, result) => {
     if (confirm) {
+      const { selectWeek, selectSchedWeekIndex } = this.state;
+      const { selectOriginConflict } = this;
       console.log("onSolveConflictResult, result: "+JSON.stringify(result));
-      this.props.updateKebiao(result.data);
+      this.props.updateKebiao(selectOriginConflict.data, result.data, 3, selectWeek, selectSchedWeekIndex);
       this.hasFetchKebiao = false; // force to reload kebiao
     }
     return true;

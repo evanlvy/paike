@@ -137,7 +137,7 @@ const kebiaoByTeacherSched = (state = Immutable.fromJS({}), action) => {
     case types.FETCH_TEACHERS:
       return state.merge(action.kebiaoByTeacherSchedList);
     case kebiaoTypes.UPDATE_KEBIAO:
-      return Immutable.fromJS({});
+      return state.merge(action.kebiaoByTeacherSched);
     default:
       return state;
   }

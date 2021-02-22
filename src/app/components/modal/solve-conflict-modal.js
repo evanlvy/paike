@@ -185,15 +185,20 @@ class SolveConflictModalWrapped extends Component {
     const { selectWeek, selectItem } = this.state;
     const { teacherSched } = this.props;
     const selectItemData = selectItem.data;
-    if (teacherId === selectItemData.lab_teacher_id) {
-      return true;
-    }
+
     const teacherSchedId = buildTeacherSchedId(teacherId, 3, selectWeek);
     const teacherSchedInfo = teacherSched.get(teacherSchedId);
     if (teacherSchedInfo) {
       //console.log("teacher: "+teacherInfo.title+" schedInfo: "+JSON.stringify(teacherSchedInfo));
       const schedInDay = teacherSchedInfo.schedules[selectItemData.day_in_week-1];
-      return !(schedInDay && schedInDay[(selectItemData.index-1)/2] && schedInDay[(selectItemData.index-1)/2].length > 0);
+      if (!schedInDay) {
+        return true;
+      }
+      const schedHours = schedInDay[(selectItemData.index-1)/2];
+      if (!schedHours || schedHours.length === 0) {
+        return true;
+      }
+      return schedHours.indexOf(selectItemData.id+"") >= 0;
     }
     return true;
   }
