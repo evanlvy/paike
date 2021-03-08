@@ -85,9 +85,11 @@ class SolveConflictModalWrapped extends Component {
     this.chooseLabModalRef = React.createRef();
     this.schedTableModalRef = React.createRef();
     this.doubleConfirmDialog = React.createRef();
+
+    this.stageIndex = 3; // set stage index to 3 by default
   }
 
-  showConflict = (weekIndex, selectItem, conflictList) => {
+  showConflict = (stageIndex, weekIndex, selectItem, conflictList) => {
     if (!selectItem) {
       console.log("Can't show empty data in SolveConflictModal");
       return;
@@ -100,6 +102,7 @@ class SolveConflictModalWrapped extends Component {
     } else {
       this.conflictList = [selectItem];
     }
+    this.stageIndex = stageIndex;
     this.setState({
       selectWeek: weekIndex,
       selectItem: selectItem
@@ -148,13 +151,14 @@ class SolveConflictModalWrapped extends Component {
   }
 
   checkLabFree = (labId) => {
+    const { stageIndex } = this;
     const { selectWeek, selectItem } = this.state;
     const { labSched } = this.props;
     const selectItemData = selectItem.data;
     if (labId === selectItemData.lab_id) {
       return true;
     }
-    const labSchedId = buildLabSchedId(labId, 3, selectWeek);
+    const labSchedId = buildLabSchedId(labId, stageIndex, selectWeek);
     const labSchedInfo = labSched.get(labSchedId);
     if (labSchedInfo) {
       // console.log("labSchedInfo: "+JSON.stringify(labSchedInfo));
@@ -182,11 +186,12 @@ class SolveConflictModalWrapped extends Component {
   }
 
   checkTeacherFree = (teacherId) => {
+    const { stageIndex } = this;
     const { selectWeek, selectItem } = this.state;
     const { teacherSched } = this.props;
     const selectItemData = selectItem.data;
 
-    const teacherSchedId = buildTeacherSchedId(teacherId, 3, selectWeek);
+    const teacherSchedId = buildTeacherSchedId(teacherId, stageIndex, selectWeek);
     const teacherSchedInfo = teacherSched.get(teacherSchedId);
     if (teacherSchedInfo) {
       //console.log("teacher: "+teacherInfo.title+" schedInfo: "+JSON.stringify(teacherSchedInfo));
@@ -345,8 +350,8 @@ class SolveConflictModalWrapped extends Component {
   buildBanjiSchedTable = (banjiId) => {
     const { t, banjiSched } = this.props;
     const { selectWeek } = this.state;
-    const { schedTableFieldNames, schedTableRowNames} = this;
-    const banjiSchedId = buildBanjiSchedId(banjiId, 3, selectWeek);
+    const { stageIndex, schedTableFieldNames, schedTableRowNames} = this;
+    const banjiSchedId = buildBanjiSchedId(banjiId, stageIndex, selectWeek);
     console.log("Get kebiaoInfo of "+banjiSchedId);
     const kebiaoInfo = banjiSched[banjiSchedId];
     this.schedTableLoading = !kebiaoInfo;
@@ -499,10 +504,10 @@ class SolveConflictModalWrapped extends Component {
 
   buildLabSchedTable = (lab) => {
     const { t, labSched } = this.props;
-    const { schedTableFieldNames, schedTableRowNames } = this;
+    const { stageIndex, schedTableFieldNames, schedTableRowNames } = this;
     const { selectWeek, selectItem } = this.state;
     const selectConflictData = selectItem.data;
-    const labSchedId = buildLabSchedId(lab.id, 3, selectWeek);
+    const labSchedId = buildLabSchedId(lab.id, stageIndex, selectWeek);
     console.log("Get shixunInfo of "+labSchedId);
     const shixunInfo = labSched.get(labSchedId);
     let resultList = [];

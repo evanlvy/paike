@@ -15,6 +15,7 @@ import {
   ResultTable
 } from '../components';
 
+import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
 import { actions as subjectActions, getSubjectByGrade } from '../redux/modules/subject';
 import { actions as banjiActions, buildGradeSubjectId, getBanjiBySubject } from '../redux/modules/banji';
 import { actions as kebiaoActions, buildBanjiSchedId, getLiLunByAllBanjiSched } from '../redux/modules/kebiao';
@@ -25,10 +26,10 @@ const LILUNKEBIAO_COLOR = "orange";
 class LiLunKeBiaoScreenWrapped extends Component {
   constructor(props) {
     super(props);
-    const { t } = props;
+    const { t, schoolWeek } = props;
     this.state = {
       selectedSubjectIndex: 0,
-      selectWeek: 1,
+      selectWeek: schoolWeek ? schoolWeek : 1,
       labs: []
     };
 
@@ -59,7 +60,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
     ];
 
     this.tableDataList = [];
-    this.subjectSelectWeek = 1;
+    this.subjectSelectWeek = schoolWeek ? schoolWeek : 1;
 
     this.tabsListRef = React.createRef();
   }
@@ -69,7 +70,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { subjects, banjiBySubject, kebiaoByBanjiSched, location } = this.props;
+    const { schoolYear, schoolWeek, subjects, banjiBySubject, kebiaoByBanjiSched, location } = this.props;
     const { selectedSubjectIndex, selectWeek } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
@@ -77,7 +78,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
       this.resetData();
       console.log("shouldComponentUpdate, location state diff");
       return true;
-    } else if (nextProps.subjects !== subjects || nextProps.banjiBySubject !== banjiBySubject || nextProps.kebiaoByBanjiSched !== kebiaoByBanjiSched) {
+    } else if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
+    || nextProps.subjects !== subjects || nextProps.banjiBySubject !== banjiBySubject || nextProps.kebiaoByBanjiSched !== kebiaoByBanjiSched) {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedSubjectIndex !== selectedSubjectIndex || nextState.selectWeek !== selectWeek ) {
@@ -99,22 +101,25 @@ class LiLunKeBiaoScreenWrapped extends Component {
       this.loadBanji();
     }
     if (this.banjiData && !this.hasFetchKebiao) {
-      const { subjectSelectWeek } = this;
-      this.loadKebiao(subjectSelectWeek);
+      const { schoolWeek } = this.props;
+      console.log("loadKebiao: schoolWeek: "+schoolWeek);
+      this.subjectSelectWeek = schoolWeek;
+      this.loadKebiao(this.subjectSelectWeek);
     }
   }
 
   resetData = () => {
     console.log("reset kebiao data");
+    const { schoolWeek } = this.props;
     this.tabsListRef.current.reset();
     this.subjectsData = null;
     this.selectedSubject = null;
-    this.subjectSelectWeek = 1;
+    this.subjectSelectWeek = schoolWeek ? schoolWeek : 1;
     this.hasFetchBanji = false;
     this.banjiData = null;
     this.hasFetchKebiao = false;
     this.setState({
-      selectWeek: 1,
+      selectWeek: schoolWeek ? schoolWeek : 1,
     });
   }
 
@@ -212,15 +217,15 @@ class LiLunKeBiaoScreenWrapped extends Component {
   }
 
   buildKebiao = () => {
-    const { kebiaoByBanjiSched } = this.props;
+    const { kebiaoByBanjiSched, schoolYear, schoolWeek } = this.props;
     const { subjectSelectWeek } = this;
-    if (!this.banjiData) {
+    if (!this.banjiData || !schoolYear || !schoolWeek) {
       return;
     }
 
     const tableDataList = []
     this.banjiData.forEach(banjiInfo => {
-      const banjiSchedId = buildBanjiSchedId(banjiInfo.id, 3, subjectSelectWeek);
+      const banjiSchedId = buildBanjiSchedId(banjiInfo.id, schoolYear, subjectSelectWeek);
       console.log("Get kebiaoInfo of "+banjiSchedId);
       const kebiaoInfo = kebiaoByBanjiSched[banjiSchedId];
       if (kebiaoInfo) {
@@ -267,12 +272,13 @@ class LiLunKeBiaoScreenWrapped extends Component {
       console.error("BanjiData not got yet");
       return;
     }
-    console.log("loadKebiao");
+    const { schoolYear } = this.props;
+    console.log("loadKebiao, year: "+schoolYear+" week: "+selectWeek);
     let banjiIds = [];
     this.banjiData.forEach(banjiInfo => {
       banjiIds.push(banjiInfo.id);
     })
-    this.props.fetchLiLunByBanji(banjiIds, 3, selectWeek, selectWeek+1);
+    this.props.fetchLiLunByBanji(banjiIds, schoolYear, selectWeek, selectWeek+1);
     this.hasFetchKebiao = true;
   }
 
@@ -353,6 +359,8 @@ class LiLunKeBiaoScreenWrapped extends Component {
 const mapStateToProps = (state, props) => {
   const { edu, grd } = props.location.state;
   return {
+    schoolYear: getSchoolYear(state),
+    schoolWeek: getSchoolWeek(state),
     subjects: getSubjectByGrade(state, edu.id, grd.id),
     banjiBySubject: getBanjiBySubject(state),
     kebiaoByBanjiSched: getLiLunByAllBanjiSched(state),

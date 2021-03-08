@@ -15,6 +15,7 @@ import {
   ResultTable,
 } from '../components';
 
+import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
 import { actions as labActions, buildLabSchedId, getLabsByAllCenter, getShiXunByLabSched } from '../redux/modules/lab';
 import { getKebiao } from '../redux/modules/kebiao';
 
@@ -25,10 +26,10 @@ const LAB_ITEM_COLOR = "gray.400";
 class CenterLabScreen extends Component {
   constructor(props) {
     super (props);
-    const { t } = props;
+    const { t, schoolWeek } = props;
     this.state = {
       selectedLabIndex: 0,
-      selectWeek: 1
+      selectWeek: schoolWeek ? schoolWeek : 1,
     };
 
     this.tabTitles = [];
@@ -59,6 +60,8 @@ class CenterLabScreen extends Component {
       t("kebiao.sched_1213")+t("kebiao.sched_unit"),
     ];
 
+    this.labSelectWeek = schoolWeek ? schoolWeek : 1;
+
     this.tabsListRef = React.createRef();
   }
 
@@ -67,7 +70,7 @@ class CenterLabScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { labsByCenter, shixunByLabSched, shixunByIds, location } = this.props;
+    const { schoolYear, schoolWeek, labsByCenter, shixunByLabSched, shixunByIds, location } = this.props;
     const { selectedLabIndex, selectWeek } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
@@ -75,7 +78,8 @@ class CenterLabScreen extends Component {
       this.resetData();
       console.log("shouldComponentUpdate, location state diff");
       return true;
-    } else if (nextProps.labsByCenter !== labsByCenter || nextProps.shixunByLabSched !== shixunByLabSched || nextProps.shixunByIds !== shixunByIds) {
+    } else if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
+    || nextProps.labsByCenter !== labsByCenter || nextProps.shixunByLabSched !== shixunByLabSched || nextProps.shixunByIds !== shixunByIds) {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedLabIndex !== selectedLabIndex || nextState.selectWeek !== selectWeek) {
@@ -91,26 +95,34 @@ class CenterLabScreen extends Component {
 
   loadData = () => {
     if (!this.labList || this.labList.length === 0) { // only get subjects when it's empty
-      const { selectWeek } = this.state;
-      this.loadLabs(selectWeek);
+      const { schoolWeek } = this.props;
+      console.log("loadLabKebiao: schoolWeek: "+schoolWeek);
+      this.labSelectWeek = schoolWeek;
+      this.loadLabs(this.labSelectWeek);
     }
   }
 
   resetData = () => {
     console.log("reset shixun data");
+    const { schoolWeek } = this.props;
     this.labList = null;
     this.selectedLab = null;
+    this.labSelectWeek = schoolWeek ? schoolWeek : 1;
     this.tableData = null;
     this.setState({
       selectedLabIndex: 0,
-      selectWeek: 1,
+      selectWeek: schoolWeek ? schoolWeek : 1,
     });
   }
 
-  loadLabs = (weekIndex) => {
-    console.log("loadLabs");
+  loadLabs = (selectWeek) => {
+    const { schoolYear, schoolWeek } = this.props;
+    if (!schoolYear || !schoolWeek) {
+      return;
+    }
+    console.log("loadLabs, year: "+schoolYear+" week: "+selectWeek);
     const { center } = this.props.location.state;
-    this.props.fetchLabs(center.id, 3, weekIndex);
+    this.props.fetchLabs(center.id, schoolYear, selectWeek);
   }
 
   buildData = () => {
@@ -178,8 +190,8 @@ class CenterLabScreen extends Component {
   }
 
   buildCenterKebiaoTable = () => {
-    const { shixunByLabSched } = this.props;
-    const { selectWeek } = this.state;
+    const { shixunByLabSched, schoolYear } = this.props;
+    const { labSelectWeek } = this;
     const { labList, tableFieldNames, tableRowNames } = this;
 
     let resultList = [];
@@ -189,7 +201,7 @@ class CenterLabScreen extends Component {
     console.log("buildCenterKebiaoTable: "+JSON.stringify(shixunByLabSched));
     for (let labIndex=1; labIndex < labList.length; labIndex++) {
       const labInfo = labList[labIndex];
-      const labSchedId = buildLabSchedId(labInfo.id, 3, selectWeek);
+      const labSchedId = buildLabSchedId(labInfo.id, schoolYear, labSelectWeek);
       const shixunInfo = shixunByLabSched.get(labSchedId);
       //console.log(`Get LabSchedId: ${labSchedId}, data: ${JSON.stringify(shixunInfo)}`);
       for (let i=1; i < tableFieldNames.length; i++) {
@@ -237,11 +249,11 @@ class CenterLabScreen extends Component {
   }
 
   buildLabKebiaoTable = (labId) => {
-    const { shixunByLabSched } = this.props;
-    const { selectWeek } = this.state;
+    const { shixunByLabSched, schoolYear } = this.props;
+    const { labSelectWeek } = this;
     const { tableFieldNames, tableRowNames } = this;
 
-    const labSchedId = buildLabSchedId(labId, 3, selectWeek);
+    const labSchedId = buildLabSchedId(labId, schoolYear, labSelectWeek);
     console.log("Get shixunInfo of "+labSchedId);
     const shixunInfo = shixunByLabSched.get(labSchedId);
     let resultList = [];
@@ -300,18 +312,18 @@ class CenterLabScreen extends Component {
   onSemesterPageChanged = (index) => {
     const { semesterPages } = this;
     console.log("onSemesterPageChanged: "+semesterPages[index].name);
-    const weekIndex = index+1;
+    this.labSelectWeek = index+1;
     this.setState({
-      selectWeek : weekIndex
+      selectWeek : this.labSelectWeek
     });
-    this.loadLabs(weekIndex);
+    this.loadLabs(this.labSelectWeek);
   }
 
   render() {
     const { t } = this.props;
     this.buildData();
     const { selectedLabIndex } = this.state;
-    const { labTitle, labList, onLabClicked,
+    const { labTitle, labList, onLabClicked, labSelectWeek,
       tabTitles, tableHeaders, tableTitle, tableData, semesterPages,
       onSemesterPageChanged } = this;
     const pageTables = [];
@@ -329,6 +341,7 @@ class CenterLabScreen extends Component {
         pagePrevCaption={t("kebiao.prev_semester_week")}
         pageNextCaption={t("kebiao.next_semester_week")}
         onResultPageIndexChanged={onSemesterPageChanged}
+        initPageIndex={labSelectWeek-1}
         pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}/>);
     } else {
       pageTables[0] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
@@ -366,6 +379,8 @@ class CenterLabScreen extends Component {
 
 const mapStateToProps = (state) => {
   return {
+    schoolYear: getSchoolYear(state),
+    schoolWeek: getSchoolWeek(state),
     labsByCenter: getLabsByAllCenter(state),
     shixunByLabSched: getShiXunByLabSched(state),
     shixunByIds:getKebiao(state),

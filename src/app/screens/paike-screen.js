@@ -16,6 +16,7 @@ import {
   SolveConflictModal,
 } from '../components';
 
+import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
 import { actions as jysActions, getAllJiaoyanshi, getJiaoyanshiOfAllCenters } from '../redux/modules/jiaoyanshi';
 import { actions as labActions, getLabsByAllLabItem, getShiXunByLabSched } from '../redux/modules/lab';
 import { actions as teacherActions, getTeachersByAllJys, getKebiaoByTeacherSched } from '../redux/modules/teacher';
@@ -28,10 +29,10 @@ const PAIKESCREEN_COLOR = "pink";
 class PaikeScreen extends Component {
   constructor(props) {
     super(props);
-    const { t } = props;
+    const { t, schoolWeek } = props;
     this.state = {
       selectedCenterIndex: 0,
-      selectWeek: 1,
+      selectWeek: schoolWeek ? schoolWeek : 1,
       selectSchedWeekIndex: 1,
       selectDepIndex: 0,
       selectConflict: null,
@@ -61,6 +62,7 @@ class PaikeScreen extends Component {
       t("kebiao.sched_89"), t("kebiao.sched_1011"), t("kebiao.sched_1213")
     ];
     this.tableData = null;
+    this.paikeSelectWeek = schoolWeek ? schoolWeek : 1;
 
     this.tabsListRef = React.createRef();
     this.conflictModalRef = React.createRef();
@@ -71,11 +73,12 @@ class PaikeScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { centerList, jysList, labsByLabItem, teacherByJys, kebiaoByIds,
+    const { schoolYear, schoolWeek, centerList, jysList, labsByLabItem, teacherByJys, kebiaoByIds,
        shixunByLabSched, kebiaoByJysSched, kebiaoByBanjiSched, kebiaoByTeacherSched } = this.props;
     const { selectedCenterIndex, selectDepIndex, selectSchedWeekIndex, selectWeek, selectConflict } = this.state;
 
-    if (nextProps.centerList !== centerList || nextProps.jysList !== jysList
+    if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
+    || nextProps.centerList !== centerList || nextProps.jysList !== jysList
     || nextProps.labsByLabItem !== labsByLabItem || nextProps.teacherByJys !== teacherByJys
     || nextProps.kebiaoByIds !== kebiaoByIds || nextProps.shixunByLabSched !== shixunByLabSched
     || nextProps.kebiaoByJysSched !== kebiaoByJysSched || nextProps.kebiaoByBanjiSched !== kebiaoByBanjiSched
@@ -99,8 +102,10 @@ class PaikeScreen extends Component {
       this.loadCenterList();
     }
     if (this.centerData && !this.hasFetchKebiao) {
-      const { selectWeek } = this.state;
-      this.loadKebiao(selectWeek);
+      const { schoolWeek } = this.props;
+      console.log("loadPaikeKebiao: schoolWeek: "+schoolWeek);
+      this.paikeSelectWeek = schoolWeek;
+      this.loadKebiao(this.paikeSelectWeek);
     }
   }
 
@@ -165,13 +170,14 @@ class PaikeScreen extends Component {
   }
   // Teachers
   loadTeacherSched = (selectWeek) => {
+    const { schoolYear } = this.props;
     const { selectConflict } = this.state;
     if (!selectConflict) {
       console.error("Conflict not selected yet");
       return;
     }
     const { selectTeacherDepartment } = this;
-    this.props.fetchTeachersByJys(selectTeacherDepartment.id, 3, selectWeek);
+    this.props.fetchTeachersByJys(selectTeacherDepartment.id, schoolYear, selectWeek);
   }
 
   buildTeacherInfo = () => {
@@ -210,12 +216,13 @@ class PaikeScreen extends Component {
 
   // Labs
   loadLabSched = (selectWeek) => {
+    const { schoolYear } = this.props;
     const { selectConflict } = this.state;
     if (!selectConflict) {
       console.error("Conflict not selected yet");
       return;
     }
-    this.props.fetchLabsByLabItem(selectConflict.data.labitem_id, 3, selectWeek);
+    this.props.fetchLabsByLabItem(selectConflict.data.labitem_id, schoolYear, selectWeek);
   }
 
   buildLabList = () => {
@@ -238,27 +245,29 @@ class PaikeScreen extends Component {
 
   // Banji Kebiao
   loadBanjiSched = (conflictList, selectWeek) => {
+    const { schoolYear } = this.props;
     let banjiIds = [];
     conflictList.forEach(conflict => {
       if (banjiIds.indexOf(conflict.data.class_id) < 0) {
         banjiIds.push(conflict.data.class_id);
       }
     });
-    this.props.fetchKeBiaoByBanji(banjiIds, 3, selectWeek, selectWeek+1);
+    this.props.fetchKeBiaoByBanji(banjiIds, schoolYear, selectWeek, selectWeek+1);
   }
 
   // Shixun Kebiao
   loadKebiao = (selectWeek) => {
+    const { schoolYear } = this.props;
     if (!this.selectedJysList) {
       console.error("JYS data not selected yet");
       return;
     }
-    console.log("loadKebiao");
+    console.log("loadPaikeKebiao");
     const jysIds = [];
     this.selectedJysList.forEach(jys => {
       jysIds.push(jys.id);
     });
-    this.props.fetchShiXun(jysIds, 3, selectWeek);
+    this.props.fetchShiXun(jysIds, schoolYear, selectWeek);
     this.hasFetchKebiao = true;
   }
 
@@ -278,11 +287,11 @@ class PaikeScreen extends Component {
   }
 
   buildKebiaoBySched = (jysList, kebiaoByJysSched) => {
-    const { selectWeek } = this.state;
-    const { weekdayNames, hourNames } = this;
+    const { schoolYear } = this.props;
+    const { weekdayNames, hourNames, paikeSelectWeek } = this;
     let result = {}
     jysList.forEach(jys => {
-      const jysSchedId = buildJysSchedId(jys.id, 3, selectWeek);
+      const jysSchedId = buildJysSchedId(jys.id, schoolYear, paikeSelectWeek);
       console.log("Get kebiaoInfo of "+jysSchedId);
       const kebiaoInWeek = kebiaoByJysSched[jysSchedId];
       console.log("kebiao: "+JSON.stringify(kebiaoInWeek));
@@ -372,19 +381,20 @@ class PaikeScreen extends Component {
   onSemesterPageChanged = (index) => {
     const { semesterPages } = this;
     console.log("onSemesterPageChanged: "+semesterPages[index].name);
-    const weekIndex = index+1;
+    this.paikeSelectWeek = index+1;
     this.setState({
-      selectWeek : weekIndex,
-      selectSchedWeekIndex: weekIndex
+      selectWeek : this.paikeSelectWeek,
+      selectSchedWeekIndex: this.paikeSelectWeek
     });
-    this.loadKebiao(weekIndex);
+    this.loadKebiao(this.paikeSelectWeek);
   }
 
   onKebiaoRowClicked = (index) => {
     console.log("onKebiaoRowClicked, index: "+index);
     const rowData = {...this.tableData[index]};
     //if (rowData.is_conflict) {
-      const { selectWeek } = this.state;
+      const { schoolYear } = this.props;
+      const { paikeSelectWeek } = this;
       this.conflictList = [rowData];
       // this.tableData.forEach(row => {
       //   if (row.is_conflict) {
@@ -395,10 +405,10 @@ class PaikeScreen extends Component {
         selectConflict : rowData
       });
       this.selectOriginConflict = this.tableData[index];
-      this.loadLabSched(selectWeek);
-      this.loadTeacherSched(selectWeek);
-      this.loadBanjiSched(this.conflictList, selectWeek);
-      this.conflictModalRef.current.showConflict(selectWeek, rowData, this.conflictList);
+      this.loadLabSched(paikeSelectWeek);
+      this.loadTeacherSched(paikeSelectWeek);
+      this.loadBanjiSched(this.conflictList, paikeSelectWeek);
+      this.conflictModalRef.current.showConflict(schoolYear, paikeSelectWeek, rowData, this.conflictList);
     //}
   }
 
@@ -425,10 +435,11 @@ class PaikeScreen extends Component {
 
   onSolveConflictResult = (confirm, result) => {
     if (confirm) {
-      const { selectWeek, selectSchedWeekIndex } = this.state;
-      const { selectOriginConflict } = this;
+      const { schoolYear } = this.props;
+      const { selectSchedWeekIndex } = this.state;
+      const { paikeSelectWeek, selectOriginConflict } = this;
       console.log("onSolveConflictResult, result: "+JSON.stringify(result));
-      this.props.updateKebiao(selectOriginConflict.data, result.data, 3, selectWeek, selectSchedWeekIndex);
+      this.props.updateKebiao(selectOriginConflict.data, result.data, schoolYear, paikeSelectWeek, selectSchedWeekIndex);
       this.hasFetchKebiao = false; // force to reload kebiao
     }
     return true;
@@ -438,7 +449,7 @@ class PaikeScreen extends Component {
     const { t, kebiaoByIds, shixunByLabSched, kebiaoByTeacherSched, kebiaoByBanjiSched } = this.props;
     const { selectedCenterIndex } = this.state;
     this.buildData();
-    const { centerData, centerTitle, selectedCenter, semesterPages,
+    const { centerData, centerTitle, selectedCenter, semesterPages, paikeSelectWeek,
       labList, teacherList, teacherDepList,
       tabTitles, tableTitle, tableHeaders, tableData,
       onCenterClicked, onTabChanged, onSemesterPageChanged,
@@ -459,6 +470,7 @@ class PaikeScreen extends Component {
         pagePrevCaption={t("kebiao.prev_semester_week")}
         pageNextCaption={t("kebiao.next_semester_week")}
         onResultPageIndexChanged={onSemesterPageChanged}
+        initPageIndex={paikeSelectWeek-1}
         pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
         onRowClicked={onKebiaoRowClicked} />);
     } else {
@@ -508,6 +520,8 @@ class PaikeScreen extends Component {
 
 const mapStateToProps = (state) => {
   return {
+    schoolYear: getSchoolYear(state),
+    schoolWeek: getSchoolWeek(state),
     centerList: getJiaoyanshiOfAllCenters(state),
     jysList: getAllJiaoyanshi(state),
     labsByLabItem: getLabsByAllLabItem(state),

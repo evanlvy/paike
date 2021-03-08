@@ -22,6 +22,23 @@ class Api {
       throw error;
     }
   }
+
+  querySchoolYearWeek = async (date) => {
+    try {
+      const url = this.baseUrl+"/get_stage_week";
+      console.log("Request url "+url);
+      let response = await axios.post(url, {
+        date: date
+      });
+      const { success, message, stage_id, week_idx } = response.data;
+      if (!success) {
+        throw new Error(message.message);
+      }
+      return { year: stage_id, week: week_idx };
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export const api = new Api();

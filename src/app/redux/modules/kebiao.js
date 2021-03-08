@@ -20,6 +20,7 @@ export const types = {
 // actions
 export const actions = {
   fetchLiLunByBanji: (banjiIds, year, weekStart, weekEnd) => {
+    console.log(`fetchLiLunByBanji: ids: ${JSON.stringify(banjiIds)}, year: ${year}, weekStart: ${weekStart}, weekEnd: ${weekEnd}`);
     return async (dispatch, getState) => {
       try {
         if (shouldFetchKebiaoData("liLunByBanjiSched", banjiIds, year, weekStart, weekEnd, getState())) {

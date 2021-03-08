@@ -15,6 +15,7 @@ import {
   ResultTable,
 } from '../components';
 
+import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
 import { actions as subjectActions, getSubjectByGrade } from '../redux/modules/subject';
 import { actions as banjiActions, buildGradeSubjectId, getBanjiBySubject } from '../redux/modules/banji';
 import { actions as kebiaoActions, buildBanjiSchedId, getKeBiaoByAllBanjiSched } from '../redux/modules/kebiao';
@@ -25,11 +26,11 @@ const BANJIKEBIAO_COLOR = "blue";
 class BanJiKeBiaoScreen extends Component {
   constructor(props) {
     super(props);
-    const { t } = props;
+    const { t, schoolWeek } = props;
     this.state = {
       selectedSubjectIndex: 0,
       selectedBanjiIndex: 0,
-      selectWeek: 1
+      selectWeek: schoolWeek ? schoolWeek : 1
     };
 
     this.semesterPages = [];
@@ -56,7 +57,7 @@ class BanJiKeBiaoScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { subjects, banjiBySubject, kebiaoByBanjiSched, location } = this.props;
+    const { schoolYear, schoolWeek, subjects, banjiBySubject, kebiaoByBanjiSched, location } = this.props;
     const { selectedSubjectIndex, selectedBanjiIndex, selectWeek } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
@@ -64,7 +65,8 @@ class BanJiKeBiaoScreen extends Component {
       this.resetData();
       console.log("shouldComponentUpdate, location state diff");
       return true;
-    } else if (nextProps.subjects !== subjects || nextProps.banjiBySubject !== banjiBySubject || nextProps.kebiaoByBanjiSched !== kebiaoByBanjiSched) {
+    } else if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
+    || nextProps.subjects !== subjects || nextProps.banjiBySubject !== banjiBySubject || nextProps.kebiaoByBanjiSched !== kebiaoByBanjiSched) {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedSubjectIndex !== selectedSubjectIndex || nextState.selectedBanjiIndex !== selectedBanjiIndex || nextState.selectWeek !== selectWeek ) {
@@ -86,8 +88,10 @@ class BanJiKeBiaoScreen extends Component {
       this.loadBanji();
     }
     if (this.selectedBanji && !this.hasFetchKebiao) {
-      const { banjiSelectWeek } = this;
-      this.loadKebiao(banjiSelectWeek);
+      const { schoolWeek } = this.props;
+      console.log("loadBanjiKebiao: schoolWeek: "+schoolWeek);
+      this.banjiSelectWeek = schoolWeek;
+      this.loadKebiao(this.banjiSelectWeek);
     }
   }
 
@@ -107,10 +111,11 @@ class BanJiKeBiaoScreen extends Component {
   }
 
   resetBanjiData = () => {
+    const { schoolWeek } = this.props;
     this.banjiData = null;
     this.selectedBanji = null;
     this.banjiSelectWeeks = [];
-    this.banjiSelectWeek = 1;
+    this.banjiSelectWeek = schoolWeek ? schoolWeek : 1;
     this.tableDataList = [];
     this.curDataIndex = 0;
     this.hasFetchKebiao = false;
@@ -119,7 +124,7 @@ class BanJiKeBiaoScreen extends Component {
     }
     this.setState({
       selectedBanjiIndex: 0,
-      selectWeek: 1
+      selectWeek: schoolWeek ? schoolWeek : 1
     });
   }
 
@@ -233,13 +238,13 @@ class BanJiKeBiaoScreen extends Component {
   }
 
   buildKebiao = () => {
-    const { kebiaoByBanjiSched } = this.props;
+    const { kebiaoByBanjiSched, schoolYear, schoolWeek } = this.props;
     const { banjiSelectWeek } = this;
-    if (!this.selectedBanji) {
+    if (!this.selectedBanji || !schoolYear || !schoolWeek) {
       return;
     }
 
-    const banjiSchedId = buildBanjiSchedId(this.selectedBanji.id, 3, banjiSelectWeek);
+    const banjiSchedId = buildBanjiSchedId(this.selectedBanji.id, schoolYear, banjiSelectWeek);
     console.log("Get kebiaoInfo of "+banjiSchedId);
     const kebiaoInfo = kebiaoByBanjiSched[banjiSchedId];
     if (kebiaoInfo) {
@@ -326,9 +331,10 @@ class BanJiKeBiaoScreen extends Component {
       console.error("BanjiData not selected yet");
       return;
     }
-    console.log("loadKebiao");
+    const { schoolYear } = this.props;
+    console.log("loadBanjiKebiao, year: "+schoolYear+" week: "+selectWeek);
     const banjiIds = [this.selectedBanji.id];
-    this.props.fetchKeBiaoByBanji(banjiIds, 3, selectWeek, selectWeek+1);
+    this.props.fetchKeBiaoByBanji(banjiIds, schoolYear, selectWeek, selectWeek+1);
     this.hasFetchKebiao = true;
   }
 
@@ -424,6 +430,8 @@ class BanJiKeBiaoScreen extends Component {
 const mapStateToProps = (state, props) => {
   const { edu, grd } = props.location.state;
   return {
+    schoolYear: getSchoolYear(state),
+    schoolWeek: getSchoolWeek(state),
     subjects: getSubjectByGrade(state, edu.id, grd.id),
     banjiBySubject: getBanjiBySubject(state),
     kebiaoByBanjiSched: getKeBiaoByAllBanjiSched(state),

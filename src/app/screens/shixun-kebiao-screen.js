@@ -15,6 +15,7 @@ import {
   ResultTable,
 } from '../components';
 
+import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
 import { actions as jysActions, getAllJiaoyanshi } from '../redux/modules/jiaoyanshi';
 import { actions as kebiaoActions, buildJysSchedId, getShiXunByJiaoyanshiSched } from '../redux/modules/kebiao';
 
@@ -24,10 +25,10 @@ const SHIXUNKEBIAO_COLOR = "green";
 class ShiXunKeBiaoScreen extends Component {
   constructor(props) {
     super(props);
-    const { t } = props;
+    const { t, schoolWeek } = props;
     this.state = {
       selectedJysIndexList: [0],
-      selectWeek: 1,
+      selectWeek: schoolWeek ? schoolWeek : 1,
     };
 
     this.semesterPages = [];
@@ -54,6 +55,7 @@ class ShiXunKeBiaoScreen extends Component {
       t("kebiao.sched_89"), t("kebiao.sched_1011"), t("kebiao.sched_1213")
     ];
     this.tableData = null;
+    this.shixunSelectWeek = schoolWeek ? schoolWeek : 1;
 
     this.tabsListRef = React.createRef();
   }
@@ -63,7 +65,7 @@ class ShiXunKeBiaoScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { jysList, kebiaoByJysSched, location } = this.props;
+    const { schoolYear, schoolWeek, jysList, kebiaoByJysSched, location } = this.props;
     const { selectedJysIndexList, selectWeek } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
@@ -71,7 +73,8 @@ class ShiXunKeBiaoScreen extends Component {
       //this.resetData();
       console.log("shouldComponentUpdate, location state diff");
       return true;
-    } else if (nextProps.jysList !== jysList || nextProps.kebiaoByJysSched !== kebiaoByJysSched) {
+    } else if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
+    || nextProps.jysList !== jysList || nextProps.kebiaoByJysSched !== kebiaoByJysSched) {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedJysIndexList !== selectedJysIndexList || nextState.selectWeek !== selectWeek ) {
@@ -90,8 +93,10 @@ class ShiXunKeBiaoScreen extends Component {
       this.loadJysList();
     }
     if (this.selectedJysList && !this.hasFetchKebiao) {
-      const { selectWeek } = this.state;
-      this.loadKebiao(selectWeek);
+      const { schoolWeek } = this.props;
+      this.shixunSelectWeek = schoolWeek;
+      console.log("loadKebiao: schoolWeek: "+this.shixunSelectWeek);
+      this.loadKebiao(this.shixunSelectWeek);
     }
   }
 
@@ -157,8 +162,8 @@ class ShiXunKeBiaoScreen extends Component {
   }
 
   buildKebiao = () => {
-    const { kebiaoByJysSched } = this.props;
-    if (!this.selectedJysList || this.selectedJysList.length === 0) {
+    const { kebiaoByJysSched, schoolYear, schoolWeek } = this.props;
+    if (!this.selectedJysList || this.selectedJysList.length === 0 || !schoolYear || !schoolWeek) {
       return;
     }
 
@@ -172,11 +177,11 @@ class ShiXunKeBiaoScreen extends Component {
   }
 
   buildKebiaoBySched = (jysList, kebiaoByJysSched) => {
-    const { selectWeek } = this.state;
-    const { weekdayNames, hourNames } = this;
+    const { schoolYear } = this.props;
+    const { shixunSelectWeek, weekdayNames, hourNames } = this;
     let result = {}
     jysList.forEach(jys => {
-      const jysSchedId = buildJysSchedId(jys.id, 3, selectWeek);
+      const jysSchedId = buildJysSchedId(jys.id, schoolYear, shixunSelectWeek);
       console.log("Get kebiaoInfo of "+jysSchedId);
       const kebiaoInWeek = kebiaoByJysSched[jysSchedId];
       if (kebiaoInWeek) {
@@ -254,12 +259,13 @@ class ShiXunKeBiaoScreen extends Component {
       console.error("JYS data not selected yet");
       return;
     }
-    console.log("loadKebiao");
+    const { schoolYear } = this.props;
+    console.log("loadShiXunKebiao, year: "+schoolYear+" week: "+selectWeek);
     const jysIds = [];
     this.selectedJysList.forEach(jys => {
       jysIds.push(jys.id);
     });
-    this.props.fetchShiXun(jysIds, 3, selectWeek);
+    this.props.fetchShiXun(jysIds, schoolYear, selectWeek);
     this.hasFetchKebiao = true;
   }
 
@@ -280,24 +286,24 @@ class ShiXunKeBiaoScreen extends Component {
       selectedJysIndexList: newIndexList
     });
     this.setJysSelectedIndexList(newIndexList);
-    this.loadKebiao(this.state.selectWeek);
+    this.loadKebiao(this.shixunSelectWeek);
   }
 
   onSemesterPageChanged = (index) => {
     const { semesterPages } = this;
     console.log("onSemesterPageChanged: "+semesterPages[index].name);
-    const weekIndex = index+1;
+    this.shixunSelectWeek = index+1;
     this.setState({
-      selectWeek : weekIndex
+      selectWeek : this.shixunSelectWeek
     });
-    this.loadKebiao(weekIndex);
+    this.loadKebiao(this.shixunSelectWeek);
   }
 
   render() {
     const { t } = this.props;
     const { selectedJysIndexList } = this.state;
     this.buildData();
-    const { jysData, jysTitle,
+    const { jysData, jysTitle, shixunSelectWeek,
       tabTitles, tableTitle, tableHeaders, tableData, semesterPages,
       onJysClicked, onTabChanged, onSemesterPageChanged } = this;
     const pageTables = [];
@@ -315,6 +321,7 @@ class ShiXunKeBiaoScreen extends Component {
         pagePrevCaption={t("kebiao.prev_semester_week")}
         pageNextCaption={t("kebiao.next_semester_week")}
         onResultPageIndexChanged={onSemesterPageChanged}
+        initPageIndex={shixunSelectWeek-1}
         pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]} />);
     } else {
       pageTables[0] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
@@ -349,6 +356,8 @@ class ShiXunKeBiaoScreen extends Component {
 
 const mapStateToProps = (state) => {
   return {
+    schoolYear: getSchoolYear(state),
+    schoolWeek: getSchoolWeek(state),
     jysList: getAllJiaoyanshi(state),
     kebiaoByJysSched: getShiXunByJiaoyanshiSched(state),
   }
