@@ -10,6 +10,7 @@ import subject from './subject';
 import teacher from './teacher';
 import banji from './banji';
 import kebiao from './kebiao';
+import history from './history';
 
 const rootReducer = combineReducers({
   app,
@@ -22,6 +23,7 @@ const rootReducer = combineReducers({
   teacher,
   banji,
   kebiao,
+  history,
 });
 
 export default rootReducer;

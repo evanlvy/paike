@@ -4,13 +4,18 @@ import React, { Component } from 'react';
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
 import { withTranslation } from 'react-i18next';
+import { format } from 'date-fns';
 import {
   Flex,
   Text,
 } from '@chakra-ui/core';
+import {
+  MdHistory
+} from 'react-icons/md';
 
 import {
   SubjectBoard,
+  CollapseBoard,
   ResultTabList,
   ResultTable,
   SolveConflictModal,
@@ -22,6 +27,7 @@ import { actions as labActions, getLabsByAllLabItem, getShiXunByLabSched } from 
 import { actions as teacherActions, getTeachersByAllJys, getKebiaoByTeacherSched } from '../redux/modules/teacher';
 import { actions as kebiaoActions, buildJysSchedId, getShiXunByJiaoyanshiSched, getKeBiaoByAllBanjiSched } from '../redux/modules/kebiao';
 import { getKebiao } from '../redux/modules/kebiao';
+import { actions as historyActions, buildHistorySchedId, getHistoryInfoBySched } from '../redux/modules/history';
 
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
@@ -64,6 +70,13 @@ class PaikeScreen extends Component {
     this.tableData = null;
     this.paikeSelectWeek = schoolWeek ? schoolWeek : 1;
 
+    this.historyTableData = null;
+    this.historyTableHeaders= [
+      {name: t("paikeScreen.history_edition_time"), field: "date"},
+      {name: t("paikeScreen.history_editor"), field: "editor"},
+      {name: t("paikeScreen.history_edition_content"), field: "content", width: 520},
+    ];
+
     this.tabsListRef = React.createRef();
     this.conflictModalRef = React.createRef();
   }
@@ -74,7 +87,7 @@ class PaikeScreen extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, schoolWeek, centerList, jysList, labsByLabItem, teacherByJys, kebiaoByIds,
-       shixunByLabSched, kebiaoByJysSched, kebiaoByBanjiSched, kebiaoByTeacherSched } = this.props;
+       shixunByLabSched, kebiaoByJysSched, kebiaoByBanjiSched, kebiaoByTeacherSched, historyBySched } = this.props;
     const { selectedCenterIndex, selectDepIndex, selectSchedWeekIndex, selectWeek, selectConflict } = this.state;
 
     if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
@@ -82,7 +95,8 @@ class PaikeScreen extends Component {
     || nextProps.labsByLabItem !== labsByLabItem || nextProps.teacherByJys !== teacherByJys
     || nextProps.kebiaoByIds !== kebiaoByIds || nextProps.shixunByLabSched !== shixunByLabSched
     || nextProps.kebiaoByJysSched !== kebiaoByJysSched || nextProps.kebiaoByBanjiSched !== kebiaoByBanjiSched
-    || nextProps.kebiaoByTeacherSched !== kebiaoByTeacherSched) {
+    || nextProps.kebiaoByTeacherSched !== kebiaoByTeacherSched
+    || nextProps.historyBySched !== historyBySched) {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedCenterIndex !== selectedCenterIndex || nextState.selectDepIndex !== selectDepIndex
@@ -101,6 +115,11 @@ class PaikeScreen extends Component {
     if (!this.centerData || this.centerData.length === 0) { // only get jys list when it's empty
       this.loadCenterList();
     }
+    if (!this.hasFetchHistory && (!this.historyTableData || this.historyTableData.length === 0)) {
+      const { schoolYear, schoolWeek } = this.props;
+      console.log("loadHistory, schoolYear: "+schoolYear+", schoolWeek: "+schoolWeek);
+      this.loadHistory(schoolWeek);
+    }
     if (this.centerData && !this.hasFetchKebiao) {
       const { schoolWeek } = this.props;
       console.log("loadPaikeKebiao: schoolWeek: "+schoolWeek);
@@ -112,6 +131,7 @@ class PaikeScreen extends Component {
   buildData = () => {
     this.buildSemester();
     this.buildCenterList();
+    this.buildHistory();
     this.buildKebiao();
     this.buildLabList();
     this.buildTeacherInfo();
@@ -168,6 +188,99 @@ class PaikeScreen extends Component {
     this.tableTitle = t("paikeScreen.table_title_template", {center_info: this.selectedCenter.name});
     console.log(`updateTableTitle: ${this.tableTitle}`);
   }
+  // History
+  loadHistory = (week) => {
+    const { schoolYear } = this.props;
+    console.log("loadHistory");
+    this.props.fetchHistory(schoolYear, week);
+
+    this.hasFetchHistory = true;
+  }
+
+  buildHistory = () => {
+    const { schoolYear, historyBySched } = this.props;
+    if (!historyBySched) {
+      console.log("History isn't got yet");
+      return;
+    }
+    const { paikeSelectWeek } = this;
+    const historySchedId = buildHistorySchedId(schoolYear, paikeSelectWeek);
+    console.log("Get historyInfo of "+historySchedId);
+    const historyList = historyBySched[historySchedId];
+    console.log("history: "+JSON.stringify(historyList));
+    if (historyList) {
+      this.historyTableData = this.buildHistoryTable(historyList);
+    }
+    console.log("buildHistoryTable: "+JSON.stringify(this.historyTableData));
+    this.historyTitle = this.buildHistoryTitle(this.historyTableData);
+  }
+
+  buildHistoryTitle = (historyTableData) => {
+    let historyTitle = "";
+    if (!historyTableData || historyTableData.length === 0) {
+      return historyTitle;
+    }
+    const lastHistory = historyTableData[0];
+    historyTitle += lastHistory.editor + " ";
+    lastHistory.content.titles.forEach((title) => {
+      historyTitle += title + "\n";
+    })
+    return historyTitle.trim();
+  }
+
+  buildHistoryTable = (historyList) => {
+    let resultList = [];
+    historyList.forEach((history) => {
+      let resultItem = {};
+      let create_time = new Date();
+      create_time.setTime(0);
+      if (history.created_at) {
+        create_time = new Date(history.created_at+" UTC");
+      }
+      resultItem["date"] = format(create_time, 'MM/dd');
+      resultItem["time"] = create_time.getTime();
+      resultItem["editor"] = history.user;
+      resultItem["content"] = this.buildHistoryContent(history);
+      resultItem["data"] = {...history};
+      resultList.push(resultItem);
+    });
+    resultList.sort((a, b) => {
+      return b.time - a.time;
+    });
+    return resultList;
+  }
+
+  buildHistoryContent = (history) => {
+    const { t } = this.props;
+    const { weekdayNames } = this;
+    let names = [];
+    if (history.labitem && history.labitem.length > 0) {
+      names.push(history.labitem);
+    }
+    let orig_value = t("paikeScreen.before_change")+t("kebiao.semester_week_template", {index: history.week})
+      +", "+weekdayNames[history.day_in_week-1]+", "+this.buildKebiaoHoursInfo(history.begin_index_in_day, history.actual_hours)
+      +", "+history.labteacher+", "+history.lab_location+", "+history.comments;
+    names.push(orig_value);
+    let new_value = t("paikeScreen.after_change")+t("kebiao.semester_week_template", {index: history.week_new})
+      +", "+weekdayNames[history.day_in_week_new-1]+", "+this.buildKebiaoHoursInfo(history.begin_index_in_day_new, history.actual_hours_new)
+      +", "+history.labteacher_new+", "+history.lab_location_new+", "+history.comments_new;
+    names.push(new_value);
+    return {titles: names};
+  }
+
+  buildKebiaoHoursInfo = (start_index, hours) => {
+    const { t } = this.props;
+    const { hourNames } = this;
+
+    const hour_start_index = (start_index-1)/2;
+    let hourInfo = "";
+    for (let i=hour_start_index; i < hour_start_index+hours/2; i++) {
+      hourInfo += hourNames[i];
+    }
+    hourInfo += t("kebiao.sched_unit");
+    return hourInfo;
+  }
+
   // Teachers
   loadTeacherSched = (selectWeek) => {
     const { schoolYear } = this.props;
@@ -387,6 +500,7 @@ class PaikeScreen extends Component {
       selectSchedWeekIndex: this.paikeSelectWeek
     });
     this.loadKebiao(this.paikeSelectWeek);
+    this.loadHistory(this.paikeSelectWeek);
   }
 
   onKebiaoRowClicked = (index) => {
@@ -449,7 +563,9 @@ class PaikeScreen extends Component {
     const { t, kebiaoByIds, shixunByLabSched, kebiaoByTeacherSched, kebiaoByBanjiSched } = this.props;
     const { selectedCenterIndex } = this.state;
     this.buildData();
-    const { centerData, centerTitle, selectedCenter, semesterPages, paikeSelectWeek,
+    const { centerData, centerTitle,
+      historyTableData, historyTitle, historyTableHeaders,
+      selectedCenter, semesterPages, paikeSelectWeek,
       labList, teacherList, teacherDepList,
       tabTitles, tableTitle, tableHeaders, tableData,
       onCenterClicked, onTabChanged, onSemesterPageChanged,
@@ -486,6 +602,19 @@ class PaikeScreen extends Component {
           initSelectIndex={selectedCenterIndex}
           onSubjectClicked={onCenterClicked}
           enableSelect />
+        {
+          historyTableData &&
+          <CollapseBoard
+            width={833}
+            maxHeight={500}
+            color={PAIKESCREEN_COLOR}
+            titleIcon={MdHistory}
+            title={historyTitle}
+            emptyMessage={t("paikeScreen.no_history")}
+            tableTitle={t("paikeScreen.history_table_title")}
+            tableHeaders={historyTableHeaders}
+            tableData={historyTableData} />
+        }
         {
           tabTitles && tabTitles.length > 0 &&
           <ResultTabList
@@ -531,6 +660,7 @@ const mapStateToProps = (state) => {
     kebiaoByJysSched: getShiXunByJiaoyanshiSched(state),
     kebiaoByBanjiSched: getKeBiaoByAllBanjiSched(state),
     kebiaoByTeacherSched: getKebiaoByTeacherSched(state),
+    historyBySched: getHistoryInfoBySched(state),
   }
 }
 
@@ -540,6 +670,7 @@ const mapDispatchToProps = (dispatch) => {
     ...bindActionCreators(labActions, dispatch),
     ...bindActionCreators(teacherActions, dispatch),
     ...bindActionCreators(kebiaoActions, dispatch),
+    ...bindActionCreators(historyActions, dispatch),
   }
 }
 

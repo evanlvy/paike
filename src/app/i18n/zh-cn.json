@@ -5,7 +5,9 @@
     "cancel": "取消",
     "ok": "确认",
     "no_data": "数据加载中...",
-    "null": "空"
+    "null": "空",
+    "expand": "展开",
+    "collapse": "收起"
   },
   "alert": {
     "default_title": "警告",
@@ -117,7 +119,14 @@
     "table_title_template": "{{teacher_info}} 排班表"
   },
   "paikeScreen": {
-    "table_title_template": "{{center_info}}实验汇总表"
+    "table_title_template": "{{center_info}}实验汇总表",
+    "before_change": "变更前:",
+    "after_change": "变更后:",
+    "no_history": "未发现修改历史",
+    "history_table_title": "修改历史",
+    "history_edition_time": "修改时间",
+    "history_editor": "修改者",
+    "history_edition_content": "修改详情"
   },
   "solveConflictModal": {
     "title": "处理冲突",
