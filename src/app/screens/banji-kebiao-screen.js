@@ -30,7 +30,8 @@ class BanJiKeBiaoScreen extends Component {
     this.state = {
       selectedSubjectIndex: 0,
       selectedBanjiIndex: 0,
-      selectWeek: schoolWeek ? schoolWeek : 1
+      selectWeek: schoolWeek ? schoolWeek : 1,
+      hasFetchKebiao: true,
     };
 
     this.semesterPages = [];
@@ -58,7 +59,7 @@ class BanJiKeBiaoScreen extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, schoolWeek, subjects, banjiBySubject, kebiaoByBanjiSched, location } = this.props;
-    const { selectedSubjectIndex, selectedBanjiIndex, selectWeek } = this.state;
+    const { selectedSubjectIndex, selectedBanjiIndex, selectWeek, hasFetchKebiao } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
     if (nextProps.location.state.grd !== location.state.grd || nextProps.location.state.edu !== location.state.edu) {
@@ -69,7 +70,8 @@ class BanJiKeBiaoScreen extends Component {
     || nextProps.subjects !== subjects || nextProps.banjiBySubject !== banjiBySubject || nextProps.kebiaoByBanjiSched !== kebiaoByBanjiSched) {
       console.log("shouldComponentUpdate, props diff");
       return true;
-    } else if (nextState.selectedSubjectIndex !== selectedSubjectIndex || nextState.selectedBanjiIndex !== selectedBanjiIndex || nextState.selectWeek !== selectWeek ) {
+    } else if (nextState.selectedSubjectIndex !== selectedSubjectIndex || nextState.selectedBanjiIndex !== selectedBanjiIndex
+    || nextState.selectWeek !== selectWeek || nextState.hasFetchKebiao !== hasFetchKebiao) {
       console.log("shouldComponentUpdate, state diff");
       return true;
     }
@@ -87,7 +89,7 @@ class BanJiKeBiaoScreen extends Component {
     if (this.selectedSubject && !this.hasFetchBanji) {
       this.loadBanji();
     }
-    if (this.selectedBanji && !this.hasFetchKebiao) {
+    if (this.selectedBanji && !this.state.hasFetchKebiao) {
       const { schoolWeek } = this.props;
       console.log("loadBanjiKebiao: schoolWeek: "+schoolWeek);
       this.banjiSelectWeek = schoolWeek;
@@ -118,13 +120,13 @@ class BanJiKeBiaoScreen extends Component {
     this.banjiSelectWeek = schoolWeek ? schoolWeek : 1;
     this.tableDataList = [];
     this.curDataIndex = 0;
-    this.hasFetchKebiao = false;
     if (this.tabsListRef.current) {
       this.tabsListRef.current.reset();
     }
     this.setState({
       selectedBanjiIndex: 0,
-      selectWeek: schoolWeek ? schoolWeek : 1
+      selectWeek: schoolWeek ? schoolWeek : 1,
+      hasFetchKebiao: false
     });
   }
 
@@ -335,7 +337,9 @@ class BanJiKeBiaoScreen extends Component {
     console.log("loadBanjiKebiao, year: "+schoolYear+" week: "+selectWeek);
     const banjiIds = [this.selectedBanji.id];
     this.props.fetchKeBiaoByBanji(banjiIds, schoolYear, selectWeek, selectWeek+1);
-    this.hasFetchKebiao = true;
+    this.setState({
+      hasFetchKebiao: true
+    });
   }
 
   onSubjectClicked = (index) => {
