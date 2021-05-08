@@ -26,6 +26,26 @@ class Api {
       throw error;
     }
   }
+
+  queryHistoryByTime = async (page_idx, page_size) => {
+    try {
+      const url = this.baseUrl+"/history";
+      console.log("Request url "+url+"with page index: "+page_idx+", size: "+page_size);
+      let request_param = {
+        pageIdx: page_idx,
+        pageSize: page_size
+      };
+      let response = await axios.post(url, request_param);
+      const { success, data, message } = response.data;
+      if (!success) {
+        throw new Error(message.message);
+      }
+      //console.log(`Response of url: ${url} is ${JSON.stringify(data[0])}`);
+      return {list: data.history, totalPage: data.totalPage, count: data.count};
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export const api = new Api();

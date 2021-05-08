@@ -27,11 +27,12 @@ import { actions as labActions, getLabsByAllLabItem, getShiXunByLabSched } from 
 import { actions as teacherActions, getTeachersByAllJys, getKebiaoByTeacherSched } from '../redux/modules/teacher';
 import { actions as kebiaoActions, buildJysSchedId, getShiXunByJiaoyanshiSched, getKeBiaoByAllBanjiSched } from '../redux/modules/kebiao';
 import { getKebiao } from '../redux/modules/kebiao';
-import { actions as historyActions, buildHistorySchedId, getHistoryInfoBySched } from '../redux/modules/history';
+import { actions as historyActions, buildHistorySchedId, getHistoryInfoBySched, getHistoryInfoByTime } from '../redux/modules/history';
 
-import { SEMESTER_WEEK_COUNT } from './common/info';
+import { SEMESTER_WEEK_COUNT, TEST_HISTORY_BYTIME } from './common/info';
 
 const PAIKESCREEN_COLOR = "pink";
+const HISTORY_BYTIME_PAGESIZE = 3;
 class PaikeScreen extends Component {
   constructor(props) {
     super(props);
@@ -42,6 +43,7 @@ class PaikeScreen extends Component {
       selectSchedWeekIndex: 1,
       selectDepIndex: 0,
       selectConflict: null,
+      selectHistoryPage: 0,
     };
 
     this.semesterPages = [];
@@ -76,6 +78,7 @@ class PaikeScreen extends Component {
       {name: t("paikeScreen.history_editor"), field: "editor"},
       {name: t("paikeScreen.history_edition_content"), field: "content", width: 520},
     ];
+    this.historyPages = null;
 
     this.tabsListRef = React.createRef();
     this.conflictModalRef = React.createRef();
@@ -88,7 +91,7 @@ class PaikeScreen extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, schoolWeek, centerList, jysList, labsByLabItem, teacherByJys, kebiaoByIds,
        shixunByLabSched, kebiaoByJysSched, kebiaoByBanjiSched, kebiaoByTeacherSched, historyBySched } = this.props;
-    const { selectedCenterIndex, selectDepIndex, selectSchedWeekIndex, selectWeek, selectConflict } = this.state;
+    const { selectedCenterIndex, selectDepIndex, selectSchedWeekIndex, selectWeek, selectConflict, selectHistoryPage } = this.state;
 
     if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
     || nextProps.centerList !== centerList || nextProps.jysList !== jysList
@@ -100,7 +103,8 @@ class PaikeScreen extends Component {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedCenterIndex !== selectedCenterIndex || nextState.selectDepIndex !== selectDepIndex
-    || nextState.selectWeek !== selectWeek || nextState.selectConflict !== selectConflict || nextState.selectSchedWeekIndex !== selectSchedWeekIndex) {
+    || nextState.selectWeek !== selectWeek || nextState.selectConflict !== selectConflict || nextState.selectSchedWeekIndex !== selectSchedWeekIndex
+    || nextState.selectHistoryPage !== selectHistoryPage) {
       console.log("shouldComponentUpdate, state diff");
       return true;
     }
@@ -116,9 +120,14 @@ class PaikeScreen extends Component {
       this.loadCenterList();
     }
     if (!this.hasFetchHistory && (!this.historyTableData || this.historyTableData.length === 0)) {
-      const { schoolYear, schoolWeek } = this.props;
-      console.log("loadHistory, schoolYear: "+schoolYear+", schoolWeek: "+schoolWeek);
-      this.loadHistory(schoolWeek);
+      if (TEST_HISTORY_BYTIME) {
+        console.log("loadHistory first page");
+        this.loadHistoryByTime(1);
+      } else {
+        const { schoolYear, schoolWeek } = this.props;
+        console.log("loadHistory, schoolYear: "+schoolYear+", schoolWeek: "+schoolWeek);
+        this.loadHistory(schoolWeek);
+      }
     }
     if (this.centerData && !this.hasFetchKebiao) {
       const { schoolWeek } = this.props;
@@ -131,7 +140,11 @@ class PaikeScreen extends Component {
   buildData = () => {
     this.buildSemester();
     this.buildCenterList();
-    this.buildHistory();
+    if (TEST_HISTORY_BYTIME) {
+      this.buildHistoryByTime();
+    } else {
+      this.buildHistory();
+    }
     this.buildKebiao();
     this.buildLabList();
     this.buildTeacherInfo();
@@ -189,6 +202,52 @@ class PaikeScreen extends Component {
     console.log(`updateTableTitle: ${this.tableTitle}`);
   }
   // History
+  // History By Time
+  loadHistoryByTime = (page_idx) => {
+    console.log("loadHistoryByTime");
+    this.props.fetchHistoryByTime(page_idx, HISTORY_BYTIME_PAGESIZE);
+  }
+
+  buildHistoryByTime = () => {
+    const { historyByTime } = this.props;
+    if (!historyByTime) {
+      console.log("HistoryByTime isn't got yet");
+      return;
+    }
+    this.buildHistoryPages(historyByTime.totalPage);
+
+    const historyList = historyByTime.list;
+    if (historyList) {
+      this.historyTableData = this.buildHistoryTableByTime(historyList);
+    }
+    console.log("buildHistoryTable: "+JSON.stringify(this.historyTableData));
+    this.historyTitle = this.buildHistoryTitle(this.historyTableData);
+  }
+
+  buildHistoryPages = (pageCount) => {
+    const { t } = this.props;
+    let pageNames = [];
+    for (let i=0; i < pageCount; i++) {
+      pageNames.push({ name: t("common.page_name_template", {index: i+1}) });
+    }
+    this.historyPages = pageNames;
+  }
+
+  buildHistoryTableByTime = (list) => {
+    const { selectHistoryPage } = this.state;
+    let beginIndex = selectHistoryPage*HISTORY_BYTIME_PAGESIZE;
+    let endIndex = beginIndex+HISTORY_BYTIME_PAGESIZE;
+    if (beginIndex >= list.length) {
+      console.log("buildHistoryTableByTime overflow");
+      return this.historyTableData;
+    }
+    if (endIndex > list.length) {
+      endIndex = list.length;
+    }
+    console.log(`Get historyInfo from ${beginIndex} to ${endIndex}`);
+    return this.buildHistoryTable(list.slice(beginIndex, endIndex));
+  }
+  // History By Schedule
   loadHistory = (week) => {
     const { schoolYear } = this.props;
     console.log("loadHistory");
@@ -207,25 +266,12 @@ class PaikeScreen extends Component {
     const historySchedId = buildHistorySchedId(schoolYear, paikeSelectWeek);
     console.log("Get historyInfo of "+historySchedId);
     const historyList = historyBySched[historySchedId];
-    console.log("history: "+JSON.stringify(historyList));
+    //console.log("history: "+JSON.stringify(historyList));
     if (historyList) {
       this.historyTableData = this.buildHistoryTable(historyList);
     }
     console.log("buildHistoryTable: "+JSON.stringify(this.historyTableData));
     this.historyTitle = this.buildHistoryTitle(this.historyTableData);
-  }
-
-  buildHistoryTitle = (historyTableData) => {
-    let historyTitle = "";
-    if (!historyTableData || historyTableData.length === 0) {
-      return historyTitle;
-    }
-    const lastHistory = historyTableData[0];
-    historyTitle += lastHistory.editor + " ";
-    lastHistory.content.titles.forEach((title) => {
-      historyTitle += title + "\n";
-    })
-    return historyTitle.trim();
   }
 
   buildHistoryTable = (historyList) => {
@@ -279,6 +325,19 @@ class PaikeScreen extends Component {
     }
     hourInfo += t("kebiao.sched_unit");
     return hourInfo;
+  }
+
+  buildHistoryTitle = (historyTableData) => {
+    let historyTitle = "";
+    if (!historyTableData || historyTableData.length === 0) {
+      return historyTitle;
+    }
+    const lastHistory = historyTableData[0];
+    historyTitle += lastHistory.editor + " ";
+    lastHistory.content.titles.forEach((title) => {
+      historyTitle += title + "\n";
+    })
+    return historyTitle.trim();
   }
 
   // Teachers
@@ -559,18 +618,25 @@ class PaikeScreen extends Component {
     return true;
   }
 
+  onHistoryPageChanged = (index) => {
+    this.setState({
+      selectHistoryPage: index
+    });
+    this.loadHistoryByTime(index+1);
+  }
+
   render() {
     const { t, kebiaoByIds, shixunByLabSched, kebiaoByTeacherSched, kebiaoByBanjiSched } = this.props;
     const { selectedCenterIndex } = this.state;
     this.buildData();
     const { centerData, centerTitle,
-      historyTableData, historyTitle, historyTableHeaders,
+      historyTableData, historyTitle, historyTableHeaders, historyPages,
       selectedCenter, semesterPages, paikeSelectWeek,
       labList, teacherList, teacherDepList,
       tabTitles, tableTitle, tableHeaders, tableData,
       onCenterClicked, onTabChanged, onSemesterPageChanged,
       onKebiaoRowClicked, onSchedWeekChanged, onTeacherDepChanged,
-      onSolveConflictResult } = this;
+      onSolveConflictResult, onHistoryPageChanged } = this;
     const pageTables = [];
     if (tableData) {
       pageTables[0] = (<ResultTable
@@ -613,7 +679,12 @@ class PaikeScreen extends Component {
             emptyMessage={t("paikeScreen.no_history")}
             tableTitle={t("paikeScreen.history_table_title")}
             tableHeaders={historyTableHeaders}
-            tableData={historyTableData} />
+            tableData={historyTableData}
+            pageNames={historyPages}
+            pagePrevCaption={t("common.prev_page")}
+            pageNextCaption={t("common.next_page")}
+            onResultPageIndexChanged={onHistoryPageChanged}
+            pageInputCaption={[t("common.input_page_prefix"), t("common.input_page_suffix")]} />
         }
         {
           tabTitles && tabTitles.length > 0 &&
@@ -661,6 +732,7 @@ const mapStateToProps = (state) => {
     kebiaoByBanjiSched: getKeBiaoByAllBanjiSched(state),
     kebiaoByTeacherSched: getKebiaoByTeacherSched(state),
     historyBySched: getHistoryInfoBySched(state),
+    historyByTime: getHistoryInfoByTime(state),
   }
 }
 
