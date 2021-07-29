@@ -105,6 +105,7 @@ class ResultTableWrapper extends Component {
 
   buildColDefArray = (headers, defaultColWidth, colLineHeight) => {
     let columnDefs = [];
+    const { t } = this.props;
     for (let i=0; i < headers.length; i++) {
       columnDefs[i] = {
         index: i,
@@ -122,7 +123,7 @@ class ResultTableWrapper extends Component {
           columnDefs[i]["cellRenderer"] = (params) => {
             // console.log("CourseTeacherRenderer: "+JSON.stringify(params, this.getCircularReplacer()));
             if (!params.value) {
-              return null;
+              return `<font color="gray">${t("kebiao.zixi")}</font>`;
             }
             let cname = params.value.course;
             if (params.value.cid <= 0){
@@ -148,7 +149,7 @@ class ResultTableWrapper extends Component {
     for (let i=0; i < data.length; i++) {
       this.rowData[i] = data[i];
     }
-    console.log("buildData: "+JSON.stringify(data));
+    //console.log("buildData: "+JSON.stringify(data));
   }
 
   onGridSizeChanged = (event) => {

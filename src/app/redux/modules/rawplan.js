@@ -40,6 +40,7 @@ export const actions = {
         try {
             const groupStageWeekId = buildGroupStageWeekId(stage, weekIdx, degreeId, gradeId);
             if (shouldFetchRawplan(groupStageWeekId, getState())) {
+              console.log("shouldFetchRawplan: return yes!");
               dispatch(appActions.startRequest());
               const data = await rawplanApi.queryRawplan(stage, weekIdx, degreeId, gradeId);
               dispatch(appActions.finishRequest());
@@ -60,7 +61,8 @@ const shouldFetchGroups = (stage, state) => {
 }
 
 const shouldFetchRawplan = (groupStageWeekId, state) => {
-  const planList = state.getIn(["rawplan", "plans", groupStageWeekId]);
+  const planList = state.getIn(["rawplan", "planRows", groupStageWeekId, 'plans']);
+  console.log("shouldFetchRawplan: "+groupStageWeekId);
   return !planList || planList.length === 0;
 }
 
@@ -98,7 +100,7 @@ const setSelectedGroup = (groupStageWeekId) => {
 
 const convertRawplanToPlain = (stage, week_idx, plans) => {
   let data_dict = {};
-  console.log("Got rawplan rows: "+JSON.stringify(plans));
+  //console.log("Got rawplan rows: "+JSON.stringify(plans));
   plans.forEach(plan_row => {
     data_dict[plan_row.id] = parsePlan(plan_row);
   });

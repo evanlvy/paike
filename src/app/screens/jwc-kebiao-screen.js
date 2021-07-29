@@ -22,19 +22,20 @@ import { SEMESTER_WEEK_COUNT } from './common/info';
 
 const JYS_KEBIAO_COLOR = "red";
 const TEACHER_ITEM_COLOR = "pink.400";
+const SEMESTER_FIRST_HALF_MAX_WEEK = 9;
+const SEMESTER_HALF_BIAS_WEEK = 6;
 class JwcKebiaoScreen extends Component {
   constructor(props) {
     super (props);
     const { t, schoolWeek } = props;
+    let weekIdx = schoolWeek ? schoolWeek : 1;
     this.state = {
       selectedSubjectIndex: 0,
-      selectWeek: schoolWeek ? schoolWeek : 1,
+      selectWeek: SEMESTER_HALF_BIAS_WEEK + ((weekIdx<=SEMESTER_FIRST_HALF_MAX_WEEK)?0:SEMESTER_FIRST_HALF_MAX_WEEK),
     };
     this.groupTitle = t("jwcKebiaoScreen.class_group");
-    this.tabTitles = [];
-    
-    this.semesterPages = [];
-    
+    //this.tabTitles = [];
+    this.semesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
     this.tableHeaders = [
       {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class"},
       {name: t("jwcKebiaoScreen.classroom"), field: "room"},
@@ -141,21 +142,8 @@ class JwcKebiaoScreen extends Component {
         ],},
       ],},*/
     ];
-
     this.tableData = null;
-    /*this.tableRowNames = [
-      t("kebiao.sched_12")+t("kebiao.sched_unit"),
-      t("kebiao.sched_34")+t("kebiao.sched_unit"),
-      t("kebiao.sched_5")+t("kebiao.sched_unit"),
-      t("kebiao.sched_67")+t("kebiao.sched_unit"),
-      t("kebiao.sched_89")+t("kebiao.sched_unit"),
-      t("kebiao.sched_1011")+t("kebiao.sched_unit"),
-      t("kebiao.sched_1213")+t("kebiao.sched_unit"),
-    ];*/
-    this.jysSelectWeek = schoolWeek ? schoolWeek : 1;
-
     this.tabsListRef = React.createRef();
-    
   }
 
   componentDidMount() {
@@ -217,50 +205,8 @@ class JwcKebiaoScreen extends Component {
     }
   }
 
-  buildKebiao = () => {
-
-  }
-
-  buildKebiaoBySched = (jysList, kebiaoByJysSched) => {
-    /*
-    const { schoolYear } = this.props;
-    const { shixunSelectWeek, weekdayNames, hourNames } = this;
-    let result = {}
-    jysList.forEach(jys => {
-      const jysSchedId = buildJysSchedId(jys.id, schoolYear, shixunSelectWeek);
-      console.log("Get kebiaoInfo of "+jysSchedId);
-      const kebiaoInWeek = kebiaoByJysSched[jysSchedId];
-      if (kebiaoInWeek) {
-        for (let i=0; i < weekdayNames.length; i++) {
-          const kebiaoInDay = kebiaoInWeek[i];
-          if (!kebiaoInDay) {
-            continue;
-          }
-          for (let j=0; j < hourNames.length; j++) {
-            const kebiaoHourList = kebiaoInDay[j];
-            if (!kebiaoHourList || kebiaoHourList.length === 0) {
-              continue;
-            }
-            const key = `${i}_${j}`;
-            if (!result[key]) {
-              result[key] = [];
-            }
-            kebiaoHourList.forEach(kebiaoHour => {
-              kebiaoHour["jys"] = {...jys};
-              result[key].push(kebiaoHour);
-            });
-          }
-        }
-      }
-    });
-    //console.log("buildKebiaoBySched: "+JSON.stringify(result));
-    return result;*/
-  }
-
-
   buildData = () => {
     this.buildGroups();
-    this.buildKebiao();
   }
 
   onSubjectClicked = (index) => {
@@ -269,8 +215,8 @@ class JwcKebiaoScreen extends Component {
       selectedSubjectIndex: index,
     });
     this.setSubjectSelectedIndex(index);
-    this.loadKebiao(index);
-    this.tabTitles.push(this.groups[index].name);
+    this.loadKebiao(this.state.selectWeek);
+    //this.tabTitles.push(this.groups[index].name);
   }
 
   setSubjectSelectedIndex = (index) => {
@@ -281,45 +227,36 @@ class JwcKebiaoScreen extends Component {
     }
   }
 
-  loadKebiao = () => {
-    const { schoolYear, schoolWeek } = this.props;
+  loadKebiao = (weekIdx) => {
+    const { schoolYear } = this.props;
     let grade_id = this.selectedSubject.grade;
     let degree_id = this.selectedSubject.degree;
     console.log("loadKebiao, grade: "+grade_id+" degree: "+degree_id);
-    this.props.fetchRawplan(schoolYear, schoolWeek, degree_id, grade_id);  //stage, weekIdx, degreeId, gradeId
+    this.props.fetchRawplan(schoolYear, weekIdx, degree_id, grade_id);  //stage, weekIdx, degreeId, gradeId
     this.setState({
       hasFetchKebiao: true
     });
   }
 
+  onSemesterPageChanged = (index) => {
+    const { semesterPages } = this;
+    console.log("onSemesterPageChanged: "+semesterPages[index].name);
+    let shixunSelectWeek = index*(SEMESTER_FIRST_HALF_MAX_WEEK)+SEMESTER_HALF_BIAS_WEEK;
+    this.setState({
+      selectWeek : shixunSelectWeek
+    });
+    this.loadKebiao(shixunSelectWeek);
+  }
+
   render() {
-    const { t, groupList, planRows, groupStageWeekId } = this.props;
+    const { t, groupList, planRows, groupStageWeekId, schoolWeek } = this.props;
     this.buildData();
     //const { selectedTeacherIndex } = this.state;
-    const { groupTitle, onSubjectClicked,
-      tabTitles, tableTitle, tableHeaders, semesterPages } = this;
-    const pageTables = [];
-    console.log("render: plans "+JSON.stringify(planRows));
+    const { groupTitle, onSubjectClicked, onSemesterPageChanged, 
+      tableTitle, tableHeaders, semesterPages } = this;
+    //const pageTables = [];
+    //console.log("render: plans "+JSON.stringify(planRows));
     console.log("render: group_id: "+groupStageWeekId);
-    if (planRows) {
-      pageTables[0] = (<ResultTable
-        height={450}
-        titleHeight={50}
-        colLineHeight={20}
-        defaultColWidth={180}
-        title={tableTitle}
-        color={JYS_KEBIAO_COLOR}
-        headers={tableHeaders}
-        data={planRows}
-        pageNames={semesterPages}
-        pagePrevCaption={t("kebiao.prev_semester_week")}
-        pageNextCaption={t("kebiao.next_semester_week")}
-        // onResultPageIndexChanged={onSemesterPageChanged}
-        // initPageIndex={jysSelectWeek-1}
-        pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}/>);
-    } else {
-      pageTables[0] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
-    }
 
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center">
@@ -336,16 +273,23 @@ class JwcKebiaoScreen extends Component {
             autoTitle />
         }
         {
-          tabTitles && tabTitles.length > 0 &&
-          <ResultTabList
-            ref={this.tabsListRef}
-            my={4}
-            width="100%"
-            maxWidth={1444}
-            tabHeight={50}
+          planRows && planRows.length > 0 &&
+          <ResultTable
+            height={450}
+            titleHeight={50}
+            colLineHeight={20}
+            defaultColWidth={180}
+            title={tableTitle}
             color={JYS_KEBIAO_COLOR}
-            titles={tabTitles}
-            pages={pageTables} />
+            headers={tableHeaders}
+            data={planRows}
+            pageNames={semesterPages}
+            pagePrevCaption={t("common.previous")}
+            pageNextCaption={t("common.next")}
+            onResultPageIndexChanged={onSemesterPageChanged}
+            initPageIndex={schoolWeek<=SEMESTER_FIRST_HALF_MAX_WEEK?0:1}
+            //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
+            />
         }
       </Flex>
     );

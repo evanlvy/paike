@@ -66,6 +66,8 @@
   "kebiao": {
     "zixi": "自习",
     "shizheng": "时政学习",
+    "semester_first_half": "1-9周",
+    "semester_second_half": "10-18周",
     "semester_one_first": "第一学期1-9周",
     "semester_one_second": "第一学期10-18周",
     "semester_two_first": "第二学期1-9周",

@@ -55,8 +55,6 @@ class ShiXunKeBiaoScreen extends Component {
       t("kebiao.sched_89"), t("kebiao.sched_1011"), t("kebiao.sched_1213")
     ];
     this.tableData = null;
-    this.shixunSelectWeek = schoolWeek ? schoolWeek : 1;
-
     this.tabsListRef = React.createRef();
     this.jysTitle = t("kebiao.jys");
   }
@@ -96,9 +94,9 @@ class ShiXunKeBiaoScreen extends Component {
     }
     if (this.selectedJysList && !this.hasFetchKebiao) {
       const { schoolWeek } = this.props;
-      this.shixunSelectWeek = schoolWeek;
-      console.log("loadKebiao: schoolWeek: "+this.shixunSelectWeek);
-      this.loadKebiao(this.shixunSelectWeek);
+      let shixunSelectWeek = schoolWeek;
+      console.log("loadKebiao: schoolWeek: "+shixunSelectWeek);
+      this.loadKebiao(shixunSelectWeek);
     }
   }
 
@@ -184,15 +182,15 @@ class ShiXunKeBiaoScreen extends Component {
     } else {
       this.tableData = [];
     }
-    console.log("kebiaoTable: "+JSON.stringify(this.tableData));
+    //console.log("kebiaoTable: "+JSON.stringify(this.tableData));
   }
 
   buildKebiaoBySched = (jysList, kebiaoByJysSched) => {
     const { schoolYear } = this.props;
-    const { shixunSelectWeek, weekdayNames, hourNames } = this;
+    const { weekdayNames, hourNames } = this;
     let result = {}
     jysList.forEach(jys => {
-      const jysSchedId = buildJysSchedId(jys.id, schoolYear, shixunSelectWeek);
+      const jysSchedId = buildJysSchedId(jys.id, schoolYear, this.state.selectWeek);
       console.log("Get kebiaoInfo of "+jysSchedId);
       const kebiaoInWeek = kebiaoByJysSched[jysSchedId];
       if (kebiaoInWeek) {
@@ -321,24 +319,24 @@ class ShiXunKeBiaoScreen extends Component {
       selectedJysIndexList: jysList
     });
     this.setJysSelectedIndexList(jysList);
-    this.loadKebiao(this.shixunSelectWeek);
+    this.loadKebiao(this.state.selectWeek);
   }
 
   onSemesterPageChanged = (index) => {
     const { semesterPages } = this;
     console.log("onSemesterPageChanged: "+semesterPages[index].name);
-    this.shixunSelectWeek = index+1;
+    let shixunSelectWeek = index+1;
     this.setState({
-      selectWeek : this.shixunSelectWeek
+      selectWeek : shixunSelectWeek
     });
-    this.loadKebiao(this.shixunSelectWeek);
+    this.loadKebiao(shixunSelectWeek);
   }
 
   render() {
     const { t } = this.props;
-    const { selectedJysIndexList } = this.state;
+    const { selectedJysIndexList, selectWeek } = this.state;
     this.buildData();
-    const { jysData, jysTitle, shixunSelectWeek,
+    const { jysData, jysTitle, 
       tabTitles, tableTitle, tableHeaders, tableData, semesterPages,
       /*onJysClicked,*/ onJysChanged, onTabChanged, onSemesterPageChanged } = this;
     const pageTables = [];
@@ -356,7 +354,7 @@ class ShiXunKeBiaoScreen extends Component {
         pagePrevCaption={t("kebiao.prev_semester_week")}
         pageNextCaption={t("kebiao.next_semester_week")}
         onResultPageIndexChanged={onSemesterPageChanged}
-        initPageIndex={shixunSelectWeek-1}
+        initPageIndex={selectWeek-1}
         pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]} />);
     } else {
       pageTables[0] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
