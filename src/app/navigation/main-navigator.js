@@ -31,6 +31,7 @@ const AsyncBanJiKeBiaoScreen = connectRoute(AsyncComponent(() => import('../scre
 const AsyncShiXunKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/shixun-kebiao-screen')));
 const AsyncCenterLabScreen = connectRoute(AsyncComponent(() => import('../screens/center-lab-screen')));
 const AsyncJysKebiaoScreen = connectRoute(AsyncComponent(() => import('../screens/jys-kebiao-screen')));
+const AsyncJwcKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/jwc-kebiao-screen')));
 const AsyncPaikeScreen = connectRoute(AsyncComponent(() => import('../screens/paike-screen')));
 
 class MainNavigatorWrapper extends PureComponent {
@@ -74,6 +75,9 @@ class MainNavigatorWrapper extends PureComponent {
       case MenuType.PAIKE:
         history.push('/paike', menu_params);
         break;
+      case MenuType.JIAOWUCHU:
+        history.push('/kebiao/jwc', menu_params);
+        break;
       default:
         break;
     }
@@ -108,6 +112,7 @@ class MainNavigatorWrapper extends PureComponent {
         <Flex px="10%" direction="column" justify="center" >
           <MenuBar gradeTypes={gradeTypes} centers={centers} labBuildings={labBuildings} onMenuSelected={this.onMenuSelected}/>
           <Switch>
+            <Route path="/kebiao/jwc" component={AsyncJwcKeBiaoScreen} />
             <Route path="/kebiao/lilun" component={AsyncLiLunKeBiaoScreen} />
             <Route path="/kebiao/banji" component={AsyncBanJiKeBiaoScreen} />
             <Route path="/kebiao/shixun" component={AsyncShiXunKeBiaoScreen} />

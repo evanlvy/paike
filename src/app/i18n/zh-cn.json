@@ -44,13 +44,15 @@
   "menuBar": {
     "lilunkebiao_title": "理论课总课表",
     "banjikebiao_title": "班级周课表",
-    "shixunkebiao_title": "实训课表",
+    "shixunkebiao_title": "教研室实训表",
     "shiyanshi_anpai_title": "实验室安排",
-    "jiaoyanshi_kebiao_title": "教研室时间表",
+    "jiaoyanshi_kebiao_title": "教师周课表",
     "jiaoshi_paike_title": "教师排课",
-    "basic_maintain_title": "基础数据维护"
+    "basic_maintain_title": "基础数据维护",
+    "jiaowuchu_kebiao_title": "教务处课表"
   },
   "subjectBoard": {
+    "title_prefix_unselected": "请选择",
     "title_no_subject_template": "请选择专业 [{{grade_info}}]",
     "title_template": "{{subject_name}} [{{grade_info}}]",
     "title_no_jys_template": "请选择分中心教研室",
@@ -113,7 +115,8 @@
     "next_semester_page": "下一学习周期"
   },
   "shixunKebiaoScreen": {
-    "table_title_template": "实训中心实验汇总[{{jys_info}}]"
+    "all_departments": "全选",
+    "table_title_template": "实训中心实验汇总 [已选{{jys_count}}个教研室]"
   },
   "centerLabScreen": {
     "all_labs": "全部实验室",
@@ -122,6 +125,31 @@
   "jysKebiaoScreen": {
     "all_teachers": "全教研室",
     "table_title_template": "{{teacher_info}} 排班表"
+  },
+  "jwcKebiaoScreen": {
+    "class_group": "班级分组",
+    "banji_sched_title": "班级",
+    "classroom": "教室",
+    "mon_12": "星期一 1，2节",
+    "mon_34": "3，4节",
+    "mon_56": "6，7节",
+    "mon_78": "8，9节",
+    "tue_12": "星期二 1，2节",
+    "tue_34": "3，4节",
+    "tue_56": "6，7节",
+    "tue_78": "8，9节",
+    "wed_12": "星期三 1，2节",
+    "wed_34": "3，4节",
+    "wed_56": "6，7节",
+    "wed_78": "8，9节",
+    "thu_12": "星期四 1，2节",
+    "thu_34": "3，4节",
+    "thu_56": "6，7节",
+    "thu_78": "8，9节",
+    "fri_12": "星期五 1，2节",
+    "fri_34": "3，4节",
+    "fri_56": "6，7节",
+    "fri_78": "8，9节"
   },
   "paikeScreen": {
     "table_title_template": "{{center_info}}实验汇总表",

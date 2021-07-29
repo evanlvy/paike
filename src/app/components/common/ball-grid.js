@@ -20,7 +20,7 @@ function BallGrid(props) {
         {
           balls.map((ball, index) => (
             <Flex justify="center" m={2} key={index}>
-              <Box display="flex" position="relative" width={ballSize} height={ballSize} borderRadius="50%" justifyContent="center" alignItems="center" backgroundColor={ball.color} onClick={()=>{onBallClicked(index)}}>
+              <Box display="flex" position="relative" width={ballSize} height={ballSize} borderRadius="50%" justifyContent="center" alignItems="center" backgroundColor={ball.color?ball.color:"gray.500"} onClick={()=>{onBallClicked(index)}}>
                 {selectedBallIndexList != null && selectedBallIndexList.indexOf(index) >= 0 &&  <Icon name="check" color={checkIconColor} position="absolute" bottom="0px" right="0px" size="2em"/>}
                 <Text width="80%" color="white" textAlign="center">{ball.title}</Text>
               </Box>

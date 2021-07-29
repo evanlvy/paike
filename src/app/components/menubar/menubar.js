@@ -55,6 +55,7 @@ const MenuType = {
   JIAOYANSHI: 5,
   PAIKE: 6,
   BASIC_MAINTAIN: 7,
+  JIAOWUCHU: 8,
 };
 
 const MenuListType = {
@@ -71,6 +72,7 @@ class MenuBarWrapped extends Component {
     this.shixunMenuRef = React.createRef();
     this.labMenuRef = React.createRef();
     this.jysMenuRef = React.createRef();
+    this.jwcMenuRef = React.createRef();
 
     this.menuRefs = [this.lilunMenuRef, this.banjiMenuRef, this.shixunMenuRef, this.labMenuRef, this.jysMenuRef, null, null];
   }
@@ -216,6 +218,20 @@ class MenuBarWrapped extends Component {
     this.notifyMenuSelected(MenuType.PAIKE, null);
   }
 
+  onDepartmentLabsSummaryClicked = () => {
+    console.log("onDepartmentLabsSummaryClicked");
+    // reset other menus
+    this.resetMenu(MenuType.SHIXUN-1);
+    this.notifyMenuSelected(MenuType.SHIXUN, null);
+  }
+
+  onJwcKebiaoClicked = () => {
+    console.log("onJwcKebiaoBtnClicked");
+    // reset other menus
+    this.resetMenu(MenuType.JIAOWUCHU-1);
+    this.notifyMenuSelected(MenuType.JIAOWUCHU, null);
+  }
+
   onMaintainMenuSelected = (menu_type, main_index, sub_index) => {
     const { maintain_menus } = this;
     const main_menu = maintain_menus[main_index];
@@ -230,14 +246,16 @@ class MenuBarWrapped extends Component {
     this.initMenu();
     const { grade_info, lab_centers, lab_buildings, jiaoyanshi_centers, maintain_menus } = this;
     const menus = [
+      { type: MenuType.JIAOWUCHU, title: "menuBar.jiaowuchu_kebiao_title", icon: AiTwotoneExperiment, bgColor: "green", onClick: this.onJwcKebiaoClicked,
+              menu_ref: this.jwcMenuRef },
       { list_type: MenuListType.GROUP, type: MenuType.LILUN, title: "menuBar.lilunkebiao_title", icon: FiBookOpen, bgColor: "orange",
               menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.lilunMenuRef },
       { list_type: MenuListType.GROUP, type: MenuType.BANJI, title: "menuBar.banjikebiao_title", icon: FaCalendarDay, bgColor: "cyan",
               menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.banjiMenuRef },
-      { list_type: MenuListType.GROUP, type: MenuType.SHIXUN, title: "menuBar.shixunkebiao_title", icon: AiTwotoneExperiment, bgColor: "green",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged}, menu_ref: this.shixunMenuRef },
+      { type: MenuType.SHIXUN, title: "menuBar.shixunkebiao_title", icon: AiTwotoneExperiment, bgColor: "green", onClick: this.onDepartmentLabsSummaryClicked,
+              menu_ref: this.shixunMenuRef },
       { list_type: MenuListType.LAB, type: MenuType.SHIYANSHI, title: "menuBar.shiyanshi_anpai_title", icon: FaBuilding, bgColor: "blue",
-              menuListProps: {labCenters: lab_centers ,labBuildings: lab_buildings, onLabChange: this.onLabChanged}, menu_ref: this.labMenuRef },
+              menuListProps: {labCenters: lab_centers, labBuildings: lab_buildings, onLabChange: this.onLabChanged}, menu_ref: this.labMenuRef },
       { list_type: MenuListType.GROUP, type: MenuType.JIAOYANSHI, title: "menuBar.jiaoyanshi_kebiao_title", icon: MdCollectionsBookmark, bgColor: "red",
               menuListProps: {menuGroups: jiaoyanshi_centers, onGroupMenuSelected: this.onJiaoYanShiChange, height: 500}, menu_ref: this.jysMenuRef },
       { type: MenuType.PAIKE, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink", onClick: this.onJiaoShiPaiKeClicked},
@@ -245,7 +263,7 @@ class MenuBarWrapped extends Component {
               menuListProps: {menuGroups: maintain_menus, onGroupMenuSelected: this.onMaintainMenuSelected, height: 500} },
     ]
     return (
-      <Flex direction="row" justify="center" mt={5}>
+      <Flex direction="row" justify="center" flexWrap="wrap" mt={5}>
         {
           menus.map((item) => {
             switch(item.list_type){
@@ -256,6 +274,7 @@ class MenuBarWrapped extends Component {
                   menuType={item.type}
                   mx={1}
                   width="11em"
+                  marginBottom="2"
                   title={item.title}
                   icon={item.icon}
                   bgColor={item.bgColor}
@@ -267,6 +286,7 @@ class MenuBarWrapped extends Component {
                   menuType={item.type}
                   mx={1}
                   width="11em"
+                  marginBottom="2"
                   title={item.title}
                   icon={item.icon}
                   bgColor={item.bgColor}
@@ -276,6 +296,7 @@ class MenuBarWrapped extends Component {
                   key={item.type}
                   mx={1}
                   width="11em"
+                  marginBottom="2"
                   leftIcon={item.icon}
                   variantColor={item.bgColor}
                   onClick={() => item.onClick(item.menu_type)}>

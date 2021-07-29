@@ -219,7 +219,7 @@ class BanJiKeBiaoScreen extends Component {
       this.selectedBanji = this.banjiData[index];
       let selectWeek = this.banjiSelectWeeks[index];
       if (selectWeek == null) { // not set week index of this banji, reset it
-        this.banjiSelectWeeks[index] = 1;
+        this.banjiSelectWeeks[index] = this.banjiSelectWeek;
       }
       this.banjiSelectWeek = this.banjiSelectWeeks[index];
     } else {

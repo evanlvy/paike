@@ -11,6 +11,7 @@ import teacher from './teacher';
 import banji from './banji';
 import kebiao from './kebiao';
 import history from './history';
+import rawplan from './rawplan';
 
 const rootReducer = combineReducers({
   app,
@@ -24,6 +25,7 @@ const rootReducer = combineReducers({
   banji,
   kebiao,
   history,
+  rawplan,
 });
 
 export default rootReducer;

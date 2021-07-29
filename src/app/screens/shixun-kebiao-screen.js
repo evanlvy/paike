@@ -58,6 +58,7 @@ class ShiXunKeBiaoScreen extends Component {
     this.shixunSelectWeek = schoolWeek ? schoolWeek : 1;
 
     this.tabsListRef = React.createRef();
+    this.jysTitle = t("kebiao.jys");
   }
 
   componentDidMount() {
@@ -65,15 +66,16 @@ class ShiXunKeBiaoScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { schoolYear, schoolWeek, jysList, kebiaoByJysSched, location } = this.props;
+    const { schoolYear, schoolWeek, jysList, kebiaoByJysSched/*, location*/ } = this.props;
     const { selectedJysIndexList, selectWeek } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
-    if (nextProps.location.state.grd !== location.state.grd || nextProps.location.state.edu !== location.state.edu) {
+    /*if (nextProps.location.state.grd !== location.state.grd || nextProps.location.state.edu !== location.state.edu) {
       //this.resetData();
       console.log("shouldComponentUpdate, location state diff");
       return true;
-    } else if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
+    } else */
+    if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
     || nextProps.jysList !== jysList || nextProps.kebiaoByJysSched !== kebiaoByJysSched) {
       console.log("shouldComponentUpdate, props diff");
       return true;
@@ -125,6 +127,7 @@ class ShiXunKeBiaoScreen extends Component {
     if (this.jysData == null || this.jysData.length === 0) {
       const { jysList } = this.props;
       this.jysData = !jysList ? [] : jysList;
+      //this.jysData.unshift({title: t("shixunKebiaoScreen.all_departments"), color: "gray.400"});
       console.log("JYS Data: "+JSON.stringify(this.jysData));
       this.setJysSelectedIndexList(this.state.selectedJysIndexList);
     }
@@ -147,18 +150,26 @@ class ShiXunKeBiaoScreen extends Component {
     this.tabTitles = [];
     if (!this.selectedJysList || this.selectedJysList.length === 0) {
       this.tabTitles = [];
-      this.jysTitle = t("subjectBoard.title_no_jys_template");
+      //this.jysTitle = t("subjectBoard.title_no_jys_template");
       return;
     }
     let jys_info = "";
-    this.selectedJysList.forEach(jys => {
-      jys_info += jys.name + " ";
+    this.selectedJysList.every((item, index) => {
+      if (item.title != null) {
+        jys_info += item.title + " ";
+      }
+      if (jys_info.length > 30){
+        jys_info += "...";
+        return false;
+      }
+      return true;
     });
-    this.jysTitle = t("subjectBoard.title_jys_template", {jys_info: jys_info.trim()});
+    //this.jysTitle = t("subjectBoard.title_jys_template", {jys_info: jys_info.trim()});
     this.tabTitles = [jys_info];
     console.log(`updateTabTitles: ${JSON.stringify(this.tabTitles)}`);
-    this.tableTitle = t("shixunKebiaoScreen.table_title_template", {jys_info: jys_info});
+    this.tableTitle = t("shixunKebiaoScreen.table_title_template", {jys_count: this.selectedJysList.length});
     console.log(`updateTableTitle: ${this.tableTitle}`);
+    
   }
 
   buildKebiao = () => {
@@ -269,23 +280,47 @@ class ShiXunKeBiaoScreen extends Component {
     this.hasFetchKebiao = true;
   }
 
-  onJysClicked = (index) => {
+  /*onJysClicked = (index) => {
     console.log(`onJysClicked ${this.jysData[index].title}`);
-    const { selectedJysIndexList: oldIndexList } = this.state;
+    const { selectedJysIndexList: oldIndexList,  } = this.state;
     let newIndexList = [];
-    oldIndexList.forEach(index_item => {
-      if (index_item !== index) {
-        newIndexList.push(index_item);
+    if (index === 0) {
+      if (oldIndexList.includes(0)) {
+        // Uncheck ALL
+        newIndexList = [];
       }
-    });
-    if (newIndexList.length === oldIndexList.length) { // nothing removed, it's a checked click
-      newIndexList.push(index);
+      else {
+        // Check ALL
+        newIndexList = [...Array(this.jysData.length).keys()];
+      }
+      console.log(`onJysClicked newlist: ${newIndexList}`);
+    }
+    else {
+      // Remove clicked item
+      oldIndexList.forEach(index_item => {
+        if (index_item !== index) {
+          newIndexList.push(index_item);
+        }
+      });
+      // Add clicked item or not
+      if (newIndexList.length === oldIndexList.length) { // nothing removed, it's a checked click
+        newIndexList.push(index);
+      }
     }
 
     this.setState({
       selectedJysIndexList: newIndexList
     });
     this.setJysSelectedIndexList(newIndexList);
+    this.loadKebiao(this.shixunSelectWeek);
+  }*/
+
+  onJysChanged = (jysList) => {
+    console.log(`onJysChanged ${jysList}`);
+    this.setState({
+      selectedJysIndexList: jysList
+    });
+    this.setJysSelectedIndexList(jysList);
     this.loadKebiao(this.shixunSelectWeek);
   }
 
@@ -305,11 +340,11 @@ class ShiXunKeBiaoScreen extends Component {
     this.buildData();
     const { jysData, jysTitle, shixunSelectWeek,
       tabTitles, tableTitle, tableHeaders, tableData, semesterPages,
-      onJysClicked, onTabChanged, onSemesterPageChanged } = this;
+      /*onJysClicked,*/ onJysChanged, onTabChanged, onSemesterPageChanged } = this;
     const pageTables = [];
     if (tableData) {
       pageTables[0] = (<ResultTable
-        height={450}
+        height={450/*window.innerHeight*/}
         titleHeight={50}
         colLineHeight={20}
         defaultColWidth={180}
@@ -334,8 +369,12 @@ class ShiXunKeBiaoScreen extends Component {
           title={jysTitle}
           subjects={jysData}
           initSelectedIndexList={selectedJysIndexList}
-          onSubjectClicked={onJysClicked}
-          enableMultiSelect />
+          //onSubjectClicked={onJysClicked}
+          selectionChanged={onJysChanged}
+          t={t}
+          enableMultiSelect
+          enableSelectAll
+          autoTitle />
         {
           tabTitles && tabTitles.length > 0 &&
           <ResultTabList

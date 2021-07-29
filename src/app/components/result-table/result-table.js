@@ -43,9 +43,21 @@ class ResultTableWrapper extends Component {
     this.buildUI(props);
   }
 
+  getCircularReplacer = () => {
+    const seen = new WeakSet();
+    return (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) {
+          return;
+        }
+        seen.add(value);
+      }
+      return value;
+    };
+  };
+
   shouldComponentUpdate(nextProps, nextState) {
     const { props, state } = this;
-    // console.log("shouldComponentUpdate, orig props "+JSON.stringify(props));
     //console.log("shouldComponentUpdate, initPageIndex: "+props.initPageIndex+"->"+nextProps.initPageIndex);
     if (nextProps.headers !== props.headers || nextProps.defaultColWidth !== props.defaultColWidth
     || nextProps.colLineHeight !== props.colLineHeight || nextProps.data !== props.data
@@ -54,16 +66,19 @@ class ResultTableWrapper extends Component {
         this.needCorrectPageIndex = true;
       }
       this.buildUI(nextProps);
+      console.log("shouldComponentUpdate:true");
       return true;
     }
     if (nextState.curPageIndex !== state.curPageIndex) {
+      console.log("shouldComponentUpdate:true");
       return true;
     }
+    console.log("shouldComponentUpdate:false");
     return false;
   }
 
   componentDidUpdate() {
-    //console.log("componentDidUpdate, state.curPageIndex: "+this.state.curPageIndex+", props.initPageIndex: "+this.props.initPageIndex+", need correct: "+this.needCorrectPageIndex);
+    console.log("componentDidUpdate, state.curPageIndex: "+this.state.curPageIndex+", props.initPageIndex: "+this.props.initPageIndex+", need correct: "+this.needCorrectPageIndex);
     if (this.needCorrectPageIndex) {
       this.setState({
         curPageIndex: this.props.initPageIndex
@@ -85,9 +100,13 @@ class ResultTableWrapper extends Component {
 
   buildColDef = (props) => {
     const { headers, defaultColWidth, colLineHeight } = props;
-    this.columnDefs = [];
+    this.columnDefs = this.buildColDefArray(headers, defaultColWidth, colLineHeight);
+  }
+
+  buildColDefArray = (headers, defaultColWidth, colLineHeight) => {
+    let columnDefs = [];
     for (let i=0; i < headers.length; i++) {
-      this.columnDefs[i] = {
+      columnDefs[i] = {
         index: i,
         headerName: headers[i].name,
         field: headers[i].field,
@@ -95,8 +114,32 @@ class ResultTableWrapper extends Component {
         lineHeight: colLineHeight,
         cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
       };
+      if (headers[i].children && headers[i].children.length > 0) {
+        columnDefs[i]["children"] = this.buildColDefArray(headers[i].children, defaultColWidth/2, colLineHeight);
+      }
+      if (headers[i].renderer && headers[i].renderer !== null) {
+        if (headers[i].renderer === "course_teacher_renderer") {
+          columnDefs[i]["cellRenderer"] = (params) => {
+            // console.log("CourseTeacherRenderer: "+JSON.stringify(params, this.getCircularReplacer()));
+            if (!params.value) {
+              return null;
+            }
+            let cname = params.value.course;
+            if (params.value.cid <= 0){
+              cname = `<font color="white" style="background-color:#FF0000;">${cname}</font>`;
+            }
+            let tname = params.value.teacher;
+            if (params.value.tid <= 0){
+              tname = `<font color="white" style="background-color:#FF0000;">${tname}</font>`;
+            }
+            let output = `<b>${cname}</b><br>${tname}`
+            return output;
+          };
+        }
+      }
     }
-    this.columnDefs[0]["pinned"] = "left";
+    columnDefs[0]["pinned"] = "left";
+    return columnDefs;
   }
 
   buildData = (props) => {
@@ -105,6 +148,7 @@ class ResultTableWrapper extends Component {
     for (let i=0; i < data.length; i++) {
       this.rowData[i] = data[i];
     }
+    console.log("buildData: "+JSON.stringify(data));
   }
 
   onGridSizeChanged = (event) => {
