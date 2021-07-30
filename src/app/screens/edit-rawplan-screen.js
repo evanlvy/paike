@@ -181,10 +181,18 @@ class EditRawplanScreen extends Component {
 
   onCellValueChanged = (params) => {
     let dest_col = params.colDef.field;
-    console.log("onCellValueChanged: newValue:"+JSON.stringify(params.newValue)+" ColRef:"+JSON.stringify(params.colDef));
+    console.log("onCellValueChanged: newValue:"+JSON.stringify(params.newValue)+" oldValue:"+params.oldValue+" ColRef:"+JSON.stringify(params.colDef));
+    console.log("onCellValueChanged: cell obj:"+JSON.stringify(params.data[dest_col]))
     if (!params.newValue || params.newValue.length < 1) {
+      // Delete the old value from state
       return true;
     }
+    if (params.oldValue && params.newValue.length > 1 && params.newValue === params.oldValue) {
+      // Compare value with no change
+      return;
+    }
+    //TODO: Dispatch action for the value change!
+
   }
 
   render() {
