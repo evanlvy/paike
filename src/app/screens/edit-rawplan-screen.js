@@ -16,14 +16,14 @@ import {
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
 import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup} from '../redux/modules/rawplan';
-
+import { EditableTable } from '../components/result-table/editable-table';
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
 const JYS_KEBIAO_COLOR = "red";
 const TEACHER_ITEM_COLOR = "pink.400";
 const SEMESTER_FIRST_HALF_MAX_WEEK = 9;
 const SEMESTER_HALF_BIAS_WEEK = 6;
-class JwcKebiaoScreen extends Component {
+class EditRawplanScreen extends Component {
   constructor(props) {
     super (props);
     const { t, schoolWeek } = props;
@@ -37,109 +37,27 @@ class JwcKebiaoScreen extends Component {
     this.semesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
     this.tableHeaders = [
       {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class"},
-      {name: t("jwcKebiaoScreen.classroom"), field: "room"},
-      {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.mon_78"), field: "mon_78", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.tue_12"), field: "tue_12", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.tue_34"), field: "tue_34", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.tue_56"), field: "tue_56", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.tue_78"), field: "tue_78", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.wed_12"), field: "wed_12", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.wed_34"), field: "wed_34", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.wed_56"), field: "wed_56", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.wed_78"), field: "wed_78", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.thu_12"), field: "thu_12", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.thu_34"), field: "thu_34", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.thu_56"), field: "thu_56", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.thu_78"), field: "thu_78", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.fri_12"), field: "fri_12", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.fri_34"), field: "fri_34", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.fri_56"), field: "fri_56", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.fri_78"), field: "fri_78", renderer: "course_teacher_renderer"},
-      /*{name: "slots", field: "slots", children: [
-        {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.mon_78"), field: "mon_78", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.tue_12"), field: "tue_12", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.tue_34"), field: "tue_34", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.tue_56"), field: "tue_56", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.tue_78"), field: "tue_78", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.wed_12"), field: "wed_12", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.wed_34"), field: "wed_34", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.wed_56"), field: "wed_56", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.wed_78"), field: "wed_78", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.thu_12"), field: "thu_12", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.thu_34"), field: "thu_34", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.thu_56"), field: "thu_56", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.thu_78"), field: "thu_78", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.fri_12"), field: "fri_12", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.fri_34"), field: "fri_34", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.fri_56"), field: "fri_56", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.fri_78"), field: "fri_78", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-      ],},*/
+      {name: t("jwcKebiaoScreen.classroom"), field: "room", width: 50, editable: true},
+      {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.mon_78"), field: "mon_78", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.tue_12"), field: "tue_12", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.tue_34"), field: "tue_34", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.tue_56"), field: "tue_56", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.tue_78"), field: "tue_78", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.wed_12"), field: "wed_12", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.wed_34"), field: "wed_34", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.wed_56"), field: "wed_56", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.wed_78"), field: "wed_78", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.thu_12"), field: "thu_12", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.thu_34"), field: "thu_34", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.thu_56"), field: "thu_56", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.thu_78"), field: "thu_78", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.fri_12"), field: "fri_12", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.fri_34"), field: "fri_34", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.fri_56"), field: "fri_56", renderer: "course_teacher_renderer", editable: true},
+      {name: t("jwcKebiaoScreen.fri_78"), field: "fri_78", renderer: "course_teacher_renderer", editable: true},
     ];
     this.tableData = null;
     this.tabsListRef = React.createRef();
@@ -247,11 +165,33 @@ class JwcKebiaoScreen extends Component {
     this.loadKebiao(shixunSelectWeek);
   }
 
+  onCellClicked = (e) => {
+    const { multiSelect, singleSelect } = this.props;
+    if (multiSelect) {
+      this.onMultiCellClicked(e);
+    } else if (singleSelect) {
+      this.onSingleCellClicked(e);
+    }
+
+    const { onCellClicked : onCellClickedCb } = this.props;
+    if (onCellClickedCb) {
+      onCellClickedCb(e);
+    }
+  }
+
+  onCellValueChanged = (params) => {
+    let dest_col = params.colDef.field;
+    console.log("onCellValueChanged: newValue:"+JSON.stringify(params.newValue)+" ColRef:"+JSON.stringify(params.colDef));
+    if (!params.newValue || params.newValue.length < 1) {
+      return true;
+    }
+  }
+
   render() {
     const { t, groupList, planRows, groupStageWeekId, schoolWeek } = this.props;
     this.buildData();
     //const { selectedTeacherIndex } = this.state;
-    const { groupTitle, onSubjectClicked, onSemesterPageChanged, 
+    const { groupTitle, onSubjectClicked, onSemesterPageChanged, onCellClicked, onCellValueChanged,
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
     //console.log("render: plans "+JSON.stringify(planRows));
@@ -273,7 +213,7 @@ class JwcKebiaoScreen extends Component {
         }
         {
           planRows && planRows.length > 0 &&
-          <ResultTable
+          <EditableTable
             height={450}
             titleHeight={50}
             colLineHeight={20}
@@ -285,8 +225,10 @@ class JwcKebiaoScreen extends Component {
             pageNames={semesterPages}
             pagePrevCaption={t("common.previous")}
             pageNextCaption={t("common.next")}
-            onResultPageIndexChanged={onSemesterPageChanged}
+            //onResultPageIndexChanged={onSemesterPageChanged}
             initPageIndex={schoolWeek<=SEMESTER_FIRST_HALF_MAX_WEEK?0:1}
+            onCellValueChanged={onCellValueChanged}
+            onCellClicked={onCellClicked}
             //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
             />
         }
@@ -313,4 +255,4 @@ const mapDispatchToProps = (dispatch) => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(JwcKebiaoScreen));
+export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(EditRawplanScreen));

@@ -148,17 +148,18 @@ class MenuBarWrapped extends Component {
       };
       jys_info.push(center_item);
     })
-    //console.log("initJiaoYanShi, jys_info: "+JSON.stringify(jys_info));
+    // console.log("initJiaoYanShi, jys_info: "+JSON.stringify(jys_info));
     this.jiaoyanshi_centers = jys_info;
   }
 
   initMaintainMenu = () => {
+    const { t } = this.props;
     this.maintain_menus = [
-      {name: "审核批准", items: [{name: "课表变更"}, {name: "教师请假"}, {name: "学生请假"}]},
-      {name: "统计", items: [{name: "课时统计"}, {name: "微信关联学生统计"}]},
-      {name: "公共假期", items: [{name: "假期调整/重新排课"}]},
-      {name: "年度数据录入", items: [{name: "教务处总课表"}, {name: "班级(及分组)"}]},
-      {name: "基础数据维护", items: [{name: "教研室"}, {name: "实验室"}, {name: "实训分中心"}, {name: "教师"}, {name: "课程"}, {name: "学院"}, {name: "专业"}]},
+      {name: t("maintainMenu.audit"), items: [{name: t("maintainMenu.audit_planChange")}, {name: t("maintainMenu.audit_teacherAbsence")}, {name: t("maintainMenu.audit_stuAbsence")}]},
+      {name: t("maintainMenu.statistics"), items: [{name: t("maintainMenu.statistics_laborHour")}, {name: t("maintainMenu.statistics_wechat")}]},
+      {name: t("maintainMenu.holiday"), items: [{name: t("maintainMenu.holiday_adjust")}]},
+      {name: t("maintainMenu.annualData"), items: [{name: t("maintainMenu.annualData_rawplans")}, {name: t("maintainMenu.annualData_classes")}]},
+      {name: t("maintainMenu.basicData"), items: [{name: t("maintainMenu.basicData_department")}, {name: t("maintainMenu.basicData_labInfo")}, {name: t("maintainMenu.basicData_labCenter")}, {name: t("maintainMenu.basicData_teachers")}, {name: t("maintainMenu.basicData_courses")}, {name: t("maintainMenu.basicData_colleges")}, {name: t("maintainMenu.basicData_majors")}]},
     ];
   }
 

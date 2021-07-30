@@ -33,6 +33,8 @@ const AsyncCenterLabScreen = connectRoute(AsyncComponent(() => import('../screen
 const AsyncJysKebiaoScreen = connectRoute(AsyncComponent(() => import('../screens/jys-kebiao-screen')));
 const AsyncJwcKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screens/jwc-kebiao-screen')));
 const AsyncPaikeScreen = connectRoute(AsyncComponent(() => import('../screens/paike-screen')));
+const AsyncEditRawplan = connectRoute(AsyncComponent(() => import('../screens/edit-rawplan-screen')));
+
 
 class MainNavigatorWrapper extends PureComponent {
   constructor(props) {
@@ -54,7 +56,7 @@ class MainNavigatorWrapper extends PureComponent {
   }
 
   onMenuSelected = (menu, menu_params) => {
-    const { history } = this.props;
+    const { t, history } = this.props;
     console.log("onMenuSelected: "+menu+", params: "+JSON.stringify(menu_params));
     switch(menu) {
       case MenuType.LILUN:
@@ -78,6 +80,10 @@ class MainNavigatorWrapper extends PureComponent {
       case MenuType.JIAOWUCHU:
         history.push('/kebiao/jwc', menu_params);
         break;
+      case MenuType.BASIC_MAINTAIN:
+        if (menu_params.sub.name === t("maintainMenu.annualData_rawplans")) {
+          history.push('/maintain/rawplan', menu_params);
+        }
       default:
         break;
     }
@@ -119,6 +125,7 @@ class MainNavigatorWrapper extends PureComponent {
             <Route path="/labs" component={AsyncCenterLabScreen} />
             <Route path="/jys" component={AsyncJysKebiaoScreen} />
             <Route path="/paike" component={AsyncPaikeScreen} />
+            <Route path="/maintain/rawplan" component={AsyncEditRawplan} />
           </Switch>
         </Flex>
         {

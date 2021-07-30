@@ -146,10 +146,10 @@ const groupStageWeekId = (state = Immutable.fromJS({}), action) => {
 
 export const parsePlan = (plan_row) => {
   let item_dict = {};
-  console.log("parsePlan: "+JSON.stringify(plan_row));
+  //console.log("parsePlan: "+JSON.stringify(plan_row));
   for (let key of Object.keys(plan_row)) {
     let value = plan_row[key];
-    console.log("parsePlan: value:"+JSON.stringify(value));
+    //console.log("parsePlan: value:"+JSON.stringify(value));
     if (typeof value === "string") {
       let item_splited = value.split('$');
       if (item_splited.length === 4) {

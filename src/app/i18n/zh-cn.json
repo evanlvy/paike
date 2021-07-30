@@ -187,5 +187,27 @@
   "chooseTeacherModal": {
     "title_template": "选择教师 [{{shixun_name}}]",
     "shixun_center": "实训中心"
+  },
+  "maintainMenu": {
+    "audit": "审核批准",
+    "audit_planChange": "课表变更", 
+    "audit_teacherAbsence": "教师请假",
+    "audit_stuAbsence": "学生请假",
+    "statistics": "统计",
+    "statistics_laborHour": "课时统计",
+    "statistics_wechat": "微信关联学生统计",
+    "holiday": "公共假期",
+    "holiday_adjust": "假期调整/重新排课",
+    "annualData": "新教学数据录入",
+    "annualData_rawplans": "教务处总课表",
+    "annualData_classes": "班级(及分组)",
+    "basicData": "基础数据维护",
+    "basicData_department": "教研室",
+    "basicData_labInfo": "实验室",
+    "basicData_labCenter": "实训分中心",
+    "basicData_teachers": "教师", 
+    "basicData_courses": "课程",
+    "basicData_colleges": "学院", 
+    "basicData_majors": "专业"
   }
 }

@@ -38,6 +38,73 @@ class EditableTable extends Component {
     return false;
   }
 
+  getCircularReplacer = () => {
+    const seen = new WeakSet();
+    return (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) {
+          return;
+        }
+        seen.add(value);
+      }
+      return value;
+    };
+  };
+
+  courseTeacherGetter = (params) => {
+    //console.log("courseTeacherGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
+    let value = params.data[params.colDef.field];
+    //console.log("courseTeacherGetter: value:"+JSON.stringify(value));
+    if (!value) {
+      return "自习";
+    }
+    let cname = value.course;
+    if (value.cid <= 0){
+      cname = cname+ (value.cid < 0?"\u274C":"\u2753");
+    }
+    let tname = value.teacher;
+    if (value.tid <= 0){
+      tname = tname+(value.tid < 0?"\u274C":"\u2753");
+    }
+    let output = cname + " " + tname;
+    //console.log("courseTeacherGetter: "+output);
+    return output;
+  };
+
+  courseTeacherSetter = (params) => {
+    let dest_col = params.colDef.field;
+    if (!params.newValue || params.newValue.length < 1) {
+      delete params.data[dest_col];
+      return true;
+    }
+    let old_string = "";
+    if (params.oldValue && params.oldValue.length > 0) {
+      old_string = params.oldValue.replace("\u274C", "").replace("\u2753", "").replace(/\s+/g, "");
+    }
+    let input_string = params.newValue.replace("\u274C", "").replace("\u2753", "");
+    if (old_string.length > 1) {
+      // Compare string after trim
+      let new_trimmed = input_string.replace(/\s+/g, "");
+      if (old_string === new_trimmed) {
+        return false;
+      }
+    }
+    let output = {course: "", cid: 0, teacher: "", tid: 0};
+    let item_splited = input_string.split(' ');
+    if (item_splited.length >= 1) {
+      output.course = item_splited[0];
+    }
+    if (item_splited.length === 2) {
+      output.teacher = item_splited[1];
+    }
+    if (item_splited.length > 2) {
+      output.teacher = input_string.replace(output.course, "");
+    }
+    //console.log("courseTeacherSetter: "+JSON.stringify(output));
+    params.data[dest_col] = output;
+    return true;
+  };
+
   buildColDef = (props) => {
     const { headers, defaultColWidth, colLineHeight, cellClassRules } = props;
     const columnDefs = [];
@@ -52,6 +119,12 @@ class EditableTable extends Component {
         cellRenderer: "commonRenderer",
         editable: headers[i].editable,
       };
+      if (headers[i].renderer && headers[i].renderer !== null) {
+        if (headers[i].renderer === "course_teacher_renderer") {
+          columnDefs[i]["valueGetter"] = this.courseTeacherGetter;
+          columnDefs[i]["valueSetter"] = this.courseTeacherSetter;
+        }
+      }
     }
     this.columnDefs = columnDefs;
   }
@@ -91,7 +164,7 @@ class EditableTable extends Component {
   render() {
     const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onCellClicked } = this;
     const { width, defaultColWidth, cellClassRules, headers, data,
-      onCellClicked: onCellClickedCallback, ...other_props } = this.props;
+      onCellClicked: onCellClickedCallback,onCellValueChanged, ...other_props } = this.props;
     //console.log("RowData: "+JSON.stringify(rowData));
     return (
       <Flex direction="column" width={width ? width : "100%"} {...other_props} >
@@ -102,6 +175,7 @@ class EditableTable extends Component {
             columnDefs={columnDefs}
             rowData={rowData}
             onGridReady={onGridReady}
+            onCellValueChanged={onCellValueChanged}
             onCellClicked={onCellClicked} >
           </AgGridReact>
         </div>
