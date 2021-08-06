@@ -171,6 +171,8 @@ class EditableTable extends Component {
       <Flex direction="column" width={width ? width : "100%"} {...other_props} >
         <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
           <AgGridReact
+            deltaRowMode={true}
+            getRowNodeId={data=>data.id}
             defaultColDef={defaultColDef}
             frameworkComponents={frameworkComponents}
             columnDefs={columnDefs}

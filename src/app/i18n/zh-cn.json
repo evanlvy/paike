@@ -209,5 +209,8 @@
     "basicData_courses": "课程",
     "basicData_colleges": "学院", 
     "basicData_majors": "专业"
+  },
+  "editRawplanScreen": {
+    "commit": "提交改动"
   }
 }

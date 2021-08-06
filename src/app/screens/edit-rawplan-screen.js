@@ -6,6 +6,7 @@ import { connect } from "react-redux";
 import { withTranslation } from 'react-i18next';
 import {
   Flex,
+  Button,
   Text,
 } from '@chakra-ui/core';
 
@@ -15,7 +16,7 @@ import {
 } from '../components';
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
-import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup} from '../redux/modules/rawplan';
+import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, getChangedRowIds} from '../redux/modules/rawplan';
 import { EditableTable } from '../components/result-table/editable-table';
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
@@ -36,8 +37,8 @@ class EditRawplanScreen extends Component {
     //this.tabTitles = [];
     this.semesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
     this.tableHeaders = [
-      {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class"},
-      {name: t("jwcKebiaoScreen.classroom"), field: "room", width: 50, editable: true},
+      {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class_name"},
+      {name: t("jwcKebiaoScreen.classroom"), field: "classroom", width: 60, editable: true},
       {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", renderer: "course_teacher_renderer", editable: true},
       {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", renderer: "course_teacher_renderer", editable: true},
       {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", renderer: "course_teacher_renderer", editable: true},
@@ -72,9 +73,12 @@ class EditRawplanScreen extends Component {
     const { selectedSubjectIndex } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
-    if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.planRows !== planRows || nextProps.groupStageWeekId !== groupStageWeekId) {
+    if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.groupStageWeekId !== groupStageWeekId) {
       console.log("shouldComponentUpdate, props diff");
       return true;
+    } else if (nextProps.planRows !== planRows) {
+      console.log("shouldComponentUpdate, planRows diff");
+      return false;
     } else if (nextState.selectedSubjectIndex !== selectedSubjectIndex) {
       console.log("shouldComponentUpdate, state diff");
       return true;
@@ -182,24 +186,25 @@ class EditRawplanScreen extends Component {
   onCellValueChanged = (params) => {
     let dest_col = params.colDef.field;
     console.log("onCellValueChanged: newValue:"+JSON.stringify(params.newValue)+" oldValue:"+params.oldValue+" ColRef:"+JSON.stringify(params.colDef));
-    console.log("onCellValueChanged: cell obj:"+JSON.stringify(params.data[dest_col]))
-    if (!params.newValue || params.newValue.length < 1) {
-      // Delete the old value from state
-      return true;
-    }
+    console.log("onCellValueChanged: cell obj:"+JSON.stringify(params.data[dest_col]));
     if (params.oldValue && params.newValue.length > 1 && params.newValue === params.oldValue) {
       // Compare value with no change
       return;
     }
-    //TODO: Dispatch action for the value change!
-
+    /*if (!params.newValue || params.newValue.length < 1) {
+      // Delete the old value from state
+      this.props.setPlanItem(params.data["id"], dest_col, null);
+      return;
+    }*/
+    //Dispatch action for the value change!
+    this.props.setRowChanged(params.data["id"], dest_col, params.data[dest_col]);
   }
 
   render() {
-    const { t, groupList, planRows, groupStageWeekId, schoolWeek } = this.props;
+    const { t, groupList, planRows, groupStageWeekId, schoolWeek, changedRows } = this.props;
     this.buildData();
     //const { selectedTeacherIndex } = this.state;
-    const { groupTitle, onSubjectClicked, onSemesterPageChanged, onCellClicked, onCellValueChanged,
+    const { groupTitle, onSubjectClicked, onSemesterPageChanged, onCellClicked, onCellValueChanged, onCommit,
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
     //console.log("render: plans "+JSON.stringify(planRows));
@@ -240,20 +245,25 @@ class EditRawplanScreen extends Component {
             //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
             />
         }
+        {
+          changedRows && changedRows.length>0 &&
+          <Button variantColor={JYS_KEBIAO_COLOR} onClick={onCommit}>{t("editRawplanScreen.commit")}</Button>
+        }
       </Flex>
     );
   }
 }
 
-const mapStateToProps = (state, props) => {
-  const { groupStageWeekId, groupList } = props;
-  console.log("mapStateToProps: "+groupStageWeekId + groupList);
+const mapStateToProps = (state/*, props*/) => {
+  //const { groupStageWeekId, groupList } = props;
+  //console.log("mapStateToProps: "+groupStageWeekId + groupList);
   return {
     schoolYear: getSchoolYear(state),
     schoolWeek: getSchoolWeek(state),
     groupList: getRawplanGroups(state),
     groupStageWeekId: getSelectedGroup(state),
-    planRows: getPlansByGroup(state, groupStageWeekId),
+    planRows: getPlansByGroup(state),
+    changedRows: getChangedRowIds(state),
   }
 }
 

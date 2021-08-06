@@ -27,7 +27,7 @@ class Api {
 
   queryRawplan = async (stage, weekIdx, degreeId, gradeId) => {
     try {
-      const url = this.baseUrl+"/get_rawplan";
+      const url = this.baseUrl+"/get_rawplans";
       console.log("Request url "+url+" with degree: "+degreeId+", grade: "+gradeId+", stage: "+stage+", week: "+weekIdx);
       let request_param = {
         stage_id: stage,
@@ -41,6 +41,24 @@ class Api {
         throw new Error(message.message);
       }
       return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  updateRow = async (rowId, arrayDiff) => {
+    try {
+      const url = this.baseUrl+"/set_rawplan";
+      console.log("Request url "+url+" with rowId: "+rowId+" Diff: "+JSON.stringify(arrayDiff));
+      let request_param = {
+        id: rowId,
+      };
+      let response = await axios.post(url, Object.assign(request_param, arrayDiff));
+      const { success, data, message } = response.data;
+      if (!success) {
+        throw new Error(message.message);
+      }
+      return data.id;
     } catch (error) {
       throw error;
     }
