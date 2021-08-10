@@ -60,7 +60,7 @@ export const actions = {
       return async (dispatch, getState) => {
         try {
             dispatch(appActions.startRequest());
-            const data = await rawplanApi.updateRow(rowId, getRowDiff(getState()));
+            const data = await rawplanApi.updateRow(rowId, getRowDiff(getState(), rowId));
             console.log("updateRow: return ok for rowId: "+data.id);
             dispatch(appActions.finishRequest());
         } catch (error) {
@@ -174,6 +174,14 @@ const rowChanged = (state = Immutable.fromJS({}), action) => {
       //console.log("rowChanged reducer:" + JSON.stringify(state[action.rowId]));
       // How to change deep level state!
       // Ref: https://stackoverflow.com/questions/36031590/right-way-to-update-state-in-redux-reducers
+      if (!state[action.rowId]) {
+        // Use merge firstly otherwize the object will have keys as 'size' and '_altered'...
+        return state.merge({
+          [action.rowId]: {
+            [action.colId]: combinePlanItem(action.planItem)
+          }
+        });
+      }
       return Object.assign({}, state, {
         [action.rowId]: Object.assign({}, state[action.rowId], {
           [action.colId]: combinePlanItem(action.planItem)
@@ -206,6 +214,10 @@ export const parsePlan = (plan_row) => {
           item_dict[key] = {course: item_splited[0], cid: item_splited[1], teacher: item_splited[2], tid: item_splited[3]};
         }
       }
+    }
+    else if (typeof value === "number") {
+      // non-plan keys
+      item_dict[key] = value;
     }
   }
   //let ret_val = {id: plan_row.id, begin_week: plan_row.begin_week, to: plan_row.end_week, class: plan_row.class_name, room: plan_row.classroom};
@@ -247,13 +259,15 @@ export const getPlans = (state) => state.getIn(["rawplan", "planRows"]);
 
 export const getSelectedGroup = (state) => state.getIn(["rawplan", "groupStageWeekId", "id"]);
 
+export const getRows = (state) => state.getIn(["rawplan", "planRows", getSelectedGroup(state), 'plans']);
+
 export const getRowDiff = (state, rowId) => state.getIn(["rawplan", "rowChanged", rowId]);
 
-export const getChangedRowIds = (state) => Object.values(state.getIn(["rawplan", "rowChanged"]));
+export const getChangedRows = (state) => state.getIn(["rawplan", "rowChanged"]);
 
 export const getRawplanGroups = createSelector(
-  [getGroups, getStage],
-  (groups, stage) => {
+  getGroups,
+  (groups) => {
     if (!groups) return [];
     if (!Object.keys(groups).length) return [];
     //console.log("Selector: get Groups actual: "+groups);
@@ -266,16 +280,24 @@ export const getRawplanGroups = createSelector(
   }
 );
 
-export const getPlansByGroup = (state/*, groupStageWeekId*/) => {
-  /*console.log("selector: "+groupStageWeekId);
-  let group_from_state = groupStageWeekId;
-  if (!groupStageWeekId) {
-    group_from_state = getSelectedGroup(state);
-  }*/
-  let group_from_state = getSelectedGroup(state);
-  let rows = state.getIn(["rawplan", "planRows", group_from_state, 'plans']);
-  if (!rows || rows.length <= 0) {
-    return null;
+export const getPlansByGroup = createSelector(
+  getRows, 
+  (rows) => {
+    if (!rows || rows.length <= 0) {
+      return null;
+    }
+    //console.log("ReSelector: rows="+JSON.stringify(rows));
+    return Object.values(rows);
   }
-  return Object.values(rows);
-};
+);
+
+export const getAnyRowChanged = createSelector(
+  getChangedRows, 
+  (rows) => {
+    if (!rows) {
+      return 0;
+    }
+    //console.log("ReSelector: rows changed keys="+JSON.stringify(Object.entries(rows)));
+    return rows.size;
+  }
+);

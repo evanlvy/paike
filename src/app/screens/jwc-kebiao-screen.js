@@ -199,7 +199,9 @@ class JwcKebiaoScreen extends Component {
       this.groups = !groupList ? [] : groupList;
       console.log("Groups Data: "+JSON.stringify(this.groups));
       if (!this.state.selectedSubjectIndex) {
-        this.state.selectedSubjectIndex = 0;
+        this.setState({
+          selectedSubjectIndex: 0,
+        });
       }
     }
   }

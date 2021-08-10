@@ -16,7 +16,7 @@ import {
 } from '../components';
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
-import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, getChangedRowIds} from '../redux/modules/rawplan';
+import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, getAnyRowChanged} from '../redux/modules/rawplan';
 import { EditableTable } from '../components/result-table/editable-table';
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
@@ -69,11 +69,12 @@ class EditRawplanScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { schoolYear, groupList, planRows, groupStageWeekId } = this.props;
+    const { schoolYear, groupList, planRows, groupStageWeekId, changedRows } = this.props;
     const { selectedSubjectIndex } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
-    if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.groupStageWeekId !== groupStageWeekId) {
+    if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.groupStageWeekId !== groupStageWeekId
+      || nextProps.changedRows !== changedRows) {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextProps.planRows !== planRows) {
@@ -86,9 +87,9 @@ class EditRawplanScreen extends Component {
     return false;
   }
 
-  componentDidUpdate() {
+  /*componentDidUpdate() {
     this.loadData();
-  }
+  }*/
 
   loadData = () => {
     if (!this.groups || this.groups.length === 0) { // only get subjects when it's empty
@@ -120,9 +121,6 @@ class EditRawplanScreen extends Component {
       const { groupList } = this.props;
       this.groups = !groupList ? [] : groupList;
       console.log("Groups Data: "+JSON.stringify(this.groups));
-      if (!this.state.selectedSubjectIndex) {
-        this.state.selectedSubjectIndex = 0;
-      }
     }
   }
 
@@ -208,7 +206,7 @@ class EditRawplanScreen extends Component {
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
     //console.log("render: plans "+JSON.stringify(planRows));
-    console.log("render: group_id: "+groupStageWeekId);
+    console.log("render: group_id: "+groupStageWeekId+ " changedRows:"+changedRows);
 
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center">
@@ -246,7 +244,7 @@ class EditRawplanScreen extends Component {
             />
         }
         {
-          changedRows && changedRows.length>0 &&
+          changedRows>0 &&
           <Button variantColor={JYS_KEBIAO_COLOR} onClick={onCommit}>{t("editRawplanScreen.commit")}</Button>
         }
       </Flex>
@@ -263,7 +261,7 @@ const mapStateToProps = (state/*, props*/) => {
     groupList: getRawplanGroups(state),
     groupStageWeekId: getSelectedGroup(state),
     planRows: getPlansByGroup(state),
-    changedRows: getChangedRowIds(state),
+    changedRows: getAnyRowChanged(state),
   }
 }
 

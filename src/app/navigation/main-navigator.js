@@ -84,6 +84,7 @@ class MainNavigatorWrapper extends PureComponent {
         if (menu_params.sub.name === t("maintainMenu.annualData_rawplans")) {
           history.push('/maintain/rawplan', menu_params);
         }
+        break;
       default:
         break;
     }
