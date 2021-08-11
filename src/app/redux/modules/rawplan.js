@@ -46,7 +46,7 @@ export const actions = {
               dispatch(appActions.startRequest());
               const data = await rawplanApi.queryRawplan(stage, weekIdx, degreeId, gradeId);
               dispatch(appActions.finishRequest());
-              let plans = convertRawplanToPlain(stage, weekIdx, data);
+              let plans = convertRawplanToPlain(data);
               dispatch(fetchRawplanSuccess(groupStageWeekId, plans));
             }
             dispatch(setSelectedGroup(groupStageWeekId));
@@ -55,7 +55,28 @@ export const actions = {
         }
       }
     },
-    updateRow: (rowId) => {
+    reloadRows: () => {
+      return async (dispatch, getState) => {
+        try {
+            // Get stage week info from state
+            const groupStageWeekId = getSelectedGroup(getState());
+            let item_splited = groupStageWeekId.split('_');
+            if (item_splited.length === 4) {
+              console.log("reloadRows!");
+              dispatch(appActions.startRequest());
+              const data = await rawplanApi.queryRawplan(item_splited[0], item_splited[1], item_splited[2], item_splited[3]);
+              dispatch(appActions.finishRequest());
+              let plans = convertRawplanToPlain(data);
+              dispatch(fetchRawplanSuccess(groupStageWeekId, plans));
+              // Clear changed rows, this will trigger rerender
+              dispatch(actions.clearChanges());
+            }
+        } catch (error) {
+          dispatch(appActions.setError(error));
+        }
+      }
+    },
+    commitRow: (rowId) => {
       console.log(`updateRow: rowId: ${rowId}`);
       return async (dispatch, getState) => {
         try {
@@ -122,7 +143,7 @@ const setSelectedGroup = (groupStageWeekId) => {
   })
 }
 
-const convertRawplanToPlain = (stage, week_idx, plans) => {
+const convertRawplanToPlain = (plans) => {
   let data_dict = {};
   //console.log("Got rawplan rows: "+JSON.stringify(plans));
   plans.forEach(plan_row => {
@@ -174,21 +195,13 @@ const rowChanged = (state = Immutable.fromJS({}), action) => {
       //console.log("rowChanged reducer:" + JSON.stringify(state[action.rowId]));
       // How to change deep level state!
       // Ref: https://stackoverflow.com/questions/36031590/right-way-to-update-state-in-redux-reducers
-      if (!state[action.rowId]) {
-        // Use merge firstly otherwize the object will have keys as 'size' and '_altered'...
-        return state.merge({
-          [action.rowId]: {
-            [action.colId]: combinePlanItem(action.planItem)
-          }
-        });
-      }
-      return Object.assign({}, state, {
-        [action.rowId]: Object.assign({}, state[action.rowId], {
+      return state.mergeDeep({
+        [action.rowId]: {
           [action.colId]: combinePlanItem(action.planItem)
-        })
+        }
       });
     case types.CLEAR_ROW_CHANGES:
-      return {};
+      return Immutable.fromJS({});  // Should return ImmutableJS object instead of empty obj {} directly!
     default:
       return state;
   }
@@ -251,11 +264,9 @@ const reducer = combineReducers({
 export default reducer;
 
 // selectors
-export const getGroups = state => state.getIn(["rawplan", "groupList"]);
+export const getGroups = state => state.getIn(["rawplan", "groupList"]).valueSeq();
 
 export const getStage = (state) => state.getIn(["rawplan", "yearId", "id"]);
-
-export const getPlans = (state) => state.getIn(["rawplan", "planRows"]);
 
 export const getSelectedGroup = (state) => state.getIn(["rawplan", "groupStageWeekId", "id"]);
 
@@ -263,20 +274,23 @@ export const getRows = (state) => state.getIn(["rawplan", "planRows", getSelecte
 
 export const getRowDiff = (state, rowId) => state.getIn(["rawplan", "rowChanged", rowId]);
 
-export const getChangedRows = (state) => state.getIn(["rawplan", "rowChanged"]);
+export const countChangedRows = (state) => state.getIn(["rawplan", "rowChanged"]).size;
+
+export const getChangedRowIds = (state) => state.getIn(["rawplan", "rowChanged"]).keySeq().toJS();
 
 export const getRawplanGroups = createSelector(
   getGroups,
   (groups) => {
     if (!groups) return [];
-    if (!Object.keys(groups).length) return [];
+    //if (!Object.keys(groups).length) return [];
     //console.log("Selector: get Groups actual: "+groups);
     //console.log("Selector: get Groups: "+JSON.stringify(groups));
-    let group_list = [];
+    /*(let group_list = [];
     groups.forEach((value, key) => {
       group_list.push(value);
     })
-    return group_list;
+    return group_list;*/
+    return groups.toJS();
   }
 );
 
@@ -291,13 +305,9 @@ export const getPlansByGroup = createSelector(
   }
 );
 
-export const getAnyRowChanged = createSelector(
-  getChangedRows, 
-  (rows) => {
-    if (!rows) {
-      return 0;
-    }
-    //console.log("ReSelector: rows changed keys="+JSON.stringify(Object.entries(rows)));
-    return rows.size;
+export const countRowChanged = createSelector(
+  countChangedRows,
+  (value) => {
+    return value;
   }
 );

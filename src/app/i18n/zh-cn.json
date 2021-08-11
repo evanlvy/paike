@@ -211,6 +211,7 @@
     "basicData_majors": "专业"
   },
   "editRawplanScreen": {
-    "commit": "提交改动"
+    "commit": "提交改动",
+    "revert": "放弃改动"
   }
 }

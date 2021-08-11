@@ -2,7 +2,7 @@
 
 import React, { Component } from 'react';
 import { bindActionCreators } from "redux";
-import { connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import { withTranslation } from 'react-i18next';
 import {
   Flex,
@@ -16,7 +16,7 @@ import {
 } from '../components';
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
-import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, getAnyRowChanged} from '../redux/modules/rawplan';
+import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, countRowChanged, getChangedRowIds} from '../redux/modules/rawplan';
 import { EditableTable } from '../components/result-table/editable-table';
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
@@ -198,11 +198,27 @@ class EditRawplanScreen extends Component {
     this.props.setRowChanged(params.data["id"], dest_col, params.data[dest_col]);
   }
 
+  getChangedIds = () => {
+    return useSelector(state => getChangedRowIds(state));
+  }
+
+  onCommit = () => {
+    let row_ids = this.getChangedIds();
+    console.log("onCommit: changes: "+row_ids);
+    row_ids.forEach(element => {
+      this.props.commitRows(element);
+    });
+  }
+
+  onRevert = () => {
+    this.props.reloadRows();
+  }
+
   render() {
     const { t, groupList, planRows, groupStageWeekId, schoolWeek, changedRows } = this.props;
     this.buildData();
     //const { selectedTeacherIndex } = this.state;
-    const { groupTitle, onSubjectClicked, onSemesterPageChanged, onCellClicked, onCellValueChanged, onCommit,
+    const { groupTitle, onSubjectClicked, onSemesterPageChanged, onCellClicked, onCellValueChanged, onCommit, onRevert,
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
     //console.log("render: plans "+JSON.stringify(planRows));
@@ -245,7 +261,10 @@ class EditRawplanScreen extends Component {
         }
         {
           changedRows>0 &&
-          <Button variantColor={JYS_KEBIAO_COLOR} onClick={onCommit}>{t("editRawplanScreen.commit")}</Button>
+          <p>
+            <Button variantColor={JYS_KEBIAO_COLOR} onClick={onCommit}>{t("editRawplanScreen.commit")}</Button>
+            <Button variantColor={JYS_KEBIAO_COLOR} onClick={onRevert}>{t("editRawplanScreen.revert")}</Button>
+          </p>
         }
       </Flex>
     );
@@ -261,7 +280,7 @@ const mapStateToProps = (state/*, props*/) => {
     groupList: getRawplanGroups(state),
     groupStageWeekId: getSelectedGroup(state),
     planRows: getPlansByGroup(state),
-    changedRows: getAnyRowChanged(state),
+    changedRows: countRowChanged(state),
   }
 }
 
