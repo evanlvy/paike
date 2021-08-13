@@ -92,7 +92,8 @@ class EditRawplanScreen extends Component {
   }*/
 
   loadData = () => {
-    if (!this.groups || this.groups.length === 0) { // only get subjects when it's empty
+    const { groupList } = this.props;
+    if (!groupList || groupList.length === 0) { // only get subjects when it's empty
       this.loadGroups();
     }
   }
@@ -116,31 +117,18 @@ class EditRawplanScreen extends Component {
     this.props.fetchRawplanGroups(schoolYear);
   }
 
-  buildGroups = () => {
-    if (!this.groups || this.groups.length === 0) {
-      const { groupList } = this.props;
-      this.groups = !groupList ? [] : groupList;
-      console.log("Groups Data: "+JSON.stringify(this.groups));
-    }
-  }
-
-  buildData = () => {
-    this.buildGroups();
-  }
-
   onSubjectClicked = (index) => {
-    console.log(`onSubjectClicked ${this.groups[index].title}`);
     this.setState({
       selectedSubjectIndex: index,
     });
     this.setSubjectSelectedIndex(index);
     this.loadKebiao(this.state.selectWeek);
-    //this.tabTitles.push(this.groups[index].name);
   }
 
   setSubjectSelectedIndex = (index) => {
-    if (this.groups && index < this.groups.length) {
-      this.selectedSubject = this.groups[index];
+    const { groupList } = this.props;
+    if (groupList && index < groupList.length) {
+      this.selectedSubject = groupList[index];
     } else {
       this.selectedSubject = null;
     }
@@ -213,7 +201,6 @@ class EditRawplanScreen extends Component {
 
   render() {
     const { t, groupList, planRows, groupStageWeekId, schoolWeek, changedRows } = this.props;
-    this.buildData();
     //const { selectedTeacherIndex } = this.state;
     const { groupTitle, onSubjectClicked, onSemesterPageChanged, onCellClicked, onCellValueChanged, onCommit, onRevert,
       tableTitle, tableHeaders, semesterPages } = this;
