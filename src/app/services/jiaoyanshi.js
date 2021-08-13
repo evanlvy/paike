@@ -14,7 +14,12 @@ class Api {
       let response = await axios.post(url, {});
       const { success, data, message } = response.data;
       if (!success) {
-        throw new Error(message.message);
+        if (!message) {
+          throw new Error("服务器返回错误! 请联系管理员。");
+        }
+        else {
+          throw new Error(message.message);
+        }
       }
       return data.departments;
     } catch (error) {

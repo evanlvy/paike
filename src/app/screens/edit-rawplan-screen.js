@@ -198,16 +198,13 @@ class EditRawplanScreen extends Component {
     this.props.setRowChanged(params.data["id"], dest_col, params.data[dest_col]);
   }
 
-  getChangedIds = () => {
-    return useSelector(state => getChangedRowIds(state));
-  }
-
   onCommit = () => {
-    let row_ids = this.getChangedIds();
+    let row_ids = this.props.getChangedRowIds();
     console.log("onCommit: changes: "+row_ids);
     row_ids.forEach(element => {
-      this.props.commitRows(element);
+      this.props.commitRow(element);
     });
+    this.props.clearChanges();
   }
 
   onRevert = () => {

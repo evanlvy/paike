@@ -12,9 +12,15 @@ class Api {
       const url = this.baseUrl+"/actual_grade_from_classes";
       console.log("Request url "+url);
       let response = await axios.post(url, {});
+      console.log("Rsp: "+JSON.stringify(response));
       const { success, data, message } = response.data;
       if (!success) {
-        throw new Error(message.message);
+        if (!message) {
+          throw new Error("服务器返回错误! 请联系管理员。");
+        }
+        else {
+          throw new Error(message.message);
+        }
       }
       //console.log(`Response of url: ${url} is ${JSON.stringify(data[0])}`);
       return data;
@@ -32,7 +38,12 @@ class Api {
       });
       const { success, message, stage_id, week_idx } = response.data;
       if (!success) {
-        throw new Error(message.message);
+        if (!message) {
+          throw new Error("服务器返回错误! 请联系管理员。");
+        }
+        else {
+          throw new Error(message.message);
+        }
       }
       return { year: stage_id, week: week_idx };
     } catch (error) {

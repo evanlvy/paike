@@ -98,6 +98,13 @@ export const actions = {
     clearChanges: () => ({
       type: types.CLEAR_ROW_CHANGES
     }),
+    getChangedRowIds: () => {
+      // Use thunk to call selector with State ref. In order to peek state value only.
+      return (dispatch, getState) => {
+        const state = getState();
+        return getChangedRowIds(state);
+      }
+    },
 }
 
 const shouldFetchGroups = (stage, state) => {
