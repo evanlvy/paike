@@ -1,4 +1,4 @@
-import Immutable from 'immutable';
+import Immutable, { has } from 'immutable';
 import { combineReducers } from 'redux-immutable';
 import { createSelector } from 'reselect';
 
@@ -69,7 +69,7 @@ export const actions = {
               let plans = convertRawplanToPlain(data);
               dispatch(fetchRawplanSuccess(groupStageWeekId, plans));
               // Clear changed rows, this will trigger rerender
-              dispatch(actions.clearChanges());
+              dispatch(actions.clearChanges(groupStageWeekId));
             }
         } catch (error) {
           dispatch(appActions.setError(error));
@@ -84,19 +84,23 @@ export const actions = {
             const data = await rawplanApi.updateRow(rowId, getRowDiff(getState(), rowId));
             console.log("updateRow: return ok for rowId: "+data.id);
             dispatch(appActions.finishRequest());
+            const groupStageWeekId = getSelectedGroup(getState());
+            dispatch(actions.clearChanges(groupStageWeekId));
         } catch (error) {
           dispatch(appActions.setError(error));
         }
       }
     },
-    setRowChanged: (rowId, colId, planItem) => ({
+    setRowChanged: (groupStageWeekId, rowId, colId, planItem) => ({
       type: types.SET_ROW_CHANGED,
+      groupStageWeekId,
       rowId,
       colId,
       planItem
     }),
-    clearChanges: () => ({
-      type: types.CLEAR_ROW_CHANGES
+    clearChanges: (groupStageWeekId) => ({
+      type: types.CLEAR_ROW_CHANGES,
+      groupStageWeekId
     }),
     getChangedRowIds: () => {
       // Use thunk to call selector with State ref. In order to peek state value only.
@@ -199,16 +203,18 @@ const groupStageWeekId = (state = Immutable.fromJS({}), action) => {
 const rowChanged = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.SET_ROW_CHANGED:
-      //console.log("rowChanged reducer:" + JSON.stringify(state[action.rowId]));
+      //console.log("rowChanged reducer:" + JSON.stringify(state));
       // How to change deep level state!
       // Ref: https://stackoverflow.com/questions/36031590/right-way-to-update-state-in-redux-reducers
       return state.mergeDeep({
-        [action.rowId]: {
-          [action.colId]: combinePlanItem(action.planItem)
+        [action.groupStageWeekId]: {
+          [action.rowId]: {
+            [action.colId]: combinePlanItem(action.planItem)
+          }
         }
       });
     case types.CLEAR_ROW_CHANGES:
-      return Immutable.fromJS({});  // Should return ImmutableJS object instead of empty obj {} directly!
+      return state.remove(action.groupStageWeekId);  // Should return ImmutableJS object instead of empty obj {} directly!
     default:
       return state;
   }
@@ -279,24 +285,26 @@ export const getSelectedGroup = (state) => state.getIn(["rawplan", "groupStageWe
 
 export const getRows = (state) => state.getIn(["rawplan", "planRows", getSelectedGroup(state), 'plans']);
 
-export const getRowDiff = (state, rowId) => state.getIn(["rawplan", "rowChanged", rowId]);
+export const getRowDiff = (state, rowId) => state.getIn(["rawplan", "rowChanged", getSelectedGroup(state), rowId]);
 
-export const countChangedRows = (state) => state.getIn(["rawplan", "rowChanged"]).size;
+export const countChangedRows = (state) => {
+  let combined_id = getSelectedGroup(state);
+  if (combined_id) {
+    if (state.hasIn(["rawplan", "rowChanged", combined_id])) {
+      // The deep in object is not immutable!
+      return Object.keys(state.getIn(["rawplan", "rowChanged", combined_id])).length;
+    }
+  }
+  return 0;
+}
 
-export const getChangedRowIds = (state) => state.getIn(["rawplan", "rowChanged"]).keySeq().toJS();
+//export const getChangedRowIds = (state) => state.getIn(["rawplan", "rowChanged", getSelectedGroup(state)]).keySeq().toJS();
+export const getChangedRowIds = (state) => Object.keys(state.getIn(["rawplan", "rowChanged", getSelectedGroup(state)]));
 
 export const getRawplanGroups = createSelector(
   getGroups,
   (groups) => {
     if (!groups) return [];
-    //if (!Object.keys(groups).length) return [];
-    //console.log("Selector: get Groups actual: "+groups);
-    //console.log("Selector: get Groups: "+JSON.stringify(groups));
-    /*(let group_list = [];
-    groups.forEach((value, key) => {
-      group_list.push(value);
-    })
-    return group_list;*/
     return groups.toJS();
   }
 );

@@ -21,7 +21,7 @@ import { EditableTable } from '../components/result-table/editable-table';
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
 const JYS_KEBIAO_COLOR = "red";
-const TEACHER_ITEM_COLOR = "pink.400";
+const CANCEL_COLOR = "gray";
 const SEMESTER_FIRST_HALF_MAX_WEEK = 9;
 const SEMESTER_HALF_BIAS_WEEK = 6;
 class EditRawplanScreen extends Component {
@@ -183,7 +183,7 @@ class EditRawplanScreen extends Component {
       return;
     }*/
     //Dispatch action for the value change!
-    this.props.setRowChanged(params.data["id"], dest_col, params.data[dest_col]);
+    this.props.setRowChanged(this.props.groupStageWeekId, params.data["id"], dest_col, params.data[dest_col]);
   }
 
   onCommit = () => {
@@ -236,7 +236,7 @@ class EditRawplanScreen extends Component {
             pageNames={semesterPages}
             pagePrevCaption={t("common.previous")}
             pageNextCaption={t("common.next")}
-            //onResultPageIndexChanged={onSemesterPageChanged}
+            onResultPageIndexChanged={onSemesterPageChanged}
             initPageIndex={schoolWeek<=SEMESTER_FIRST_HALF_MAX_WEEK?0:1}
             onCellValueChanged={onCellValueChanged}
             onCellClicked={onCellClicked}
@@ -246,8 +246,8 @@ class EditRawplanScreen extends Component {
         {
           changedRows>0 &&
           <p>
-            <Button variantColor={JYS_KEBIAO_COLOR} onClick={onCommit}>{t("editRawplanScreen.commit")}</Button>
-            <Button variantColor={JYS_KEBIAO_COLOR} onClick={onRevert}>{t("editRawplanScreen.revert")}</Button>
+            <Button margin="5" variantColor={JYS_KEBIAO_COLOR} onClick={onCommit}>{t("editRawplanScreen.commit")}</Button>
+            <Button margin="5" variantColor={CANCEL_COLOR} onClick={onRevert}>{t("editRawplanScreen.revert")}</Button>
           </p>
         }
       </Flex>

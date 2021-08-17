@@ -2,6 +2,10 @@ import React, { Component } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import {
   Flex,
+  Text,
+  Input,
+  Button,
+  Box,
 } from '@chakra-ui/core';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
@@ -13,6 +17,10 @@ import { CommonRenderer } from "./common-renderer";
 class EditableTable extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      curPageIndex: props.initPageIndex ? props.initPageIndex : 0,
+      editPageNum: ""
+    };
     this.defaultColDef = {
       autoHeight: true,
     }
@@ -23,12 +31,16 @@ class EditableTable extends Component {
     this.buildData(props);
   }
 
-  shouldComponentUpdate(nextProps) {
-    const { props } = this;
+  shouldComponentUpdate(nextProps, nextState) {
+    const { props, state } = this;
     // console.log("shouldComponentUpdate, orig props "+JSON.stringify(props));
     if (nextProps.headers !== props.headers || nextProps.defaultColWidth !== props.defaultColWidth
     || nextProps.colLineHeight !== props.colLineHeight) {
       this.buildColDef(nextProps);
+      return true;
+    }
+    if (nextState.curPageIndex !== state.curPageIndex) {
+      console.log("shouldComponentUpdate:true");
       return true;
     }
     if (nextProps.data !== props.data) {
@@ -158,30 +170,104 @@ class EditableTable extends Component {
     }
   }
 
+  onPagePrevClicked = () => {
+    const { curPageIndex } = this.state;
+    if (curPageIndex > 0) {
+      const newIndex = curPageIndex-1;
+      this.setState({
+        curPageIndex: newIndex
+      });
+      this.notifyPageIndexChanged(newIndex);
+    }
+  }
+
+  onPageNextClicked = () => {
+    const { curPageIndex } = this.state;
+    const { pageNames } = this.props;
+    if (curPageIndex < pageNames.length-1) {
+      const newIndex = curPageIndex+1;
+      this.setState({
+        curPageIndex: newIndex
+      });
+      this.notifyPageIndexChanged(newIndex);
+    }
+  }
+
+  onEditPageNum = (event) => {
+    this.clearEditTimer();
+
+    const { pageNames } = this.props;
+    const newIndex = parseInt(event.target.value);
+    if (isNaN(newIndex) || newIndex < 1 || newIndex > pageNames.length) {
+      return;
+    }
+    this.setState({
+      curPageIndex: newIndex-1
+    });
+    this.editTimer = setTimeout(() => {
+      this.notifyPageIndexChanged(newIndex-1);
+    }, 1000);
+  }
+
+  notifyPageIndexChanged = (index) => {
+    const { onResultPageIndexChanged } = this.props;
+    if (onResultPageIndexChanged) {
+      onResultPageIndexChanged(index);
+    }
+  }
+
   onGridReady = (params) => {
     this.gridApi = params.api;
   };
 
   render() {
-    const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onCellClicked } = this;
-    const { width, defaultColWidth, cellClassRules, headers, data,
+    const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onCellClicked, 
+      onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
+    const { t, width, defaultColWidth, cellClassRules, headers, data,
+      title, color, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, onResultPageIndexChanged,
       onCellClicked: onCellClickedCallback,onCellValueChanged, ...other_props } = this.props;
+    const { curPageIndex } = this.state;
     //console.log("RowData: "+JSON.stringify(rowData));
     return (
       <Flex direction="column" width={width ? width : "100%"} {...other_props} >
-        <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
-          <AgGridReact
-            deltaRowMode={true}
-            getRowNodeId={data=>data.id}
-            defaultColDef={defaultColDef}
-            frameworkComponents={frameworkComponents}
-            columnDefs={columnDefs}
-            rowData={rowData}
-            onGridReady={onGridReady}
-            onCellValueChanged={onCellValueChanged}
-            onCellClicked={onCellClicked} >
-          </AgGridReact>
-        </div>
+        {
+          (title || pageNames) &&
+          <Box display="flex" flexDirection="row" bg={color+".400"} height={titleHeight} px={4} alignItems="center"
+            borderWidth={1} borderColor={color+".200"} roundedTop="md">
+            <Text width="100%">{title}</Text>
+            {
+              pageNames &&
+              <Flex direction="row" alignItems="center">
+                {
+                  pageInputCaption &&
+                  <Flex direction="row" alignItems="center">
+                    <Text ml={2} whiteSpace="nowrap">{pageInputCaption[0]}</Text>
+                    <Input width="3rem" px="4px" textAlign="center" mx={2} size="md" value={curPageIndex+1} onChange={onEditPageNum} />
+                    <Text mr={2} whiteSpace="nowrap">{pageInputCaption[1]}</Text>
+                  </Flex>
+                }
+                <Button mr={2} variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
+                { !pageInputCaption && <Text whiteSpace="nowrap" mx={2}>{pageNames[curPageIndex].name}</Text> }
+                <Button ml={2} variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
+              </Flex>
+            }
+          </Box>
+        }
+        <Box width="100%" height="100%" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
+          <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
+            <AgGridReact
+              deltaRowMode={true}
+              getRowNodeId={data=>data.id}
+              defaultColDef={defaultColDef}
+              frameworkComponents={frameworkComponents}
+              columnDefs={columnDefs}
+              rowData={rowData}
+              onGridReady={onGridReady}
+              onCellValueChanged={onCellValueChanged}
+              onCellClicked={onCellClicked} >
+            </AgGridReact>
+          </div>
+        </Box>
       </Flex>
     )
   }

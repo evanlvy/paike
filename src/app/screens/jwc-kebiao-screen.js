@@ -36,8 +36,8 @@ class JwcKebiaoScreen extends Component {
     //this.tabTitles = [];
     this.semesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
     this.tableHeaders = [
-      {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class"},
-      {name: t("jwcKebiaoScreen.classroom"), field: "room"},
+      {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class_name"},
+      {name: t("jwcKebiaoScreen.classroom"), field: "classroom"},
       {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", renderer: "course_teacher_renderer"},
       {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", renderer: "course_teacher_renderer"},
       {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", renderer: "course_teacher_renderer"},
@@ -58,88 +58,6 @@ class JwcKebiaoScreen extends Component {
       {name: t("jwcKebiaoScreen.fri_34"), field: "fri_34", renderer: "course_teacher_renderer"},
       {name: t("jwcKebiaoScreen.fri_56"), field: "fri_56", renderer: "course_teacher_renderer"},
       {name: t("jwcKebiaoScreen.fri_78"), field: "fri_78", renderer: "course_teacher_renderer"},
-      /*{name: "slots", field: "slots", children: [
-        {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.mon_78"), field: "mon_78", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.tue_12"), field: "tue_12", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.tue_34"), field: "tue_34", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.tue_56"), field: "tue_56", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.tue_78"), field: "tue_78", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.wed_12"), field: "wed_12", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.wed_34"), field: "wed_34", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.wed_56"), field: "wed_56", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.wed_78"), field: "wed_78", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.thu_12"), field: "thu_12", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.thu_34"), field: "thu_34", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.thu_56"), field: "thu_56", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.thu_78"), field: "thu_78", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.fri_12"), field: "fri_12", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.fri_34"), field: "fri_34", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.fri_56"), field: "fri_56", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-        {name: t("jwcKebiaoScreen.fri_78"), field: "fri_78", children: [
-          {name: "course", field: "course"},
-          {name: "teacher", field: "teacher"},
-        ],},
-      ],},*/
     ];
     this.tableData = null;
     this.tabsListRef = React.createRef();
@@ -164,9 +82,9 @@ class JwcKebiaoScreen extends Component {
     return false;
   }
 
-  componentDidUpdate() {
+  /*componentDidUpdate() {
     this.loadData();
-  }
+  }*/
 
   loadData = () => {
     if (!this.groups || this.groups.length === 0) { // only get subjects when it's empty
@@ -193,25 +111,7 @@ class JwcKebiaoScreen extends Component {
     this.props.fetchRawplanGroups(schoolYear);
   }
 
-  buildGroups = () => {
-    if (!this.groups || this.groups.length === 0) {
-      const { groupList } = this.props;
-      this.groups = !groupList ? [] : groupList;
-      console.log("Groups Data: "+JSON.stringify(this.groups));
-      if (!this.state.selectedSubjectIndex) {
-        this.setState({
-          selectedSubjectIndex: 0,
-        });
-      }
-    }
-  }
-
-  buildData = () => {
-    this.buildGroups();
-  }
-
   onSubjectClicked = (index) => {
-    console.log(`onSubjectClicked ${this.groups[index].title}`);
     this.setState({
       selectedSubjectIndex: index,
     });
@@ -221,8 +121,9 @@ class JwcKebiaoScreen extends Component {
   }
 
   setSubjectSelectedIndex = (index) => {
-    if (this.groups && index < this.groups.length) {
-      this.selectedSubject = this.groups[index];
+    const { groupList } = this.props;
+    if (groupList && index < groupList.length) {
+      this.selectedSubject = groupList[index];
     } else {
       this.selectedSubject = null;
     }
@@ -251,7 +152,7 @@ class JwcKebiaoScreen extends Component {
 
   render() {
     const { t, groupList, planRows, groupStageWeekId, schoolWeek } = this.props;
-    this.buildData();
+    //this.buildData();
     //const { selectedTeacherIndex } = this.state;
     const { groupTitle, onSubjectClicked, onSemesterPageChanged, 
       tableTitle, tableHeaders, semesterPages } = this;
