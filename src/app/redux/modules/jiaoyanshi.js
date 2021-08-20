@@ -1,4 +1,4 @@
-import Immutable from 'immutable';
+import Immutable, { isImmutable } from 'immutable';
 import { combineReducers } from 'redux-immutable';
 import { createSelector } from 'reselect';
 
@@ -146,7 +146,7 @@ const reducer = combineReducers({
 export default reducer;
 
 // selectors
-export const getJiaoyanshi = state => state.getIn(["jiaoyanshi", "jiaoyanshiByIds"]);
+export const getJiaoyanshi = state => state.getIn(["jiaoyanshi", "jiaoyanshiByIds"]).sortBy(o => o["id"]);
 
 export const getJiaoyanshiIds = state => state.getIn(["jiaoyanshi", "jiaoyanshiIds"]);
 
@@ -156,18 +156,28 @@ export const getCenter = state => state.getIn(["jiaoyanshi", "centerByIds"]);
 
 export const getCenterIds = state => state.getIn(["jiaoyanshi", "centerIds"]);
 
-export const getAllJiaoyanshi = createSelector(
+/*export const getAllJiaoyanshi = createSelector(
   [getJiaoyanshiIds, getJiaoyanshi],
   (jysIds, jys) => {
-    let jysList = [];
     if (!jysIds || !jys) {
       return [];
     }
+    let jysList = [];
     jysIds.forEach(id => {
       const jysInfo = jys.get(id);
       jysList.push(jysInfo);
     });
     return jysList;
+  }
+)*/
+
+export const getAllJiaoyanshi = createSelector(
+  [getJiaoyanshiIds, getJiaoyanshi],
+  (jysIds, jys) => {
+    if (!jysIds || !jys) {
+      return [];
+    }
+    return jys.filter(o => (jysIds.indexOf(""+o["id"]) >= 0)).values();
   }
 )
 

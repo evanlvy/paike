@@ -3,6 +3,8 @@
 import React, { PureComponent } from 'react';
 import {
   Box,
+  Text,
+  Checkbox
 } from '@chakra-ui/core'
 
 import { BallGrid } from '../common/ball-grid';
@@ -114,6 +116,14 @@ class SubjectBoard extends PureComponent {
     }
   }
 
+  onSelectAll = (isSelectAll) => {
+    if (!isSelectAll) {
+      this.reset();
+      return;
+    }
+  }
+
+
   buildAutoTitle = (subjects, indexList) => {
     const { t, enableSelectAll } = this.props;
     // Construct tab title
@@ -144,11 +154,10 @@ class SubjectBoard extends PureComponent {
   }
 
   render() {
-    const { selectedIndexList } = this.state;
-    const { t, subjects, color, title, onSubjectClicked, enableSelectAll, autoTitle, ...other_props } = this.props;
+    const { t, subjects, color, title, enableSelectAll, autoTitle, ...other_props } = this.props;
     if (!this.items || this.items.length <= 0) {
-      if (enableSelectAll && subjects[0].check_all !== 1) {
-        this.items = [{title: t("shixunKebiaoScreen.all_departments"), color: "gray.400", check_all: 1}, ...subjects];
+      if (enableSelectAll && subjects[0] && subjects[0].check_all !== 1) {
+        this.items = [{title: t("common.select_all"), color: "gray.400", check_all: 1}, ...subjects];
       }
       else {
         this.items = [...subjects];
@@ -161,13 +170,22 @@ class SubjectBoard extends PureComponent {
     const { title_prefix, title_details } = this;
     return (
       <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" {...other_props}>
-        <Box backgroundColor={color+".400"} px={5} py={2} color="white">{autoTitle?(title_prefix+title+" [ "+title_details)+" ]":title}</Box>
+        <Box display="flex" flexDirection="row" backgroundColor={color+".400"} px={5} py={2} color="white">
+          <Text width="100%">{autoTitle?(title_prefix+title+" [ "+title_details)+" ]":title}</Text>
+          {
+            enableSelectAll && 
+            <Checkbox 
+              defaultIsChecked={false} 
+              whiteSpace="nowrap" 
+              onChange={(e) => this.onSelectAll(e.target.checked)}>{t("common.select_all")}</Checkbox>
+          }
+        </Box>
         <BallGrid
           colCount={6}
           balls={this.items}
           ballSize={100}
           maxHeight={250}
-          selectedBallIndexList={selectedIndexList}
+          selectedBallIndexList={this.state.selectedIndexList}
           onBallClicked={this.onSubjectClicked} />
       </Box>
     );

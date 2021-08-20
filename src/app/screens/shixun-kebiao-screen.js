@@ -92,7 +92,7 @@ class ShiXunKeBiaoScreen extends Component {
     if (!this.jysData || this.jysData.length === 0) { // only get jys list when it's empty
       this.loadJysList();
     }
-    if (this.selectedJysList && !this.hasFetchKebiao) {
+    if (this.state.selectedJysIndexList && !this.hasFetchKebiao) {
       const { schoolWeek } = this.props;
       let shixunSelectWeek = schoolWeek;
       console.log("loadKebiao: schoolWeek: "+shixunSelectWeek);
@@ -127,12 +127,12 @@ class ShiXunKeBiaoScreen extends Component {
       this.jysData = !jysList ? [] : jysList;
       //this.jysData.unshift({title: t("shixunKebiaoScreen.all_departments"), color: "gray.400"});
       console.log("JYS Data: "+JSON.stringify(this.jysData));
-      this.setJysSelectedIndexList(this.state.selectedJysIndexList);
+      //this.setJysSelectedIndexList(this.state.selectedJysIndexList);
     }
     this.updateTitles();
   }
 
-  setJysSelectedIndexList = (indexList) => {
+  /*setJysSelectedIndexList = (indexList) => {
     this.selectedJysList = [];
     if (this.jysData && indexList && indexList.length > 0) {
       indexList.forEach(index => {
@@ -141,18 +141,19 @@ class ShiXunKeBiaoScreen extends Component {
         }
       });
     }
-  }
+  }*/
 
   updateTitles = () => {
     const { t } = this.props;
+    const { selectedJysIndexList } = this.state;
     this.tabTitles = [];
-    if (!this.selectedJysList || this.selectedJysList.length === 0) {
+    if (!selectedJysIndexList || selectedJysIndexList.length === 0) {
       this.tabTitles = [];
       //this.jysTitle = t("subjectBoard.title_no_jys_template");
       return;
     }
     let jys_info = "";
-    this.selectedJysList.every((item, index) => {
+    selectedJysIndexList.every((item, index) => {
       if (item.title != null) {
         jys_info += item.title + " ";
       }
@@ -165,18 +166,19 @@ class ShiXunKeBiaoScreen extends Component {
     //this.jysTitle = t("subjectBoard.title_jys_template", {jys_info: jys_info.trim()});
     this.tabTitles = [jys_info];
     console.log(`updateTabTitles: ${JSON.stringify(this.tabTitles)}`);
-    this.tableTitle = t("shixunKebiaoScreen.table_title_template", {jys_count: this.selectedJysList.length});
+    this.tableTitle = t("shixunKebiaoScreen.table_title_template", {jys_count: selectedJysIndexList.length});
     console.log(`updateTableTitle: ${this.tableTitle}`);
     
   }
 
   buildKebiao = () => {
     const { kebiaoByJysSched, schoolYear, schoolWeek } = this.props;
-    if (!this.selectedJysList || this.selectedJysList.length === 0 || !schoolYear || !schoolWeek) {
+    const { selectedJysIndexList } = this.state;
+    if (!selectedJysIndexList || selectedJysIndexList.length === 0 || !schoolYear || !schoolWeek) {
       return;
     }
 
-    let kebiaoBySched = this.buildKebiaoBySched(this.selectedJysList, kebiaoByJysSched);
+    let kebiaoBySched = this.buildKebiaoBySched(selectedJysIndexList, kebiaoByJysSched);
     if (kebiaoBySched) {
       this.tableData = this.buildKebiaoTableSched(kebiaoBySched);
     } else {
@@ -263,15 +265,20 @@ class ShiXunKeBiaoScreen extends Component {
 
   }
 
-  loadKebiao = (selectWeek) => {
-    if (!this.selectedJysList) {
-      console.error("JYS data not selected yet");
-      return;
+  loadKebiao = (selectWeek, jysList=[]) => {
+    let selectedIds = jysList;
+    if (!jysList || jysList.length < 1) {
+      const { selectedJysIndexList } = this.state;
+      if (!selectedJysIndexList || selectedJysIndexList.length < 1) {
+        console.error("JYS data not selected yet");
+        return;
+      }
+      selectedIds = selectedJysIndexList;
     }
     const { schoolYear } = this.props;
-    console.log("loadShiXunKebiao, year: "+schoolYear+" week: "+selectWeek);
+    console.log("loadShiXunKebiao, year: "+schoolYear+" week: "+selectWeek+" selected:"+selectedIds);
     const jysIds = [];
-    this.selectedJysList.forEach(jys => {
+    selectedIds.forEach(jys => {
       jysIds.push(jys.id);
     });
     this.props.fetchShiXun(jysIds, schoolYear, selectWeek);
@@ -318,8 +325,8 @@ class ShiXunKeBiaoScreen extends Component {
     this.setState({
       selectedJysIndexList: jysList
     });
-    this.setJysSelectedIndexList(jysList);
-    this.loadKebiao(this.state.selectWeek);
+    //this.setJysSelectedIndexList(jysList);
+    this.loadKebiao(this.state.selectWeek, jysList);
   }
 
   onSemesterPageChanged = (index) => {

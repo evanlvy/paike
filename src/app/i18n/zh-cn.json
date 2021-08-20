@@ -12,7 +12,8 @@
     "no_data": "数据加载中...",
     "null": "空",
     "expand": "展开",
-    "collapse": "收起"
+    "collapse": "收起",
+    "select_all": "全选"
   },
   "alert": {
     "default_title": "警告",
@@ -117,7 +118,6 @@
     "next_semester_page": "下一学习周期"
   },
   "shixunKebiaoScreen": {
-    "all_departments": "全选",
     "table_title_template": "实训中心实验汇总 [已选{{jys_count}}个教研室]"
   },
   "centerLabScreen": {
@@ -200,6 +200,7 @@
     "holiday_adjust": "假期调整/重新排课",
     "annualData": "新教学数据录入",
     "annualData_rawplans": "教务处总课表",
+    "annualData_progressdoc": "教学进度表",
     "annualData_classes": "班级(及分组)",
     "basicData": "基础数据维护",
     "basicData_department": "教研室",

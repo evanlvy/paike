@@ -158,7 +158,7 @@ class MenuBarWrapped extends Component {
       {name: t("maintainMenu.audit"), items: [{name: t("maintainMenu.audit_planChange")}, {name: t("maintainMenu.audit_teacherAbsence")}, {name: t("maintainMenu.audit_stuAbsence")}]},
       {name: t("maintainMenu.statistics"), items: [{name: t("maintainMenu.statistics_laborHour")}, {name: t("maintainMenu.statistics_wechat")}]},
       {name: t("maintainMenu.holiday"), items: [{name: t("maintainMenu.holiday_adjust")}]},
-      {name: t("maintainMenu.annualData"), items: [{name: t("maintainMenu.annualData_rawplans")}, {name: t("maintainMenu.annualData_classes")}]},
+      {name: t("maintainMenu.annualData"), items: [{name: t("maintainMenu.annualData_rawplans")}, {name: t("maintainMenu.annualData_progressdoc")}, {name: t("maintainMenu.annualData_classes")}]},
       {name: t("maintainMenu.basicData"), items: [{name: t("maintainMenu.basicData_department")}, {name: t("maintainMenu.basicData_labInfo")}, {name: t("maintainMenu.basicData_labCenter")}, {name: t("maintainMenu.basicData_teachers")}, {name: t("maintainMenu.basicData_courses")}, {name: t("maintainMenu.basicData_colleges")}, {name: t("maintainMenu.basicData_majors")}]},
     ];
   }
