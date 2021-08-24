@@ -14,22 +14,18 @@ class SubjectBoard extends PureComponent {
     super (props);
     this.state = {
       selectedIndexList: this.buildInitSelectedIndexList(),
+      selectAllChecked: false,
     }
   }
 
   buildInitSelectedIndexList = () => {
-    const { initSelectedIndexList, initSelectIndex, enableSelectAll, enableMultiSelect } = this.props;
+    const { initSelectedIndexList, initSelectIndex } = this.props;
     let selectedIndexList = [];
     console.log(`initSelectedIndexList bef: ${initSelectedIndexList}`);
     if (initSelectedIndexList !== undefined) {
       selectedIndexList = [...initSelectedIndexList];
     } else if (initSelectIndex !== undefined) {
       selectedIndexList = [initSelectIndex];
-    }
-    if (enableSelectAll && enableMultiSelect) {
-      selectedIndexList = selectedIndexList.map(value=>{
-        return value + 1;
-      });
     }
     console.log(`initSelectedIndexList after: ${selectedIndexList}`);
     return selectedIndexList;
@@ -42,39 +38,27 @@ class SubjectBoard extends PureComponent {
   }
 
   onSubjectClicked = (index) => {
-    const { onSubjectClicked: onSubjectClickedCallback, selectionChanged: onSelectionChangedCallback, enableMultiSelect, enableSelect, enableSelectAll } = this.props;
-    //console.log(`onSubjectClicked ${this.items[index].title}`);
+    const { onSubjectClicked: onSubjectClickedCallback, 
+      enableMultiSelect, enableSelect, enableSelectAll } = this.props;
+    console.log(`onSubjectClicked ${this.items[index].title}`);
     if (onSubjectClickedCallback != null) {
-      onSubjectClickedCallback(index - (enableSelectAll?1:0));
+      onSubjectClickedCallback(index);
     }
     let newIndexList = [];
     if (enableMultiSelect) {
       const { selectedIndexList: oldIndexList } = this.state;
-      if (enableSelectAll && index === 0) {
-        if (oldIndexList.includes(0)) {
-          // Uncheck ALL
-          newIndexList = [];
+      // Remove clicked item
+      oldIndexList.forEach(index_item => {
+        if (index_item !== index) {
+          newIndexList.push(index_item);
         }
-        else {
-          // Check ALL
-          newIndexList = [...Array(this.items.length).keys()];
-        }
-        //console.log(`onSubjectClicked newlist: ${newIndexList}`);
+      });
+      // Add clicked item or not
+      if (newIndexList.length === oldIndexList.length) { // nothing removed, it's a checked click
+        newIndexList.push(index);
       }
-      else {
-        // Remove clicked item
-        oldIndexList.forEach(index_item => {
-          if (index_item !== index) {
-            if (enableSelectAll && index_item === 0) {
-              return;
-            }
-            newIndexList.push(index_item);
-          }
-        });
-        // Add clicked item or not
-        if (newIndexList.length === oldIndexList.length) { // nothing removed, it's a checked click
-          newIndexList.push(index);
-        }
+      if (enableSelectAll) {
+        this.state.selectAllChecked = (newIndexList.length === this.items.length);
       }
     } else if (enableSelect) {
       newIndexList = [index];
@@ -84,45 +68,45 @@ class SubjectBoard extends PureComponent {
     this.setState({
       selectedIndexList: newIndexList
     });
-
     let auto_title = this.buildAutoTitle(this.items, newIndexList);
     this.title_prefix = auto_title.prefix;
     this.title_details = auto_title.details;
-    // Construct index array returned to parent component
-    if (onSelectionChangedCallback != null) {
-      //console.log(`onSubjectListChanged before: ${newIndexList}`);
-      let feedbackIndexList = [...newIndexList];
-      if (enableSelectAll) {
-        if (feedbackIndexList.includes(0)){
-          feedbackIndexList.pop();
-        }
-        else {
-          feedbackIndexList = feedbackIndexList.map(value=>{
-            if (value > 0){
-              return value - 1;
-            }
-            else {
-              return 0;
-            }
-          });
-        }
-      } else if (enableSelect) {
-        feedbackIndexList = [index];
-      } else {
-        return;
-      }
-      //console.log(`onSubjectListChanged toParent: ${feedbackIndexList}`);
-      onSelectionChangedCallback(feedbackIndexList);
-    }
+    this.selectorCallbackInvoker(newIndexList);
   }
 
   onSelectAll = (isSelectAll) => {
+    let newIndexList = [];
     if (!isSelectAll) {
-      this.reset();
-      return;
+      // Uncheck ALL
+      newIndexList = [];
     }
+    else {
+      // Check ALL
+      newIndexList = [...Array(this.items.length).keys()];
+    }
+    console.log(`onSelectAll newlist: ${newIndexList}`);
+    this.setState({
+      selectAllChecked: isSelectAll,
+      selectedIndexList: newIndexList
+    });
+    this.selectorCallbackInvoker(newIndexList);
   }
 
+  selectorCallbackInvoker = (newIndexList) => {
+    const { selectionChanged: onSelectionChangedCallback, selectedIdsChanged: onSelectedIdsChangedCallback } = this.props;
+    // Construct index array returned to parent component
+    if (onSelectionChangedCallback != null) {
+      onSelectionChangedCallback(newIndexList);
+    }
+    if (onSelectedIdsChangedCallback != null) {
+      let idArray = [];
+      newIndexList.forEach(idx => {
+        idArray.push(this.items[idx].id);
+      });
+      console.log(`onSelectedIds: ${idArray}`);
+      onSelectedIdsChangedCallback(idArray);
+    }
+  }
 
   buildAutoTitle = (subjects, indexList) => {
     const { t, enableSelectAll } = this.props;
@@ -134,8 +118,8 @@ class SubjectBoard extends PureComponent {
       title_prefix = t("subjectBoard.title_prefix_unselected");
       return {prefix: title_prefix, details: title_selected};
     }
-    if (enableSelectAll && indexList.includes(0)){
-      title_selected = subjects[0].title;
+    if (enableSelectAll && (this.state.selectAllChecked === true)){
+      title_selected = t("common.select_all");
     }
     else {
       subjects.every((item, index) => {
@@ -156,12 +140,7 @@ class SubjectBoard extends PureComponent {
   render() {
     const { t, subjects, color, title, enableSelectAll, autoTitle, ...other_props } = this.props;
     if (!this.items || this.items.length <= 0) {
-      if (enableSelectAll && subjects[0] && subjects[0].check_all !== 1) {
-        this.items = [{title: t("common.select_all"), color: "gray.400", check_all: 1}, ...subjects];
-      }
-      else {
-        this.items = [...subjects];
-      }
+      this.items = subjects; //[...subjects];
       //console.log("Render: Groups Data items: "+JSON.stringify(this.items));
       let auto_title = this.buildAutoTitle(this.items, this.state.selectedIndexList);
       this.title_prefix = auto_title.prefix;
@@ -175,8 +154,9 @@ class SubjectBoard extends PureComponent {
           {
             enableSelectAll && 
             <Checkbox 
-              defaultIsChecked={false} 
+              //defaultIsChecked={false} 
               whiteSpace="nowrap" 
+              isChecked={this.state.selectAllChecked}
               onChange={(e) => this.onSelectAll(e.target.checked)}>{t("common.select_all")}</Checkbox>
           }
         </Box>

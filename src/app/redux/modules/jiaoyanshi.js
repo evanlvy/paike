@@ -181,6 +181,16 @@ export const getAllJiaoyanshi = createSelector(
   }
 )
 
+export const getAllJiaoyanshiMap = createSelector(
+  [getJiaoyanshiIds, getJiaoyanshi],
+  (jysIds, jys) => {
+    if (!jysIds || !jys) {
+      return [];
+    }
+    return jys.filter(o => (jysIds.indexOf(""+o["id"]) >= 0));
+  }
+)
+
 export const getJiaoyanshiOfAllCenters = createSelector(
   [getCenterIds, getCenter, getJiaoyanshiByCenters, getJiaoyanshi],
   (centerIds, centers, jysByCenters, jys) => {

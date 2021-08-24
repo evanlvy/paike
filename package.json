@@ -57,5 +57,6 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://pk.allbout.xyz"
+  "proxy": "http://10.83.34.118",
+  "__proxy": "http://pk.allbout.xyz"
 }
