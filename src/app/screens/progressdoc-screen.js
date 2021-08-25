@@ -219,8 +219,8 @@ class ProgressdocScreen extends Component {
             subjects={groupList}
             onSubjectClicked={onSubjectClicked}
             t = {t}
-            enableSelect
-            autoTitle />
+            enableSelect={true}
+            enableAutoTitle={true} />
         }
         {
           planRows && planRows.length > 0 &&

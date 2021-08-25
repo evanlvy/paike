@@ -190,7 +190,7 @@ class ShiXunKeBiaoScreen extends Component {
   buildKebiaoBySched = (jysList, kebiaoByJysSched) => {
     const { schoolYear, jysMap } = this.props;
     const { weekdayNames, hourNames } = this;
-    console.log("buildKebiaoBySched: jysMap: "+JSON.stringify(jysMap));
+    //console.log("buildKebiaoBySched: jysMap: "+JSON.stringify(jysMap));
     let result = {}
     jysList.forEach(jys => {
       const jysSchedId = buildJysSchedId(!jys.id?jys:jys.id, schoolYear, this.state.selectWeek);
@@ -338,9 +338,9 @@ class ShiXunKeBiaoScreen extends Component {
           //selectionChanged={onJysChanged}
           selectedIdsChanged={onJysIdsChanged}
           t={t}
-          enableMultiSelect
-          enableSelectAll
-          autoTitle />
+          enableMultiSelect={true}
+          enableSelectAll={true}
+          enableAutoTitle={true} />
         {
           tabTitles && tabTitles.length > 0 &&
           <ResultTabList
