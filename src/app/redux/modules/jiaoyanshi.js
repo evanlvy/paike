@@ -156,7 +156,7 @@ export const getCenter = state => state.getIn(["jiaoyanshi", "centerByIds"]);
 
 export const getCenterIds = state => state.getIn(["jiaoyanshi", "centerIds"]);
 
-/*export const getAllJiaoyanshi = createSelector(
+export const getAllJiaoyanshi = createSelector(
   [getJiaoyanshiIds, getJiaoyanshi],
   (jysIds, jys) => {
     if (!jysIds || !jys) {
@@ -169,9 +169,9 @@ export const getCenterIds = state => state.getIn(["jiaoyanshi", "centerIds"]);
     });
     return jysList;
   }
-)*/
+)
 
-export const getAllJiaoyanshi = createSelector(
+/*export const getAllJiaoyanshi = createSelector(
   [getJiaoyanshiIds, getJiaoyanshi],
   (jysIds, jys) => {
     if (!jysIds || !jys) {
@@ -179,7 +179,7 @@ export const getAllJiaoyanshi = createSelector(
     }
     return jys.filter(o => (jysIds.indexOf(""+o["id"]) >= 0)).values();
   }
-)
+)*/
 
 export const getAllJiaoyanshiMap = createSelector(
   [getJiaoyanshiIds, getJiaoyanshi],
