@@ -11,6 +11,7 @@ export const types = {
     FETCH_DOC_LIST: "PROGRESSDOC/FETCH_DOC_LIST",
     FETCH_DOC: "PROGRESSDOC/FETCH_DOC",
     SET_SELECTED_DEPAETMENT: "PROGRESSDOC/SET_SELECTED_DEPAETMENT",
+    SET_SELECTED_SEARCH: "PROGRESSDOC/SET_SELECTED_SEARCH",
     SET_OPENED_DOC_ID: "PROGRESSDOC/SET_OPENED_DOC_ID",
     ADD_DOC: "PROGRESSDOC/ADD_DOC",
     DEL_DOC: "PROGRESSDOC/DEL_DOC",
@@ -34,7 +35,7 @@ export const actions = {
       console.log(`searchDocList: keyword: ${keyword}, dep_id: ${department_id}`);
       return async (dispatch, getState) => {
         try {
-          if (shouldSearchList(stage, getState())) {
+          if (shouldSearchList(keyword, department_id, getState())) {
             console.log("shouldSearchList: return yes!");
             dispatch(appActions.startRequest());
             const data = await progressdocApi.queryDocListByKeyword(keyword, department_id, items_per_page, page_id);
@@ -51,13 +52,13 @@ export const actions = {
       console.log(`fetchDocList: dep_id: ${department_id}`);
       return async (dispatch, getState) => {
         try {
-          if (shouldFetchList(stage, getState())) {
+          if (shouldFetchList(department_id, stage, getState())) {
             console.log("shouldFetchList: return yes!");
             dispatch(appActions.startRequest());
             const data = await progressdocApi.queryDocList(department_id, stage, items_per_page, page_id);
             dispatch(appActions.finishRequest());
-            let groups = convertGroupsToPlain(data);
-            dispatch(fetchListSuccess(department_id, stage, groups));
+            console.log("fetchDocList: data="+JSON.stringify(data));
+            dispatch(fetchListSuccess(department_id, stage, data));
           }
           dispatch(setSelectedDepartment(department_id, stage));
         } catch (error) {
@@ -72,7 +73,7 @@ export const actions = {
             if (shouldFetchDoc(id, getState())) {
               console.log("shouldFetchDoc: return yes!");
               dispatch(appActions.startRequest());
-              const data = await rawplanApi.queryDoc(id);
+              const data = await progressdocApi.queryDoc(id);
               dispatch(appActions.finishRequest());
               dispatch(fetchDocSuccess(id, data));
             }
@@ -106,14 +107,14 @@ const convertGroupsToPlain = (groupsInfo) => {
 
 const searchListSuccess = (keyword, department_id, groups) => {
   return ({
-    type: types.SEARCH_LIST,
+    type: types.SEARCH_DOC_LIST,
     keyword,
     department_id,
     groups
   })
 }
 
-const setSelectedDepartment = (department_id, keyword) => {
+const setSelectedSearch = (department_id, keyword) => {
   return ({
     type: types.SET_SELECTED_SEARCH,
     department_id,
@@ -121,12 +122,12 @@ const setSelectedDepartment = (department_id, keyword) => {
   })
 }
 
-const fetchListSuccess = (department_id, stage, groups) => {
+const fetchListSuccess = (department_id, stage, data) => {
   return ({
-    type: types.FETCH_LIST,
+    type: types.FETCH_DOC_LIST,
     department_id,
     stage,
-    groups
+    data
   })
 }
 
@@ -168,7 +169,7 @@ const searchedList = (state = Immutable.fromJS({}), action) => {
 const fetchedList = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_DOC_LIST:
-      return state.merge({[action.department_id+"_"+action.stage]: action.plans});
+      return state.merge({[action.department_id+"_"+action.stage]: action.data});
     case types.SET_SELECTED_DEPAETMENT:
       return state.merge({selected: action.id+"_"+action.stage});
     default:
@@ -196,23 +197,20 @@ const reducer = combineReducers({
 export default reducer;
 
 // selectors
-export const getList = state => state.getIn(["progressDoc", "fetchedList", getSelectedDepartment(state)]).valueSeq();
+export const getList = state => state.getIn(["progressdoc", "fetchedList", getSelectedDepartment(state)]);
+export const getSelectedDepartment = (state) => state.getIn(["progressdoc", "fetchedList", "selected"]);
 
-export const getSearchedList = (state) => state.getIn(["progressDoc", "searchedList", getSelectedSearch(state)]).valueSeq();
+export const getSearchedList = (state) => state.getIn(["progressdoc", "searchedList", getSelectedSearch(state)]).valueSeq();
+export const getSelectedSearch = (state) => state.getIn(["progressdoc", "searchedList", "selected"]);
 
-export const getSelectedSearch = (state) => state.getIn(["progressDoc", "searchedList", "selected"]);
-
-export const getSelectedDepartment = (state) => state.getIn(["progressDoc", "fetchedList", "selected"]);
-
-export const getSelectedDocId = (state) => state.getIn(["progressDoc", "fetchedDoc", "selected"]);
-
-export const getDoc = (state) => state.getIn(["progressDoc", "fetchedDoc", getSelectedDocId(state)]);
+export const getDoc = (state) => state.getIn(["progressdoc", "fetchedDoc", getSelectedDocId(state)]);
+export const getSelectedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
 
 export const getDocList = createSelector(
   getList,
   (docList) => {
     if (!docList) return [];
-    return docList.toJS();
+    return Object.values(docList);
   }
 );
 

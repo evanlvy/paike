@@ -17,7 +17,7 @@ class Api {
         items_per_page: items_per_page,
         page_id: page_id,
       };
-      if (stage_id <= 0) {
+      if (stage <= 0) {
         delete request_param.stage_id;
       }
       if (items_per_page <= 0) {
@@ -31,7 +31,7 @@ class Api {
       if (!success) {
         throw new Error(message.message);
       }
-      return data.groups;
+      return data;
     } catch (error) {
       throw error;
     }
@@ -40,7 +40,7 @@ class Api {
   queryDocListByKeyword = async (keyword, department_id=0, items_per_page=0, page_id=0) => {
     try {
       const url = this.baseUrl+"/get_progressgroup";
-      console.log("Request url "+url+" with stage: "+stage+" department_id: "+department_id);
+      console.log("Request url "+url+" with department_id: "+department_id);
       let request_param = {
         name: keyword,
         department_id: department_id,
@@ -61,18 +61,18 @@ class Api {
       if (!success) {
         throw new Error(message.message);
       }
-      return data.groups;
+      return data;
     } catch (error) {
       throw error;
     }
   }
 
-  queryDoc = async (doc_id) => {
+  queryDoc = async (id) => {
     try {
       const url = this.baseUrl+"/get_progressdoc";
-      console.log("Request url "+url+" with doc_id: "+doc_id);
+      console.log("Request url "+url+" with doc_id: "+id);
       let request_param = {
-        doc_id: stage,
+        doc_id: id,
       };
       let response = await axios.post(url, request_param);
       const { success, data, message } = response.data;
@@ -103,12 +103,12 @@ class Api {
     }
   }
 
-  deleteDoc = async (doc_id) => {
+  deleteDoc = async (id) => {
     try {
       const url = this.baseUrl+"/del_progressdoc";
-      console.log("Request url "+url+" with doc_id: "+doc_id);
+      console.log("Request url "+url+" with doc_id: "+id);
       let request_param = {
-        doc_id: stage,
+        doc_id: id,
       };
       let response = await axios.post(url, request_param);
       const { success, data, message } = response.data;

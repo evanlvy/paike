@@ -12,15 +12,17 @@ import {
 
 import {
   SubjectBoard,
+  ResultTabList,
   ResultTable,
 } from '../components';
 
-import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
-import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, countRowChanged, getChangedRowIds} from '../redux/modules/rawplan';
+import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
+import { actions as jysActions, getAllJiaoyanshiMap } from '../redux/modules/jiaoyanshi';
+import { actions as progressdocActions, getDocList, getSearchedDocList, getDocContents } from '../redux/modules/progressdoc';
 import { EditableTable } from '../components/result-table/editable-table';
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
-const JYS_KEBIAO_COLOR = "red";
+const PROGRESSDOC_COLOR = "purple";
 const CANCEL_COLOR = "gray";
 const SEMESTER_FIRST_HALF_MAX_WEEK = 9;
 const SEMESTER_HALF_BIAS_WEEK = 6;
@@ -36,16 +38,21 @@ class ProgressdocScreen extends Component {
     this.semesterPages = [];
 
     this.tabTitles = [];
-    this.tableHeaders = [
-      {name: t("kebiao.shixun_sched_title"), field: "sched_name"},
-      {name: t("kebiao.jys"), field: "jys"},
-      {name: t("kebiao.banji"), field: "banji"},
-      //{name: t("kebiao.student_count"), field: "student_count"},
-      {name: t("kebiao.shixun_content"), field: "shixun_name"},
-      {name: t("kebiao.teacher"), field: "teacher"},
-      {name: t("kebiao.shixun_teacher"), field: "shixun_teacher"},
-      {name: t("kebiao.lab"), field: "lab"},
-      {name: t("kebiao.note"), field: "note"},
+    this.docListHeaders = [
+      {name: t("progressdocScreen.list_header_name"), field: "course_name"},
+      {name: t("progressdocScreen.list_header_short"), field: "short_name"},
+      {name: t("progressdocScreen.list_header_description"), field: "description"},
+      {name: t("progressdocScreen.list_header_hours_total"), field: "total_hours"},
+      {name: t("progressdocScreen.list_header_hours_theory"), field: "theory_hours"},
+      {name: t("progressdocScreen.list_header_hours_lab"), field: "lab_hours"},
+      {name: t("progressdocScreen.list_header_hours_flex"), field: "flex_hours"},
+      {name: t("progressdocScreen.list_header_textbook"), field: "textbook"},
+      {name: t("progressdocScreen.list_header_exam"), field: "exam_type"},
+      {name: t("progressdocScreen.list_header_comments"), field: "comments"},
+      {name: t("progressdocScreen.list_header_classes"), field: "classes"},
+      {name: t("progressdocScreen.list_header_created"), field: "created_at"},
+      {name: t("progressdocScreen.list_header_updated"), field: "updated_at"},
+      {name: t("progressdocScreen.list_header_id"), field: "id"},
     ];
 
     this.weekdayNames = [
@@ -66,8 +73,8 @@ class ProgressdocScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { schoolYear, schoolWeek, jysMap, kebiaoByJysSched/*, location*/ } = this.props;
-    const { selectedJysIdList, selectWeek } = this.state;
+    const { schoolYear, jysMap, stageList, docList/*, location*/ } = this.props;
+    const { selectedJysIdList } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
     /*if (nextProps.location.state.grd !== location.state.grd || nextProps.location.state.edu !== location.state.edu) {
@@ -75,30 +82,25 @@ class ProgressdocScreen extends Component {
       console.log("shouldComponentUpdate, location state diff");
       return true;
     } else */
-    if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
-    || nextProps.jysMap !== jysMap || nextProps.kebiaoByJysSched !== kebiaoByJysSched) {
+    if (nextProps.schoolYear !== schoolYear || nextProps.jysMap !== jysMap || nextProps.stageList !== stageList || nextProps.docList !== docList) {
       console.log("shouldComponentUpdate, props diff");
       return true;
-    } else if (nextState.selectedJysIdList !== selectedJysIdList || nextState.selectWeek !== selectWeek ) {
+    } else if (nextState.selectedJysIdList !== selectedJysIdList) {
       console.log("shouldComponentUpdate, state diff");
       return true;
     }
     return false;
   }
 
-  componentDidUpdate() {
-    this.loadData();
-  }
-
   loadData = () => {
+    if (!this.semesterPages || this.semesterPages.length === 0) {
+      this.props.fetchStageList();
+    }
     if (!this.jysData || this.jysData.length === 0) { // only get jys list when it's empty
       this.loadjysData();
     }
     if (this.state.selectedJysIdList && !this.hasFetchKebiao) {
-      const { schoolWeek } = this.props;
-      let shixunSelectWeek = schoolWeek;
-      console.log("loadKebiao: schoolWeek: "+shixunSelectWeek);
-      this.loadKebiao(shixunSelectWeek);
+      this.loadDocList(this.state.selectedJysIdList);
     }
   }
 
@@ -109,12 +111,8 @@ class ProgressdocScreen extends Component {
   }
 
   buildSemester = () => {
-    const { t } = this.props;
-    const { semesterPages } = this;
-    if (semesterPages.length === 0) {
-      for (let i=0; i < SEMESTER_WEEK_COUNT; i++) {
-        semesterPages.push({ name: t("kebiao.semester_week_template", {index: i+1}) });
-      }
+    if (this.semesterPages.length === 0) {
+      this.semesterPages = [...Object.values(this.props.stageList)];
     }
   }
 
@@ -180,12 +178,12 @@ class ProgressdocScreen extends Component {
       return;
     }
 
-    let kebiaoBySched = this.buildKebiaoBySched(selectedJysIdList, kebiaoByJysSched);
+    /*let kebiaoBySched = this.buildKebiaoBySched(selectedJysIdList, kebiaoByJysSched);
     if (kebiaoBySched) {
       this.tableData = this.buildKebiaoTableSched(kebiaoBySched);
     } else {
       this.tableData = [];
-    }
+    }*/
     //console.log("kebiaoTable: "+JSON.stringify(this.tableData));
   }
 
@@ -194,7 +192,7 @@ class ProgressdocScreen extends Component {
     const { weekdayNames, hourNames } = this;
     //console.log("buildKebiaoBySched: jysMap: "+JSON.stringify(jysMap));
     let result = {}
-    jysList.forEach(jys => {
+    jysList.forEach(jys => {/*
       const jysSchedId = buildJysSchedId(!jys.id?jys:jys.id, schoolYear, this.state.selectWeek);
       console.log("Get kebiaoInfo of "+jysSchedId);
       const kebiaoInWeek = kebiaoByJysSched[jysSchedId];
@@ -219,7 +217,7 @@ class ProgressdocScreen extends Component {
             });
           }
         }
-      }
+      }*/
     });
     //console.log("buildKebiaoBySched: "+JSON.stringify(result));
     return result;
@@ -267,19 +265,18 @@ class ProgressdocScreen extends Component {
     return resultList;
   }
 
-  loadKebiao = (selectWeek, jysIdList=[]) => {
-    let selectedIds = jysIdList;
+  loadDocList = (jysIdList, stage_id=0) => {
     if (!jysIdList || jysIdList.length < 1) {
-      const { selectedJysIdList } = this.state;
-      if (!selectedJysIdList || selectedJysIdList.length < 1) {
-        console.error("JYS data not selected yet");
-        return;
-      }
-      selectedIds = selectedJysIdList;
+      console.error("JYS not selected yet");
+      return;
     }
-    const { schoolYear } = this.props;
-    console.log("loadShiXunKebiao, year: "+schoolYear+" week: "+selectWeek+" selected:"+selectedIds);
-    this.props.fetchShiXun(selectedIds, schoolYear, selectWeek);
+    let stage = stage_id;
+    if (stage < 1) {
+      const { schoolYear } = this.props;
+      stage = schoolYear;
+    }
+    console.log("loadDocList, year: "+stage+" jysId:"+jysIdList[0]);
+    this.props.fetchDocList(jysIdList[0], stage);
     this.hasFetchKebiao = true;
   }
 
@@ -288,7 +285,7 @@ class ProgressdocScreen extends Component {
     this.setState({
       selectedJysIdList: jysIdList
     });
-    this.loadKebiao(this.state.selectWeek, jysIdList);
+    this.loadDocList(jysIdList);
   }
 
   onSemesterPageChanged = (index) => {
@@ -298,33 +295,33 @@ class ProgressdocScreen extends Component {
     this.setState({
       selectWeek : shixunSelectWeek
     });
-    this.loadKebiao(shixunSelectWeek);
+    this.jysIdList(shixunSelectWeek);
   }
 
   render() {
-    const { t } = this.props;
+    const { t, docList } = this.props;
     const { selectWeek } = this.state;
     this.buildData();
     const { jysData, jysTitle, 
-      tabTitles, tableTitle, tableHeaders, tableData, semesterPages,
+      tabTitles, tableTitle, docListHeaders, tableData, semesterPages,
       onJysIdsChanged, onTabChanged, onSemesterPageChanged } = this;
     const pageTables = [];
-    if (tableData) {
+    if (docList && docList.length > 0) {
       pageTables[0] = (<ResultTable
         height={450/*window.innerHeight*/}
         titleHeight={50}
         colLineHeight={20}
         defaultColWidth={180}
         title={tableTitle}
-        color={SHIXUNKEBIAO_COLOR}
-        headers={tableHeaders}
-        data={tableData}
+        color={PROGRESSDOC_COLOR}
+        headers={docListHeaders}
+        data={docList}
         pageNames={semesterPages}
-        pagePrevCaption={t("kebiao.prev_semester_week")}
-        pageNextCaption={t("kebiao.next_semester_week")}
+        pagePrevCaption={t("common.previous")}
+        pageNextCaption={t("common.next")}
         onResultPageIndexChanged={onSemesterPageChanged}
-        initPageIndex={selectWeek-1}
-        pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]} />);
+        initPageIndex={0}
+        />);
     } else {
       pageTables[0] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
     }
@@ -332,7 +329,7 @@ class ProgressdocScreen extends Component {
       <Flex width="100%" minHeight={750} direction="column" align="center">
         <SubjectBoard
           my={4}
-          color={SHIXUNKEBIAO_COLOR}
+          color={PROGRESSDOC_COLOR}
           title={jysTitle}
           subjects={jysData}
           initSelectedIndexList={this.defaultselectedJysIdList}
@@ -340,8 +337,6 @@ class ProgressdocScreen extends Component {
           //selectionChanged={onJysChanged}
           selectedIdsChanged={onJysIdsChanged}
           t={t}
-          enableMultiSelect={true}
-          enableSelectAll={true}
           enableAutoTitle={true} />
         {
           tabTitles && tabTitles.length > 0 &&
@@ -351,7 +346,7 @@ class ProgressdocScreen extends Component {
             width="100%"
             maxWidth={1444}
             tabHeight={50}
-            color={SHIXUNKEBIAO_COLOR}
+            color={PROGRESSDOC_COLOR}
             titles={tabTitles}
             onTabChange={onTabChanged}
             pages={pageTables} />
@@ -364,16 +359,17 @@ class ProgressdocScreen extends Component {
 const mapStateToProps = (state) => {
   return {
     schoolYear: getSchoolYear(state),
-    schoolWeek: getSchoolWeek(state),
+    stageList: getStageList(state),
     jysMap: getAllJiaoyanshiMap(state),
-    kebiaoByJysSched: getShiXunByJiaoyanshiSched(state),
+    docList: getDocList(state),
   }
 }
 
 const mapDispatchToProps = (dispatch) => {
   return {
     ...bindActionCreators(jysActions, dispatch),
-    ...bindActionCreators(kebiaoActions, dispatch),
+    ...bindActionCreators(gradeActions, dispatch),
+    ...bindActionCreators(progressdocActions, dispatch),
   }
 }
 

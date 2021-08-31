@@ -9,7 +9,8 @@ import { format } from 'date-fns';
 // action types
 export const types = {
   FETCH_DEGREE_GRADE: "GRADE/FETCH_DEGREE_GRADE",
-  UPDATE_SCHOOL_YEARWEEK: "GRADE/UPDATE_SCHOOL_YEARWEEK"
+  UPDATE_SCHOOL_YEARWEEK: "GRADE/UPDATE_SCHOOL_YEARWEEK",
+  FETCH_STAGE_LIST: "GRADE/FETCH_STAGE_LIST"
 };
 // action creators
 export const actions = {
@@ -43,7 +44,21 @@ export const actions = {
         dispatch(appActions.setError(error));
       }
     }
-  }
+  },
+  fetchStageList: () => {
+    return async (dispatch, getState) => {
+      try {
+        if (shouldFetchStageList(getState())) {
+          dispatch(appActions.startRequest());
+          const data = await gradeApi.queryStageList();
+          dispatch(appActions.finishRequest());
+          dispatch(fetchStageListSuccess(data));
+        }
+      } catch (error) {
+        dispatch(appActions.setError(error));
+      }
+    }
+  },
 }
 
 const shouldFetchAllGradeInfo = (state) => {
@@ -51,6 +66,12 @@ const shouldFetchAllGradeInfo = (state) => {
   //console.log(`shouldFetchAllGradeInfo: ${degrees} ${degrees.size}`);
   return !degrees || degrees.size === 0;
 }
+
+const shouldFetchStageList = (state) => {
+  const stages = getStageList(state);
+  return !stages || stages.size === 0;
+}
+
 
 const fetchAllGradeInfoSuccess = (degreeByIds, allDegrees, gradeByIds, gradeByDegree) => {
   return ({
@@ -101,6 +122,12 @@ const fetchSchoolYearWeekSuccess = (info) => {
   })
 }
 
+const fetchStageListSuccess = (data) => {
+  return ({
+    type: types.FETCH_STAGE_LIST,
+    data
+  })
+}
 // reducers
 const degreeByIds = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
@@ -147,12 +174,22 @@ const schoolYearWeek = (state = Immutable.fromJS({}), action) => {
   }
 }
 
+const stages = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.FETCH_STAGE_LIST:
+      return state.merge(action.data.stages);
+    default:
+      return state;
+  }
+}
+
 const reducer = combineReducers({
   degreeByIds,
   degreeIds,
   gradeByIds,
   gradeByDegree,
   schoolYearWeek,
+  stages,
 });
 
 export default reducer;
@@ -168,6 +205,8 @@ export const getDegreeIds = state => state.getIn(["grade", "degreeIds"]);
 export const getGrades = state => state.getIn(["grade", "gradeByIds"]);
 
 export const getGradeByAllDegree = state => state.getIn(["grade", "gradeByDegree"]);
+
+export const getStageList = state => state.getIn(["grade", "stages"]);
 
 export const getGradesOfAllDegrees = createSelector(
   [getDegreeIds, getDegrees, getGradeByAllDegree, getGrades],

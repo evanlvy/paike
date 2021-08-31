@@ -82,10 +82,6 @@ class JwcKebiaoScreen extends Component {
     return false;
   }
 
-  /*componentDidUpdate() {
-    this.loadData();
-  }*/
-
   loadData = () => {
     if (!this.groups || this.groups.length === 0) { // only get subjects when it's empty
       this.loadGroups();
@@ -151,9 +147,8 @@ class JwcKebiaoScreen extends Component {
   }
 
   render() {
-    const { t, groupList, planRows, groupStageWeekId, schoolWeek } = this.props;
-    //this.buildData();
-    //const { selectedTeacherIndex } = this.state;
+    const { t, groupList, planRows, groupStageWeekId, schoolWeek, } = this.props;
+    const { selectedSubjectIndex } = this.state;
     const { groupTitle, onSubjectClicked, onSemesterPageChanged, 
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
@@ -169,6 +164,7 @@ class JwcKebiaoScreen extends Component {
             color={JYS_KEBIAO_COLOR}
             title={groupTitle}
             subjects={groupList}
+            initSelectIndex={selectedSubjectIndex}
             onSubjectClicked={onSubjectClicked}
             t = {t}
             enableSelect={true}

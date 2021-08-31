@@ -214,5 +214,22 @@
   "editRawplanScreen": {
     "commit": "提交改动",
     "revert": "放弃改动"
+  },
+  "progressdocScreen": {
+    "list_title": "教学进度",
+    "list_header_id": "编号",
+    "list_header_name": "课程",
+    "list_header_short": "简称",
+    "list_header_description": "描述",
+    "list_header_hours_total": "总课时",
+    "list_header_hours_theory": "理论课时",
+    "list_header_hours_lab": "实训课时",
+    "list_header_hours_flex": "灵活课时",
+    "list_header_textbook": "教材",
+    "list_header_exam": "考试类型",
+    "list_header_created": "创建时间",
+    "list_header_updated": "更新时间",
+    "list_header_comments": "注释",
+    "list_header_classes": "实施班级"
   }
 }

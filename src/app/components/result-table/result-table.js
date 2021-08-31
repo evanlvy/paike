@@ -96,10 +96,12 @@ class ResultTableWrapper extends Component {
     const { t } = this.props;
     for (let i=0; i < headers.length; i++) {
       columnDefs[i] = {
-        index: i,
+        colId: i,
         headerName: headers[i].name,
         field: headers[i].field,
         width: headers[i].width == null ? defaultColWidth : headers[i].width,
+        wrapText: false,
+        autoHeight: false,
         lineHeight: colLineHeight,
         cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
       };

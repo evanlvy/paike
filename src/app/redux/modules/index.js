@@ -12,6 +12,7 @@ import banji from './banji';
 import kebiao from './kebiao';
 import history from './history';
 import rawplan from './rawplan';
+import progressdoc from './progressdoc';
 
 const rootReducer = combineReducers({
   app,
@@ -26,6 +27,7 @@ const rootReducer = combineReducers({
   kebiao,
   history,
   rawplan,
+  progressdoc,
 });
 
 export default rootReducer;

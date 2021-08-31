@@ -88,7 +88,11 @@ class JysKebiaoScreen extends Component {
     return false;
   }
 
-  componentDidUpdate() {
+  //componentDidUpdate() {
+  //  this.loadData();
+  //}
+
+  componentDidMount() {
     this.loadData();
   }
 

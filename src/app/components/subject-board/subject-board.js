@@ -32,6 +32,22 @@ class SubjectBoard extends PureComponent {
     return selectedIndexList;
   }
 
+  componentDidMount() {
+    // Work for initial selection callback
+    const {onSubjectClicked: onSubjectClickedCallback, initSelectIndex, initSelectedIndexList } = this.props;
+    if (initSelectedIndexList && initSelectedIndexList.length > 0) {
+      this.autoTitle = this.buildAutoTitle(this.items, initSelectedIndexList);
+      this.selectorCallbackInvoker(initSelectedIndexList);
+    }
+    else if (initSelectIndex >= 0) {
+      if (onSubjectClickedCallback != null) {
+        onSubjectClickedCallback(initSelectIndex);
+      }
+      this.autoTitle = this.buildAutoTitle(this.items, [initSelectIndex]);
+      this.selectorCallbackInvoker([initSelectIndex]);
+    }
+  }
+
   reset = () => {
     this.setState({
       selectedIndexList: this.buildInitSelectedIndexList()

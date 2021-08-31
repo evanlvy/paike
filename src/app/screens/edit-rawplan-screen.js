@@ -87,10 +87,6 @@ class EditRawplanScreen extends Component {
     return false;
   }
 
-  /*componentDidUpdate() {
-    this.loadData();
-  }*/
-
   loadData = () => {
     const { groupList } = this.props;
     if (!groupList || groupList.length === 0) { // only get subjects when it's empty
@@ -201,7 +197,7 @@ class EditRawplanScreen extends Component {
 
   render() {
     const { t, groupList, planRows, groupStageWeekId, schoolWeek, changedRows } = this.props;
-    //const { selectedTeacherIndex } = this.state;
+    const { selectedSubjectIndex } = this.state;
     const { groupTitle, onSubjectClicked, onSemesterPageChanged, onCellClicked, onCellValueChanged, onCommit, onRevert,
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
@@ -217,6 +213,7 @@ class EditRawplanScreen extends Component {
             color={JYS_KEBIAO_COLOR}
             title={groupTitle}
             subjects={groupList}
+            initSelectIndex={selectedSubjectIndex}
             onSubjectClicked={onSubjectClicked}
             t = {t}
             enableSelect={true}
