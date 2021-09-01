@@ -221,6 +221,16 @@ class ResultTableWrapper extends Component {
     }
   }
 
+  getPageText = (pageArray, index) => {
+    if (!pageArray || pageArray.length < index) {
+      return "";
+    }
+    if (typeof pageArray[index] === "string") {
+      return pageArray[index];
+    }
+    return pageArray[index].name;
+  }
+
   render() {
     const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, onCellClicked, onRowClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data,
@@ -235,7 +245,7 @@ class ResultTableWrapper extends Component {
           borderWidth={1} borderColor={color+".200"} roundedTop="md">
           <Text width="100%">{title}</Text>
           {
-            pageNames &&
+            pageNames && pageNames.length>0 && (!initPageIndex || initPageIndex>=0) &&
             <Flex direction="row" alignItems="center">
               {
                 pageInputCaption &&
@@ -246,7 +256,7 @@ class ResultTableWrapper extends Component {
                 </Flex>
               }
               <Button mr={2} variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
-              { !pageInputCaption && <Text whiteSpace="nowrap" mx={2}>{pageNames[curPageIndex].name}</Text> }
+              { !pageInputCaption && <Text whiteSpace="nowrap" mx={2}>{this.getPageText(pageNames, curPageIndex)}</Text> }
               <Button ml={2} variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
             </Flex>
           }

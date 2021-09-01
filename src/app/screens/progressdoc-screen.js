@@ -32,10 +32,10 @@ class ProgressdocScreen extends Component {
     const { t, schoolWeek } = props;
     this.state = {
       selectedJysIdList: [],
-      selectWeek: schoolWeek ? schoolWeek : 1,
     };
     this.defaultselectedJysIdList = [0];
     this.semesterPages = [];
+    this.initSemesterPageIdx = -1;
 
     this.tabTitles = [];
     this.docListHeaders = [
@@ -112,7 +112,12 @@ class ProgressdocScreen extends Component {
 
   buildSemester = () => {
     if (this.semesterPages.length === 0) {
+      console.log("buildSemester: stages: "+JSON.stringify(this.props.stageList));
       this.semesterPages = [...Object.values(this.props.stageList)];
+      if (this.semesterPages.length > 0) {
+        // Set default semesterPageIndex
+        this.initSemesterPageIdx = Object.keys(this.props.stageList).indexOf(""+this.props.schoolYear);
+      }
     }
   }
 
@@ -291,19 +296,18 @@ class ProgressdocScreen extends Component {
   onSemesterPageChanged = (index) => {
     const { semesterPages } = this;
     console.log("onSemesterPageChanged: "+semesterPages[index].name);
-    let shixunSelectWeek = index+1;
-    this.setState({
-      selectWeek : shixunSelectWeek
-    });
-    this.jysIdList(shixunSelectWeek);
+    if (index < 0 || index >= semesterPages.length) {
+      return;
+    }
+    let stageId = Object.keys(this.props.stageList)[index];
+    this.loadDocList(this.state.selectedJysIdList, stageId);
   }
 
   render() {
     const { t, docList } = this.props;
-    const { selectWeek } = this.state;
     this.buildData();
     const { jysData, jysTitle, 
-      tabTitles, tableTitle, docListHeaders, tableData, semesterPages,
+      tabTitles, tableTitle, docListHeaders, tableData, semesterPages, initSemesterPageIdx,
       onJysIdsChanged, onTabChanged, onSemesterPageChanged } = this;
     const pageTables = [];
     if (docList && docList.length > 0) {
@@ -320,7 +324,7 @@ class ProgressdocScreen extends Component {
         pagePrevCaption={t("common.previous")}
         pageNextCaption={t("common.next")}
         onResultPageIndexChanged={onSemesterPageChanged}
-        initPageIndex={0}
+        initPageIndex={initSemesterPageIdx}
         />);
     } else {
       pageTables[0] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);

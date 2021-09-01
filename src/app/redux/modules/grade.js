@@ -68,7 +68,7 @@ const shouldFetchAllGradeInfo = (state) => {
 }
 
 const shouldFetchStageList = (state) => {
-  const stages = getStageList(state);
+  const stages = getImmutableStageList(state);
   return !stages || stages.size === 0;
 }
 
@@ -206,7 +206,8 @@ export const getGrades = state => state.getIn(["grade", "gradeByIds"]);
 
 export const getGradeByAllDegree = state => state.getIn(["grade", "gradeByDegree"]);
 
-export const getStageList = state => state.getIn(["grade", "stages"]);
+const getImmutableStageList = state => state.getIn(["grade", "stages"]);
+export const getStageList = state => state.getIn(["grade", "stages"]).toJS();
 
 export const getGradesOfAllDegrees = createSelector(
   [getDegreeIds, getDegrees, getGradeByAllDegree, getGrades],
