@@ -16,7 +16,7 @@ import {
 } from '../components';
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
-import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, countRowChanged, getChangedRowIds} from '../redux/modules/rawplan';
+import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, countRowChanged, getTeacherStatistical} from '../redux/modules/rawplan';
 import { EditableTable } from '../components/result-table/editable-table';
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
@@ -196,13 +196,13 @@ class EditRawplanScreen extends Component {
   }
 
   render() {
-    const { t, groupList, planRows, groupStageWeekId, schoolWeek, changedRows } = this.props;
+    const { t, groupList, planRows, groupStageWeekId, schoolWeek, changedRows, statisticals } = this.props;
     const { selectedSubjectIndex } = this.state;
     const { groupTitle, onSubjectClicked, onSemesterPageChanged, onCellClicked, onCellValueChanged, onCommit, onRevert,
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
     //console.log("render: plans "+JSON.stringify(planRows));
-    console.log("render: group_id: "+groupStageWeekId+ " changedRows:"+changedRows);
+    console.log("render: group_id: "+groupStageWeekId+ " changedRows:"+changedRows, "statistics: "+JSON.stringify(statisticals));
 
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center">
@@ -262,6 +262,7 @@ const mapStateToProps = (state/*, props*/) => {
     groupStageWeekId: getSelectedGroup(state),
     planRows: getPlansByGroup(state),
     changedRows: countRowChanged(state),
+    statisticals: getTeacherStatistical(state),
   }
 }
 
