@@ -220,7 +220,7 @@ class EditRawplanScreen extends Component {
             enableAutoTitle={true} />
         }
         {
-          planRows && planRows.length > 0 &&
+          planRows &&
           <EditableTable
             height={450}
             titleHeight={50}

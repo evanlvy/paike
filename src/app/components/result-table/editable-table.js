@@ -73,11 +73,11 @@ class EditableTable extends Component {
     }
     let cname = value.course;
     if (value.cid <= 0){
-      cname = cname+ (value.cid < 0?"\u274C":"\u2753");
+      cname = (value.cid < 0?"\u274C":"\u2753")+cname;
     }
     let tname = value.teacher;
     if (value.tid <= 0){
-      tname = tname+(value.tid < 0?"\u274C":"\u2753");
+      tname = (value.tid < 0?"\u274C":"\u2753")+tname;
     }
     let output = cname + " " + tname;
     //console.log("courseTeacherGetter: "+output);
@@ -123,7 +123,7 @@ class EditableTable extends Component {
     const columnDefs = [];
     for (let i=0; i < headers.length; i++) {
       columnDefs[i] = {
-        index: i,
+        colId: i,
         headerName: headers[i].name,
         field: headers[i].field,
         width: headers[i].width == null ? defaultColWidth : headers[i].width,

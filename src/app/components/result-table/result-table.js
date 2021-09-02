@@ -110,7 +110,8 @@ class ResultTableWrapper extends Component {
       }
       if (headers[i].renderer && headers[i].renderer !== null) {
         if (headers[i].renderer === "course_teacher_renderer") {
-          columnDefs[i]["cellRenderer"] = (params) => {
+          columnDefs[i]["valueGetter"] = this.courseTeacherGetter;
+          /*columnDefs[i]["cellRenderer"] = (params) => {
             // console.log("CourseTeacherRenderer: "+JSON.stringify(params, this.getCircularReplacer()));
             if (!params.value) {
               return `<font color="gray">${t("kebiao.zixi")}</font>`;
@@ -125,7 +126,10 @@ class ResultTableWrapper extends Component {
             }
             let output = `<b>${cname}</b><br>${tname}`
             return output;
-          };
+          };*/
+        }
+        else if (headers[i].renderer === "class_name_renderer") {
+          columnDefs[i]["valueGetter"] = this.classNamesGetter;
         }
       }
     }
@@ -133,6 +137,39 @@ class ResultTableWrapper extends Component {
     return columnDefs;
   }
 
+  classNamesGetter = (params) => {
+    //console.log("courseTeacherGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
+    let value = params.data[params.colDef.field];
+    console.log("courseTeacherGetter: value:"+JSON.stringify(value));
+    //Data sample: {12: '20全科1', 13:'20全科2'}
+    if (!value) {
+      return "";
+    }
+    let short_names = Object.values(value);
+    return short_names.join(', ');
+  };
+
+  //Cell Edit Ref https://www.ag-grid.com/javascript-grid/cell-editing/?
+  courseTeacherGetter = (params) => {
+    //console.log("courseTeacherGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
+    let value = params.data[params.colDef.field];
+    //console.log("courseTeacherGetter: value:"+JSON.stringify(value));
+    if (!value) {
+      return "自习";
+    }
+    let cname = value.course;
+    if (value.cid <= 0){
+      cname = (value.cid < 0?"\u274C":"\u2753")+cname;
+    }
+    let tname = value.teacher;
+    if (value.tid <= 0){
+      tname = (value.tid < 0?"\u274C":"\u2753")+tname;
+    }
+    let output = cname + " " + tname;
+    //console.log("courseTeacherGetter: "+output);
+    return output;
+  };
+  
   buildData = (props) => {
     const { data } = props;
     this.rowData = [];
@@ -222,13 +259,16 @@ class ResultTableWrapper extends Component {
   }
 
   getPageText = (pageArray, index) => {
-    if (!pageArray || pageArray.length < index) {
+    if (!pageArray || pageArray.length < index || !pageArray[index]) {
       return "";
     }
     if (typeof pageArray[index] === "string") {
       return pageArray[index];
     }
-    return pageArray[index].name;
+    if (pageArray[index].hasOwnProperty('name')) {
+      return pageArray[index].name;
+    }
+    return "";
   }
 
   render() {

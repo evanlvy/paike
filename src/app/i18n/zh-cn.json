@@ -11,6 +11,7 @@
     "ok": "确认",
     "no_data": "数据加载中...",
     "null": "空",
+    "no_item": "无",
     "expand": "展开",
     "collapse": "收起",
     "select_all": "全选"

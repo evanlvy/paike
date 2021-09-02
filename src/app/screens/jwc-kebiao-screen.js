@@ -171,7 +171,7 @@ class JwcKebiaoScreen extends Component {
             enableAutoTitle={true} />
         }
         {
-          planRows && planRows.length > 0 &&
+          planRows &&
           <ResultTable
             height={450}
             titleHeight={50}

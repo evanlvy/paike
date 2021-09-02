@@ -49,7 +49,7 @@ class ProgressdocScreen extends Component {
       {name: t("progressdocScreen.list_header_textbook"), field: "textbook"},
       {name: t("progressdocScreen.list_header_exam"), field: "exam_type"},
       {name: t("progressdocScreen.list_header_comments"), field: "comments"},
-      {name: t("progressdocScreen.list_header_classes"), field: "classes"},
+      {name: t("progressdocScreen.list_header_classes"), field: "classes", renderer: "class_name_renderer"},
       {name: t("progressdocScreen.list_header_created"), field: "created_at"},
       {name: t("progressdocScreen.list_header_updated"), field: "updated_at"},
       {name: t("progressdocScreen.list_header_id"), field: "id"},
@@ -341,7 +341,8 @@ class ProgressdocScreen extends Component {
           //selectionChanged={onJysChanged}
           selectedIdsChanged={onJysIdsChanged}
           t={t}
-          enableAutoTitle={true} />
+          enableAutoTitle={true}
+          enableSelect />
         {
           tabTitles && tabTitles.length > 0 &&
           <ResultTabList

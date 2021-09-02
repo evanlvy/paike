@@ -40,8 +40,8 @@ export const actions = {
             dispatch(appActions.startRequest());
             const data = await progressdocApi.queryDocListByKeyword(keyword, department_id, items_per_page, page_id);
             dispatch(appActions.finishRequest());
-            let groups = convertGroupsToPlain(data);
-            dispatch(searchListSuccess(keyword, department_id, groups));
+            //let groups = convertGroupsToPlain(data);
+            dispatch(searchListSuccess(keyword, department_id, data));
           }
         } catch (error) {
           dispatch(appActions.setError(error));
@@ -57,7 +57,7 @@ export const actions = {
             dispatch(appActions.startRequest());
             const data = await progressdocApi.queryDocList(department_id, stage, items_per_page, page_id);
             dispatch(appActions.finishRequest());
-            console.log("fetchDocList: data="+JSON.stringify(data));
+            //let groups = convertGroupsToPlain(data);
             dispatch(fetchListSuccess(department_id, stage, data));
           }
           dispatch(setSelectedDepartment(department_id, stage));

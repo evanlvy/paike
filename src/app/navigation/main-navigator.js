@@ -45,6 +45,7 @@ class MainNavigatorWrapper extends PureComponent {
 
   componentDidMount() {
     this.props.fetchAllGradeInfo();
+    this.props.fetchStageList();
     this.props.updateSchoolYearWeekInfo();
     this.props.fetchJiaoyanshi();
   }
