@@ -214,7 +214,15 @@
   },
   "editRawplanScreen": {
     "commit": "提交改动",
-    "revert": "放弃改动"
+    "revert": "放弃改动",
+    "export": "导出CSV",
+    "hint_stageselector": "学期：",
+    "title_statistics": "课时统计",
+    "title_jwcplan": "教务处总课表",
+    "header_teacher": "教师",
+    "header_weektotal": "周课时",
+    "header_conflict": "课时冲突",
+    "header_overtime": "课时超标"
   },
   "progressdocScreen": {
     "list_title": "教学进度",

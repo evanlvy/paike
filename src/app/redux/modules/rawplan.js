@@ -327,13 +327,13 @@ export const countRowChanged = createSelector(
   }
 );
 
-export const getTeacherStatistical = createSelector(
-  getRows, 
-  (rows) => {
+export const getTeacherStatistics = createSelector(
+  getRows, countChangedRows,
+  (rows, changed) => {
     if (!rows || rows.length <= 0) {
       return [];
     }
-    //console.log("ReSelector: rows="+JSON.stringify(rows));
+    //console.log("getTeacherStatistics ReSelector: rows="+JSON.stringify(rows));
     // Find out teacher's hours each day. Warning if it's over 6 hours!
     let teacher_slot_array = {};
     Object.keys(rows).forEach(plan_id => {
@@ -361,8 +361,9 @@ export const getTeacherStatistical = createSelector(
     if (Object.keys(teacher_slot_array).length <= 0) {
       return [];
     }
+    console.log("getTeacherStatistics ReSelector: rows="+JSON.stringify(teacher_slot_array));
     // Data item sample: [teacher_name: {total: 28, conflicted: [mon, fri], overtime: [mon, fri]} ...]
-    let teacher_statistical_map = {};  // Object of teachers
+    let teacher_statistics_map = {};  // Object of teachers
     Object.keys(teacher_slot_array).forEach(tname => {
       let slot_array = teacher_slot_array[tname];
       let total_hours = 0;
@@ -372,20 +373,28 @@ export const getTeacherStatistical = createSelector(
       let overtime_day = [];
       slot_array.forEach(slot => {
         total_hours += 1;
-        slot_map[slot] += 1;
+        slot_map[slot] = slot_map[slot] ? slot_map[slot]+1 : 1;
         if (slot_map[slot] === 2 ) {
           conflicted_slot.push(slot);
         }
         let weekday = slot.substring(0,3);
-        weekday_map[weekday] += 1;
+        weekday_map[weekday] = weekday_map[weekday] ? weekday_map[weekday]+1 : 1;
         if (weekday_map[weekday] === 6) {
           overtime_day.push(weekday);
         }
       });
 
-      teacher_statistical_map[tname] = {"total": total_hours, "conflicted": conflicted_slot, "overtime": overtime_day};
+      teacher_statistics_map[tname] = {"name": tname, "total": total_hours, "conflicted": conflicted_slot, "overtime": overtime_day};
+      /*if (conflicted_slot.length < 1) {
+        delete teacher_statistics_map[tname].conflicted;
+      }
+      if (overtime_day.length < 1) {
+        delete teacher_statistics_map[tname].overtime;
+      }*/
     });
 
-    return teacher_statistical_map;
+    return Object.values(teacher_statistics_map).sort(function(a, b) {
+      return b["total"]-a["total"];
+    });;
   }
 );

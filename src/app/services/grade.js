@@ -45,7 +45,7 @@ class Api {
           throw new Error(message.message);
         }
       }
-      return { year: 3/*stage_id*/, week: week_idx };
+      return { year: stage_id, week: week_idx };
     } catch (error) {
       throw error;
     }

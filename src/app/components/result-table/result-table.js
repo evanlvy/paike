@@ -41,8 +41,34 @@ class ResultTableWrapper extends Component {
       },
     };
     this.buildUI(props);
+    this.slottranslate = {
+      "mon_12": "周一1,2",
+      "mon_34": "周一3,4",
+      "mon_56": "周一6,7",
+      "mon_78": "周一8,9",
+      "tue_12": "周二1,2",
+      "tue_34": "周二3,4",
+      "tue_56": "周二6,7",
+      "tue_78": "周二8,9",
+      "wed_12": "周三1,2",
+      "wed_34": "周三3,4",
+      "wed_56": "周三6,7",
+      "wed_78": "周三8,9",
+      "thu_12": "周四1,2",
+      "thu_34": "周四3,4",
+      "thu_56": "周四6,7",
+      "thu_78": "周四8,9",
+      "fri_12": "周五1,2",
+      "fri_34": "周五3,4",
+      "fri_56": "周五6,7",
+      "fri_78": "周五8,9",
+      "mon": "周一",
+      "tue": "周二",
+      "wed": "周三",
+      "thu": "周四",
+      "fri": "周五",
+    };
   }
-
 
   shouldComponentUpdate(nextProps, nextState) {
     const { props, state } = this;
@@ -99,9 +125,11 @@ class ResultTableWrapper extends Component {
         colId: i,
         headerName: headers[i].name,
         field: headers[i].field,
-        width: headers[i].width == null ? defaultColWidth : headers[i].width,
+        width: headers[i].width ? defaultColWidth : headers[i].width,
         wrapText: false,
         autoHeight: false,
+        sortable: headers[i].sortable ? headers[i].sortable: false,
+        filter: headers[i].filter ? headers[i].filter: false,
         lineHeight: colLineHeight,
         cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
       };
@@ -131,6 +159,9 @@ class ResultTableWrapper extends Component {
         else if (headers[i].renderer === "class_name_renderer") {
           columnDefs[i]["valueGetter"] = this.classNamesGetter;
         }
+        else if (headers[i].renderer === "slot_weekday_renderer") {
+          columnDefs[i]["valueGetter"] = this.slotWeekdayGetter;
+        }
       }
     }
     columnDefs[0]["pinned"] = "left";
@@ -140,13 +171,32 @@ class ResultTableWrapper extends Component {
   classNamesGetter = (params) => {
     //console.log("courseTeacherGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
     let value = params.data[params.colDef.field];
-    console.log("courseTeacherGetter: value:"+JSON.stringify(value));
+    //console.log("courseTeacherGetter: value:"+JSON.stringify(value));
     //Data sample: {12: '20全科1', 13:'20全科2'}
     if (!value) {
       return "";
     }
     let short_names = Object.values(value);
     return short_names.join(', ');
+  };
+
+  
+  slotWeekdayGetter = (params) => {
+    //console.log("slotWeekdayGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
+    let value = params.data[params.colDef.field];
+    console.log("slotWeekdayGetter: value:"+JSON.stringify(value));
+    //Data sample: [mon_12, tue_56] or [mon, fri]
+    if (!value) {
+      return "";
+    }
+    let flat_string = "";
+    Object.keys(value).forEach(index => {
+      let translated = this.slottranslate[value[index]];
+      if (translated) {
+        flat_string += translated+" ";
+      }
+    });
+    return flat_string;
   };
 
   //Cell Edit Ref https://www.ag-grid.com/javascript-grid/cell-editing/?

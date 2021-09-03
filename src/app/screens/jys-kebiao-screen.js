@@ -88,14 +88,6 @@ class JysKebiaoScreen extends Component {
     return false;
   }
 
-  //componentDidUpdate() {
-  //  this.loadData();
-  //}
-
-  componentDidMount() {
-    this.loadData();
-  }
-
   loadData = () => {
     if (!this.teacherList || this.teacherList.length === 0) { // only get subjects when it's empty
       const { schoolWeek } = this.props;

@@ -220,6 +220,12 @@ class EditableTable extends Component {
     this.gridApi = params.api;
   };
 
+  exportCsv = () => {
+    if (this.gridApi) {
+      this.gridApi.exportDataAsCsv();
+    }
+  };
+
   render() {
     const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onCellClicked, 
       onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;

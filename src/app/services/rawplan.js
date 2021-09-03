@@ -34,6 +34,7 @@ class Api {
         week_idx: weekIdx,
         degree_id: degreeId,
         grade_id: gradeId,
+        items_per_page: 100,
       };
       let response = await axios.post(url, request_param);
       const { success, data, message } = response.data;
