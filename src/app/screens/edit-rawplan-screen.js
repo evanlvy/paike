@@ -24,6 +24,7 @@ import { getSchoolYear, getSchoolWeek, getStageList } from '../redux/modules/gra
 import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, countRowChanged, getTeacherStatistics} from '../redux/modules/rawplan';
 import { EditableTable } from '../components/result-table/editable-table';
 import { SEMESTER_WEEK_COUNT } from './common/info';
+import PromptDrawer from '../components/drawer/prompt-drawer';
 
 const DEFAULT_COLOR = "red";
 const CANCEL_COLOR = "gray";
@@ -218,7 +219,8 @@ class EditRawplanScreen extends Component {
               }
               </Select>
             }
-            <Button mx={5} minW={20} variantColor={color} onClick={() => planTableRef.current.exportCsv()}>{t("editRawplanScreen.export")}</Button>
+            <Button mx={5} minW={20} variantColor="green" onClick={() => planTableRef.current.exportCsv()}>{t("editRawplanScreen.export")}</Button>
+            <PromptDrawer t={t} btnText={t("common.help")} promptText={t("editRawplanScreen.prompt_text")}></PromptDrawer>
           </Flex>
         </Box>
         {

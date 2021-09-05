@@ -379,7 +379,7 @@ export const getTeacherStatistics = createSelector(
         }
         let weekday = slot.substring(0,3);
         weekday_map[weekday] = weekday_map[weekday] ? weekday_map[weekday]+1 : 1;
-        if (weekday_map[weekday] === 6) {
+        if (weekday_map[weekday] === 3) {
           overtime_day.push(weekday);
         }
       });

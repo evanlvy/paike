@@ -9,12 +9,14 @@
     "page_name_template": "第{{index}}页",
     "cancel": "取消",
     "ok": "确认",
+    "back": "返回",
     "no_data": "数据加载中...",
     "null": "空",
     "no_item": "无",
     "expand": "展开",
     "collapse": "收起",
-    "select_all": "全选"
+    "select_all": "全选",
+    "help": "帮助"
   },
   "alert": {
     "default_title": "警告",
@@ -222,7 +224,8 @@
     "header_teacher": "教师",
     "header_weektotal": "周课时",
     "header_conflict": "课时冲突",
-    "header_overtime": "课时超标"
+    "header_overtime": "课时超标",
+    "prompt_text": "本页面用于教务处老师调整全校课表\n步骤：\n1. 导入：提前由管理员导入全校理论课表\n2. 查看统计冲突：‘课时统计表’会实时统计出课时冲突（同一时间上多个班的课）以及课时超标（当天超过六节课）\n3. 保存：修改课表至解决冲突后点击下方‘提交改动’按钮\n4. 导出：点击上方‘导出CSV’按钮可以导出数据"
   },
   "progressdocScreen": {
     "list_title": "教学进度",
