@@ -8,7 +8,6 @@ import {
   Input,
   Button,
   Box,
-  Link,
 } from '@chakra-ui/core';
 import { withTranslation } from 'react-i18next';
 
@@ -140,6 +139,7 @@ class ResultTableWrapper extends Component {
         }
         else if (headers[i].renderer === "slot_weekday_renderer") {
           //columnDefs[i]["valueGetter"] = this.slotWeekdayGetter;
+          //cellRendererFramework
           columnDefs[i]["cellRenderer"] = this.conflictCellLinkRenderer;
         }
       }
@@ -150,7 +150,7 @@ class ResultTableWrapper extends Component {
 
   conflictCellLinkRenderer = (params) => {
     let value = params.value;
-    if (typeof value == "object") {
+    if (!Array.isArray(value)) {
       value = [value];
     }
     let dom_str = "";
@@ -158,20 +158,27 @@ class ResultTableWrapper extends Component {
       //value.forEach(conflict_item => {
         //dom_str += `<Button colorScheme="teal" size="xs" onClick=${(ev, rowIndex, colKey) => {this.handleClick(ev, rowIndex, colKey)}}>${conflict_item.text}</Button>`
       //});
-      value.map((item, index) => {
+      dom_str += `<ButtonGroup onClick={this.onItemClicked.bind(this)}>`;
+      value.forEach(item => {
+        dom_str += `<Button value='`+item["rowIndex"]+'&'+item["colKey"]+`'>${slotsTranslation[item["colKey"]]}&nbsp;</Button>`;
+      });
+      dom_str += `</ButtonGroup>`;
+      // onClick=${() => {this.onItemClicked(item["rowIndex"], item["colKey"])}}
+      /*value.map((item, index) => {
         dom_str += `<Text key=${index}>
           <Link onClick=${() => {this.onItemClicked(item.rowIndex, item.colKey)}}>${slotsTranslation[item.colKey]}</Link>
         </Text>`;
-      });
+      });*/
     }
     // Format: {rowIndex: "2", colKey: "mon_56"}
     return dom_str;
   }
 
-  onItemClicked(rowIndex, colKey) {
-    if (this.onCellIndicatorClicked) {
-      this.onCellIndicatorClicked(rowIndex, colKey);
-    }
+  onItemClicked(event){ //(rowIndex, colKey) {
+    console.log('key: ', event.target.value);
+    /*if (this.onCellIndicatorClicked) {
+      this.onCellIndicatorClicked(1, "mon_56");
+    }*/
   }
 
   classNamesGetter = (params) => {
