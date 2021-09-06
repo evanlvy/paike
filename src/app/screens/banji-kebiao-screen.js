@@ -343,7 +343,6 @@ class BanJiKeBiaoScreen extends Component {
   }
 
   onSubjectClicked = (index) => {
-    console.log(`onSubjectClicked ${this.subjectsData[index].title}`);
     this.setState({
       selectedSubjectIndex: index,
     });

@@ -156,7 +156,7 @@ class JwcKebiaoScreen extends Component {
     console.log("render: group_id: "+groupStageWeekId);
 
     return (
-      <Flex width="100%" minHeight={750} direction="column" align="center">
+      <Flex width="100%" direction="column" align="center" flex={1}>
         {
           groupList && groupList.length > 0 &&
           <SubjectBoard
@@ -173,7 +173,8 @@ class JwcKebiaoScreen extends Component {
         {
           planRows &&
           <ResultTable
-            height={450}
+            flex={1}
+            minHeight={planRows.length>13?950:450}
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}

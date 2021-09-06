@@ -123,7 +123,7 @@ class EditableTable extends Component {
     const columnDefs = [];
     for (let i=0; i < headers.length; i++) {
       columnDefs[i] = {
-        colId: i,
+        //colId: i,  // Do not set colId because field will not be used in startEditingCell or getColumn.
         headerName: headers[i].name,
         field: headers[i].field,
         width: headers[i].width == null ? defaultColWidth : headers[i].width,
@@ -218,11 +218,25 @@ class EditableTable extends Component {
 
   onGridReady = (params) => {
     this.gridApi = params.api;
+    this.gridColumnApi = params.columnApi;
   };
 
   exportCsv = () => {
     if (this.gridApi) {
       this.gridApi.exportDataAsCsv();
+    }
+  };
+
+  editCell = (rowIndex, colKey) => {
+    if (this.gridApi) {
+      //this.gridApi.sizeColumnsToFit();
+      this.gridApi.setFocusedCell(rowIndex, colKey);
+      this.gridApi.startEditingCell({
+        rowIndex: rowIndex,
+        colKey: colKey,
+        // set to 'top', 'bottom' or undefined
+        //rowPinned: 'top'
+      });
     }
   };
 
@@ -259,7 +273,7 @@ class EditableTable extends Component {
             }
           </Box>
         }
-        <Box width="100%" height="100%" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
+        <Box flex={1} width="100%" height="1500px" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
           <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
             <AgGridReact
               deltaRowMode={true}

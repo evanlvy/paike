@@ -45,9 +45,9 @@ class EditRawplanScreen extends Component {
     this.semiSemesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
     this.statisticsTableHeaders = [
       {name: t("editRawplanScreen.header_teacher"), field: "name",sortable: true, filter: true},
-      {name: t("editRawplanScreen.header_weektotal"), field: "total", width: "30", sortable: true},
-      {name: t("editRawplanScreen.header_conflict"), field: "conflicted", renderer: "slot_weekday_renderer", sortable: true},
-      {name: t("editRawplanScreen.header_overtime"), field: "overtime", renderer: "slot_weekday_renderer", sortable: true},
+      {name: t("editRawplanScreen.header_weektotal"), field: "total", width: 50, sortable: true},
+      {name: t("editRawplanScreen.header_conflict"), field: "conflicted", renderer: "slot_weekday_renderer", sortable: true, resizable: true},
+      {name: t("editRawplanScreen.header_overtime"), field: "overtime", renderer: "slot_weekday_renderer", sortable: true, resizable: true},
     ];
     this.plansTableHeaders = [
       {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class_name"},
@@ -194,17 +194,21 @@ class EditRawplanScreen extends Component {
     this.props.reloadRows();
   }
 
+  onConflictIndicatorClicked = (rowIndex, colKey) => {
+    this.planTableRef.current.editCell(rowIndex, colKey);
+  }
+
   render() {
     const { t, planRows, groupStageWeekId, schoolWeek, changedRows, statistics } = this.props;
     const { selectStage } = this.state;
-    const { onSemiSemesterChanged, onCellClicked, onCellValueChanged, onCommit, onRevert, planTableRef,
+    const { onSemiSemesterChanged, onCellClicked, onCellValueChanged, onCommit, onRevert, planTableRef, onConflictIndicatorClicked,
       plansTableHeaders, semiSemesterPages, color, semesterPages, onStageChanged, statisticsTableHeaders } = this;
     //const pageTables = [];
     //console.log("render: plans "+JSON.stringify(planRows));
     console.log("render: group_id: "+groupStageWeekId+ " changedRows:"+changedRows, "statistics: "+JSON.stringify(statistics));
 
     return (
-      <Flex width="100%" minHeight={750} direction="column" align="center">
+      <Flex width="100%"  flex={1} direction="column" align="center">
         <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" minW={833}>
           <Flex direction="row" alignItems="center" px={5} py={2}>
             <Icon as={MdTune} color={color+".200"} size={12} />
@@ -220,6 +224,7 @@ class EditRawplanScreen extends Component {
               </Select>
             }
             <Button mx={5} minW={20} variantColor="green" onClick={() => planTableRef.current.exportCsv()}>{t("editRawplanScreen.export")}</Button>
+            <Button mx={5} minW={20} variantColor="green" onClick={() => planTableRef.current.editCell(8,"tue_12")}>Test</Button>
             <PromptDrawer t={t} btnText={t("common.help")} promptText={t("editRawplanScreen.prompt_text")}></PromptDrawer>
           </Flex>
         </Box>
@@ -227,8 +232,8 @@ class EditRawplanScreen extends Component {
           statistics &&
           <ResultTable
             margin="5"
-            width={780}
-            height={350}
+            maxWidth={1000}
+            minHeight={statistics.length>3?350:180}
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={150}
@@ -236,13 +241,15 @@ class EditRawplanScreen extends Component {
             color={color}
             headers={statisticsTableHeaders}
             data={statistics}
+            onCellIndicatorClicked={onConflictIndicatorClicked}
             />
         }
         {
           planRows &&
           <EditableTable
             ref={planTableRef}
-            height={800}
+            flex={1}
+            minHeight={950}
             titleHeight={50}
             colLineHeight={15}
             defaultColWidth={180}

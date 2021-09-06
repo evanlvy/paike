@@ -120,8 +120,8 @@ class MainNavigatorWrapper extends PureComponent {
     const { gradeTypes, centers, labBuildings, requestsCount, requestError } = this.props;
     console.log("Request count: "+requestsCount);
     return (
-      <Flex direction="column" justify="center">
-        <Flex px="10%" direction="column" justify="center" >
+      <Flex direction="column" justify="center" basis="100%">
+        <Flex px="10%" direction="column" justify="flex-start" flex={1}>
           <MenuBar gradeTypes={gradeTypes} centers={centers} labBuildings={labBuildings} onMenuSelected={this.onMenuSelected}/>
           <Switch>
             <Route path="/kebiao/jwc" component={AsyncJwcKeBiaoScreen} />

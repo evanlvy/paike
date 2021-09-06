@@ -18,6 +18,44 @@ export const buildGroupStageWeekId = (stage, weekIdx, degreeId, gradeId) => {
   return stage+"_"+weekIdx+"_"+degreeId+"_"+gradeId;
 }
 
+export const weekdayIndexes = {
+  "mon": 1,
+  "tue": 2,
+  "wed": 3,
+  "thu": 4,
+  "fri": 5,
+  "sat": 6,
+  "sun": 7
+};
+
+export const slotsTranslation = {
+  "mon_12": "周一1,2",
+  "mon_34": "周一3,4",
+  "mon_56": "周一6,7",
+  "mon_78": "周一8,9",
+  "tue_12": "周二1,2",
+  "tue_34": "周二3,4",
+  "tue_56": "周二6,7",
+  "tue_78": "周二8,9",
+  "wed_12": "周三1,2",
+  "wed_34": "周三3,4",
+  "wed_56": "周三6,7",
+  "wed_78": "周三8,9",
+  "thu_12": "周四1,2",
+  "thu_34": "周四3,4",
+  "thu_56": "周四6,7",
+  "thu_78": "周四8,9",
+  "fri_12": "周五1,2",
+  "fri_34": "周五3,4",
+  "fri_56": "周五6,7",
+  "fri_78": "周五8,9",
+  "mon": "周一",
+  "tue": "周二",
+  "wed": "周三",
+  "thu": "周四",
+  "fri": "周五",
+};
+
 // actions
 export const actions = {
     fetchRawplanGroups: (stage) => {
@@ -336,7 +374,7 @@ export const getTeacherStatistics = createSelector(
     //console.log("getTeacherStatistics ReSelector: rows="+JSON.stringify(rows));
     // Find out teacher's hours each day. Warning if it's over 6 hours!
     let teacher_slot_array = {};
-    Object.keys(rows).forEach(plan_id => {
+    Object.keys(rows).forEach((plan_id, row_idx) => {
       Object.keys(rows[plan_id]).forEach(key => {
         if (typeof rows[plan_id][key] === "object"){
           // Check teacher
@@ -347,12 +385,16 @@ export const getTeacherStatistics = createSelector(
               let teacher_array = teachers.split(' ');
               teacher_array.forEach(tname => {
                 if (teacher_slot_array.hasOwnProperty(tname)) {
-                  teacher_slot_array[tname].push(key);
+                  if (!teacher_slot_array[tname].hasOwnProperty(key)) {
+                    teacher_slot_array[tname][key] = [];
+                  }
+                  teacher_slot_array[tname][key].push(row_idx);  //TBD
+                  teacher_slot_array[tname]["total"] += 1;
                 }
                 else {
-                  teacher_slot_array[tname] = [key];
+                  teacher_slot_array[tname] = {[key]: [row_idx], "total": 1};
                 }
-              });              
+              });
             }
           }
         }
@@ -365,36 +407,40 @@ export const getTeacherStatistics = createSelector(
     // Data item sample: [teacher_name: {total: 28, conflicted: [mon, fri], overtime: [mon, fri]} ...]
     let teacher_statistics_map = {};  // Object of teachers
     Object.keys(teacher_slot_array).forEach(tname => {
-      let slot_array = teacher_slot_array[tname];
-      let total_hours = 0;
-      let slot_map = {};
-      let weekday_map = {};
+      // Go over each teacher
+      let teacher_obj = teacher_slot_array[tname];
       let conflicted_slot = [];
       let overtime_day = [];
-      slot_array.forEach(slot => {
-        total_hours += 1;
-        slot_map[slot] = slot_map[slot] ? slot_map[slot]+1 : 1;
-        if (slot_map[slot] === 2 ) {
-          conflicted_slot.push(slot);
+      let weekday_map = {};
+      Object.keys(teacher_obj).forEach(colKey => {
+        // Go over each slot key of this teacher
+        let rowidx_array = teacher_obj[colKey];
+        if (rowidx_array.length >= 2) {
+          rowidx_array.forEach(rowidx => {
+            conflicted_slot.push({"rowIndex": rowidx, "colKey": colKey});
+          });
         }
-        let weekday = slot.substring(0,3);
-        weekday_map[weekday] = weekday_map[weekday] ? weekday_map[weekday]+1 : 1;
-        if (weekday_map[weekday] === 3) {
-          overtime_day.push(weekday);
+        let weekday = colKey.substring(0,3);
+        if (!weekday_map[weekday]) {
+          weekday_map[weekday] = [];
+        }
+        weekday_map[weekday].push({"rowIndex": rowidx_array[0], "colKey": colKey});
+      });
+      Object.keys(weekday_map).forEach(weekday => {
+        if (weekday_map[weekday].length >= 3) {
+          overtime_day.push.apply(overtime_day, weekday_map[weekday]);
         }
       });
-
-      teacher_statistics_map[tname] = {"name": tname, "total": total_hours, "conflicted": conflicted_slot, "overtime": overtime_day};
-      /*if (conflicted_slot.length < 1) {
-        delete teacher_statistics_map[tname].conflicted;
-      }
-      if (overtime_day.length < 1) {
-        delete teacher_statistics_map[tname].overtime;
-      }*/
+      let conflicted_slot_sorted = conflicted_slot.sort(function(a, b) {
+        let astr = a["colKey"];
+        let bstr = b["colKey"];
+        return (weekdayIndexes[astr.substring(0,3)]+astr.substring(3)).localeCompare(weekdayIndexes[bstr.substring(0,3)]+bstr.substring(3));
+      });
+      teacher_statistics_map[tname] = {"name": tname, "total": teacher_slot_array[tname]["total"], "conflicted": conflicted_slot_sorted, "overtime": overtime_day};
     });
-
+    // Output Format of one slot item: {rowIndex: "2", colKey: "mon_56"}
     return Object.values(teacher_statistics_map).sort(function(a, b) {
       return b["total"]-a["total"];
-    });;
+    });
   }
 );

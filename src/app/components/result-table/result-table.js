@@ -8,6 +8,7 @@ import {
   Input,
   Button,
   Box,
+  Link,
 } from '@chakra-ui/core';
 import { withTranslation } from 'react-i18next';
 
@@ -17,6 +18,7 @@ import './table.css';
 
 import { CommonRenderer } from "./common-renderer";
 import { ArrayDataRenderer } from "./arraydata-renderer";
+import { slotsTranslation } from "../../redux/modules/rawplan";
 
 class ResultTableWrapper extends Component {
   constructor(props) {
@@ -25,7 +27,10 @@ class ResultTableWrapper extends Component {
       curPageIndex: props.initPageIndex ? props.initPageIndex : 0,
       editPageNum: ""
     };
-
+    const { onCellIndicatorClicked } = this.props;
+    if (onCellIndicatorClicked != null) {
+      this.onCellIndicatorClicked = onCellIndicatorClicked;
+    }
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
       arrayDataRenderer: ArrayDataRenderer,
@@ -41,33 +46,6 @@ class ResultTableWrapper extends Component {
       },
     };
     this.buildUI(props);
-    this.slottranslate = {
-      "mon_12": "周一1,2",
-      "mon_34": "周一3,4",
-      "mon_56": "周一6,7",
-      "mon_78": "周一8,9",
-      "tue_12": "周二1,2",
-      "tue_34": "周二3,4",
-      "tue_56": "周二6,7",
-      "tue_78": "周二8,9",
-      "wed_12": "周三1,2",
-      "wed_34": "周三3,4",
-      "wed_56": "周三6,7",
-      "wed_78": "周三8,9",
-      "thu_12": "周四1,2",
-      "thu_34": "周四3,4",
-      "thu_56": "周四6,7",
-      "thu_78": "周四8,9",
-      "fri_12": "周五1,2",
-      "fri_34": "周五3,4",
-      "fri_56": "周五6,7",
-      "fri_78": "周五8,9",
-      "mon": "周一",
-      "tue": "周二",
-      "wed": "周三",
-      "thu": "周四",
-      "fri": "周五",
-    };
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -122,7 +100,7 @@ class ResultTableWrapper extends Component {
     const { t } = this.props;
     for (let i=0; i < headers.length; i++) {
       columnDefs[i] = {
-        colId: i,
+        //colId: i,  // Do not set colId because field will not be used in startEditingCell or getColumn.
         headerName: headers[i].name,
         field: headers[i].field,
         width: headers[i].width ? defaultColWidth : headers[i].width,
@@ -132,6 +110,7 @@ class ResultTableWrapper extends Component {
         filter: headers[i].filter ? headers[i].filter: false,
         lineHeight: colLineHeight,
         cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
+        resizable: headers[i].resizable,
       };
       if (headers[i].children && headers[i].children.length > 0) {
         columnDefs[i]["children"] = this.buildColDefArray(headers[i].children, defaultColWidth/2, colLineHeight);
@@ -160,12 +139,39 @@ class ResultTableWrapper extends Component {
           columnDefs[i]["valueGetter"] = this.classNamesGetter;
         }
         else if (headers[i].renderer === "slot_weekday_renderer") {
-          columnDefs[i]["valueGetter"] = this.slotWeekdayGetter;
+          //columnDefs[i]["valueGetter"] = this.slotWeekdayGetter;
+          columnDefs[i]["cellRenderer"] = this.conflictCellLinkRenderer;
         }
       }
     }
     columnDefs[0]["pinned"] = "left";
     return columnDefs;
+  }
+
+  conflictCellLinkRenderer = (params) => {
+    let value = params.value;
+    if (typeof value == "object") {
+      value = [value];
+    }
+    let dom_str = "";
+    if (Array.isArray(value)) {
+      //value.forEach(conflict_item => {
+        //dom_str += `<Button colorScheme="teal" size="xs" onClick=${(ev, rowIndex, colKey) => {this.handleClick(ev, rowIndex, colKey)}}>${conflict_item.text}</Button>`
+      //});
+      value.map((item, index) => {
+        dom_str += `<Text key=${index}>
+          <Link onClick=${() => {this.onItemClicked(item.rowIndex, item.colKey)}}>${slotsTranslation[item.colKey]}</Link>
+        </Text>`;
+      });
+    }
+    // Format: {rowIndex: "2", colKey: "mon_56"}
+    return dom_str;
+  }
+
+  onItemClicked(rowIndex, colKey) {
+    if (this.onCellIndicatorClicked) {
+      this.onCellIndicatorClicked(rowIndex, colKey);
+    }
   }
 
   classNamesGetter = (params) => {
@@ -191,7 +197,7 @@ class ResultTableWrapper extends Component {
     }
     let flat_string = "";
     Object.keys(value).forEach(index => {
-      let translated = this.slottranslate[value[index]];
+      let translated = slotsTranslation[value[index]];
       if (translated) {
         flat_string += translated+" ";
       }
@@ -330,7 +336,7 @@ class ResultTableWrapper extends Component {
     const { curPageIndex } = this.state;
     //console.log("render: curPageIndex: "+curPageIndex);
     return (
-      <Flex direction="column" width={width ? width : "100%"} {...other_props} >
+      <Flex flex={1} direction="column" width={width ? width : "100%"} {...other_props} >
         <Box display="flex" flexDirection="row" bg={color+".400"} height={titleHeight} px={4} alignItems="center"
           borderWidth={1} borderColor={color+".200"} roundedTop="md">
           <Text width="100%">{title}</Text>
@@ -351,7 +357,7 @@ class ResultTableWrapper extends Component {
             </Flex>
           }
         </Box>
-        <Box width="100%" height="100%" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
+        <Box flex={1} width="100%" height="1500px" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
           <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
             <AgGridReact
               onGridSizeChanged={onGridSizeChanged}
