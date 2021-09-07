@@ -44,8 +44,8 @@ class EditRawplanScreen extends Component {
     this.semesterPages = {};
     this.semiSemesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
     this.statisticsTableHeaders = [
-      {name: t("editRawplanScreen.header_teacher"), field: "name", width: 150, sortable: true, filter: true},
-      {name: t("editRawplanScreen.header_weektotal"), field: "total", width: 100, sortable: true},
+      {name: t("editRawplanScreen.header_teacher"), field: "name", width: 120, sortable: true, filter: true},
+      {name: t("editRawplanScreen.header_weektotal"), field: "total", width: 80, sortable: true},
       {name: t("editRawplanScreen.header_conflict"), field: "conflicted", width: 420, renderer: "slot_weekday_renderer", sortable: true, resizable: true},
       {name: t("editRawplanScreen.header_overtime"), field: "overtime", width: 400, renderer: "slot_weekday_renderer", sortable: true, resizable: true},
     ];

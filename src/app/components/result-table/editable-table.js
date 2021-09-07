@@ -136,6 +136,7 @@ class EditableTable extends Component {
         if (headers[i].renderer === "course_teacher_renderer") {
           columnDefs[i]["valueGetter"] = this.courseTeacherGetter;
           columnDefs[i]["valueSetter"] = this.courseTeacherSetter;
+          delete columnDefs[i]["cellRenderer"];
         }
       }
     }
