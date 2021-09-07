@@ -427,7 +427,7 @@ export const getTeacherStatistics = createSelector(
         weekday_map[weekday].push({"rowIndex": rowidx_array[0], "colKey": colKey});
       });
       Object.keys(weekday_map).forEach(weekday => {
-        if (weekday_map[weekday].length >= 3) {
+        if (weekday_map[weekday].length > 3) {
           overtime_day.push.apply(overtime_day, weekday_map[weekday]);
         }
       });

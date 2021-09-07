@@ -126,7 +126,7 @@ class EditableTable extends Component {
         //colId: i,  // Do not set colId because field will not be used in startEditingCell or getColumn.
         headerName: headers[i].name,
         field: headers[i].field,
-        width: headers[i].width == null ? defaultColWidth : headers[i].width,
+        width: headers[i].width ? headers[i].width : defaultColWidth,
         lineHeight: colLineHeight,
         cellClassRules: cellClassRules,
         cellRenderer: "commonRenderer",

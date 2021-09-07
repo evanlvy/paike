@@ -17,6 +17,7 @@ import './table.css';
 
 import { CommonRenderer } from "./common-renderer";
 import { ArrayDataRenderer } from "./arraydata-renderer";
+import { ConflictsRenderer } from "./conflicts-renderer";
 import { slotsTranslation } from "../../redux/modules/rawplan";
 
 class ResultTableWrapper extends Component {
@@ -33,6 +34,7 @@ class ResultTableWrapper extends Component {
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
       arrayDataRenderer: ArrayDataRenderer,
+      conflictsRenderer: ConflictsRenderer,
     };
 
     this.defaultColDef = {
@@ -44,6 +46,7 @@ class ResultTableWrapper extends Component {
           return params.data.is_conflict;
       },
     };
+    this.onItemClicked = this.onItemClicked.bind(this);
     this.buildUI(props);
   }
 
@@ -57,11 +60,12 @@ class ResultTableWrapper extends Component {
         this.needCorrectPageIndex = true;
       }
       this.buildUI(nextProps);
-      console.log("shouldComponentUpdate:true");
+      //setTimeout(()=>{this.buildUI(nextProps)}, 0);
+      console.log("shouldComponentUpdate1:true");
       return true;
     }
     if (nextState.curPageIndex !== state.curPageIndex) {
-      console.log("shouldComponentUpdate:true");
+      console.log("shouldComponentUpdate2:true");
       return true;
     }
     console.log("shouldComponentUpdate:false");
@@ -102,8 +106,7 @@ class ResultTableWrapper extends Component {
         //colId: i,  // Do not set colId because field will not be used in startEditingCell or getColumn.
         headerName: headers[i].name,
         field: headers[i].field,
-        width: headers[i].width ? defaultColWidth : headers[i].width,
-        wrapText: false,
+        width: headers[i].width ? headers[i].width: defaultColWidth,
         autoHeight: false,
         sortable: headers[i].sortable ? headers[i].sortable: false,
         filter: headers[i].filter ? headers[i].filter: false,
@@ -139,8 +142,10 @@ class ResultTableWrapper extends Component {
         }
         else if (headers[i].renderer === "slot_weekday_renderer") {
           //columnDefs[i]["valueGetter"] = this.slotWeekdayGetter;
-          //cellRendererFramework
-          columnDefs[i]["cellRenderer"] = this.conflictCellLinkRenderer;
+          columnDefs[i]["cellRenderer"] = "conflictsRenderer";
+          columnDefs[i]["cellRendererParams"] = {
+            onItemClicked: this.onItemClicked
+          };
         }
       }
     }
@@ -148,37 +153,11 @@ class ResultTableWrapper extends Component {
     return columnDefs;
   }
 
-  conflictCellLinkRenderer = (params) => {
-    let value = params.value;
-    if (!Array.isArray(value)) {
-      value = [value];
+  onItemClicked(colKey, rowIndex) {
+    console.log('Conflict clicked: key:'+colKey+" idx:"+rowIndex);
+    if (this.onCellIndicatorClicked) {
+      this.onCellIndicatorClicked(rowIndex, colKey);
     }
-    let dom_str = "";
-    if (Array.isArray(value)) {
-      //value.forEach(conflict_item => {
-        //dom_str += `<Button colorScheme="teal" size="xs" onClick=${(ev, rowIndex, colKey) => {this.handleClick(ev, rowIndex, colKey)}}>${conflict_item.text}</Button>`
-      //});
-      dom_str += `<ButtonGroup onClick={this.onItemClicked.bind(this)}>`;
-      value.forEach(item => {
-        dom_str += `<Button value='`+item["rowIndex"]+'&'+item["colKey"]+`'>${slotsTranslation[item["colKey"]]}&nbsp;</Button>`;
-      });
-      dom_str += `</ButtonGroup>`;
-      // onClick=${() => {this.onItemClicked(item["rowIndex"], item["colKey"])}}
-      /*value.map((item, index) => {
-        dom_str += `<Text key=${index}>
-          <Link onClick=${() => {this.onItemClicked(item.rowIndex, item.colKey)}}>${slotsTranslation[item.colKey]}</Link>
-        </Text>`;
-      });*/
-    }
-    // Format: {rowIndex: "2", colKey: "mon_56"}
-    return dom_str;
-  }
-
-  onItemClicked(event){ //(rowIndex, colKey) {
-    console.log('key: ', event.target.value);
-    /*if (this.onCellIndicatorClicked) {
-      this.onCellIndicatorClicked(1, "mon_56");
-    }*/
   }
 
   classNamesGetter = (params) => {
@@ -244,6 +223,7 @@ class ResultTableWrapper extends Component {
 
   onGridSizeChanged = (event) => {
     console.log("onGridSizeChanged");
+    //setTimeout(()=>{event.api.resetRowHeights()}, 0);
     event.api.resetRowHeights();
   }
 
