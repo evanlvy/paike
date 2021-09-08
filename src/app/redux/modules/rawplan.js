@@ -325,6 +325,8 @@ export const getRows = (state) => state.getIn(["rawplan", "planRows", getSelecte
 
 export const getRowDiff = (state, rowId) => state.getIn(["rawplan", "rowChanged", getSelectedGroup(state), rowId]);
 
+export const getRowDiffArray = (state) => state.getIn(["rawplan", "rowChanged", getSelectedGroup(state)]);
+
 export const countChangedRows = (state) => {
   let combined_id = getSelectedGroup(state);
   if (combined_id) {
@@ -366,11 +368,12 @@ export const countRowChanged = createSelector(
 );
 
 export const getTeacherStatistics = createSelector(
-  getRows, countChangedRows,
+  getRows, getRowDiffArray,
   (rows, changed) => {
     if (!rows || rows.length <= 0) {
       return [];
     }
+    console.log("getTeacherStatistics ReSelector triggered!");
     //console.log("getTeacherStatistics ReSelector: rows="+JSON.stringify(rows));
     // Find out teacher's hours each day. Warning if it's over 6 hours!
     let teacher_slot_array = {};

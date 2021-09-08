@@ -286,7 +286,7 @@ const mapStateToProps = (state/*, props*/) => {
     schoolWeek: getSchoolWeek(state),
     stageList: getStageList(state),
     groupList: getRawplanGroups(state),
-    //groupStageWeekId: getSelectedGroup(state),
+    groupStageWeekId: getSelectedGroup(state),
     planRows: getPlansByGroup(state),
     changedRows: countRowChanged(state),
     statistics: getTeacherStatistics(state),
