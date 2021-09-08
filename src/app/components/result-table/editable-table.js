@@ -231,12 +231,15 @@ class EditableTable extends Component {
   editCell = (rowIndex, colKey) => {
     if (this.gridApi) {
       //this.gridApi.sizeColumnsToFit();
+      this.gridApi.stopEditing(false);
+      //console.log("EditCell: "+rowIndex+" type:"+(typeof rowIndex));
+      this.gridApi.ensureColumnVisible(colKey);  // very important
       this.gridApi.setFocusedCell(rowIndex, colKey);
       this.gridApi.startEditingCell({
         rowIndex: rowIndex,
         colKey: colKey,
         // set to 'top', 'bottom' or undefined
-        //rowPinned: 'top'
+        //rowPinned: 'top'  // Do not use
       });
     }
   };

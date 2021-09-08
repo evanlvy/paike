@@ -16,7 +16,7 @@ class ConflictsRenderer extends Component {
     if (key_str) {
       //console.log("buttonClicked:true:"+key_str);
       if (onItemClicked) {
-        onItemClicked(key_str.substring(0,6), key_str.substring(7));
+        onItemClicked(key_str.substring(0,6), parseInt(key_str.substring(7), 10));
       }
     }
   };
