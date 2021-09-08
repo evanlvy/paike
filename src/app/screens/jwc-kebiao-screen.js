@@ -178,7 +178,7 @@ class JwcKebiaoScreen extends Component {
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}
-            title={tableTitle}
+            title={t("jwcKebiaoScreen.title")}
             color={JYS_KEBIAO_COLOR}
             headers={tableHeaders}
             data={planRows}

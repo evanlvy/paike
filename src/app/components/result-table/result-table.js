@@ -154,7 +154,7 @@ class ResultTableWrapper extends Component {
   }
 
   onItemClicked(colKey, rowIndex) {
-    console.log('Conflict clicked: key:'+colKey+" idx:"+rowIndex);
+    //console.log('Conflict clicked: key:'+colKey+" idx:"+rowIndex);
     if (this.onCellIndicatorClicked) {
       this.onCellIndicatorClicked(rowIndex, colKey);
     }

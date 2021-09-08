@@ -403,7 +403,7 @@ export const getTeacherStatistics = createSelector(
     if (Object.keys(teacher_slot_array).length <= 0) {
       return [];
     }
-    console.log("getTeacherStatistics ReSelector: rows="+JSON.stringify(teacher_slot_array));
+    //console.log("getTeacherStatistics ReSelector: rows="+JSON.stringify(teacher_slot_array));
     // Data item sample: [teacher_name: {total: 28, conflicted: [mon, fri], overtime: [mon, fri]} ...]
     let teacher_statistics_map = {};  // Object of teachers
     Object.keys(teacher_slot_array).forEach(tname => {

@@ -74,7 +74,7 @@ class GroupMenuListWrapped extends Component {
             <MenuOptionGroup title={group.name} type="radio" value={group_values[group_index]} onChange={(value) => { this.onGroupValueChanged(group_index, value); }}>
               {
                 group.items.map((item, index) => (
-                  <MenuItemOption key={index} value={index}>{item.name}</MenuItemOption>
+                  <MenuItemOption key={index} value={index} isDisabled={item.isDisabled}>{item.name}</MenuItemOption>
                 ))
               }
             </MenuOptionGroup>
