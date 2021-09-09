@@ -35,15 +35,21 @@
     "by_building": "实验楼"
   },
   "loginScreen": {
-    "signin": "登录",
-    "username": "用户名",
+    "teacher": "教师",
+    "student": "学生",
+    "title": "欢迎您",
+    "stunum": "学生年级专业号",
+    "stunum_placeholder": "请输入学号前10位",
+    "username": "教师用户名",
     "username_placeholder": "请输入用户名",
     "username_error_empty": "用户名不能为空",
     "password": "密码",
     "password_placeholder": "请输入密码",
     "password_error_empty": "密码不能为空",
+    "stunum_error_invalid": "学号输入错误",
     "auth_failure": "登录失败!",
-    "error_code_template": "错误代码：{{error_code}}"
+    "error_code_template": "错误代码：{{error_code}}",
+    "signin": "登录"
   },
   "menuBar": {
     "lilunkebiao_title": "理论课总课表",

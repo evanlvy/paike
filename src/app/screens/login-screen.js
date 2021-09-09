@@ -6,6 +6,7 @@ import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
 import {
   Flex,
+  Heading,
   FormControl,
   FormLabel,
   FormErrorMessage,
@@ -15,7 +16,8 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
-  CloseButton
+  CloseButton,
+  Tabs, TabList, TabPanels, Tab, TabPanel,
 } from '@chakra-ui/core';
 import {
   Formik,
@@ -108,6 +110,19 @@ class WrappedLoginScreen extends Component {
     return error;
   }
 
+  validateStunum = (value) => {
+    const { t } = this.props;
+    let error;
+    let num = value;
+    if (typeof num === "number") {
+      num = num.toString();
+    }
+    if (typeof num === "string" && num.length < 10 && num.length > 0) {
+      error = t("loginScreen.stunum_error_invalid");
+    }
+    return error;
+  }
+
   dismissAlert = () => {
     this.setState({
       showError: false
@@ -124,7 +139,7 @@ class WrappedLoginScreen extends Component {
     const { t, error } = this.props;
     const { showError } = this.state;
     return (
-      <Flex direction="column" bg="green.50" height="100vh" align="center" justify="center">
+      <Flex direction="column" bg="white" height="100vh" align="center" alignItems="center" justify="center">
         {
           showError &&
           <Alert status="error" >
@@ -134,36 +149,72 @@ class WrappedLoginScreen extends Component {
             <CloseButton onClick={this.dismissAlert}/>
           </Alert>
         }
-        <Formik initialValues={{name: '', password: ''}}
-          onSubmit={this.onLogin}>
-          {(props) => (
-            <form onSubmit={props.handleSubmit}>
-              <Field name="name" validate={this.validateName}>
-                {({field, form}) => (
-                  <FormControl isInvalid={form.errors.name && form.touched.name}>
-                    <FormLabel htmlFor="name"><Trans>loginScreen.username</Trans></FormLabel>
-                    <Input width="30em" type="text" {...field} id="name" placeholder={t("loginScreen.username_placeholder")} />
-                    <FormErrorMessage>{form.errors.name}</FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
-              <Field name="password" validate={this.validatePassword}>
-                {({field, form}) => (
-                  <FormControl isInvalid={form.errors.password && form.touched.password}>
-                    <FormLabel htmlFor="password"><Trans>loginScreen.password</Trans></FormLabel>
-                    <Input width="100%" type="password" {...field} id="password" placeholder={t("loginScreen.password_placeholder")} />
-                    <FormErrorMessage>{form.errors.password}</FormErrorMessage>
-                  </FormControl>
-                )}
-              </Field>
-              <Button mt={4} width="100%"
-                 type="submit" variantColor="blue"
-                 isLoading={props.isSubmitting}>
-                 <Trans>loginScreen.signin</Trans>
-              </Button>
-            </form>
-          )}
-        </Formik>
+        <Flex direction="column" bg="gray.600" p={12} rounded={6}>
+          <Heading mb={6}><Trans>loginScreen.title</Trans></Heading>
+          <Tabs isFitted >
+          <TabList mb="1em">
+            <Tab><Trans>loginScreen.teacher</Trans></Tab>
+            <Tab><Trans>loginScreen.student</Trans></Tab>
+          </TabList>
+          <TabPanels>
+          <TabPanel>
+          <Formik initialValues={{name: '', password: ''}}
+            onSubmit={this.onLogin}>
+            {(props) => (
+              <form onSubmit={props.handleSubmit}>
+                <Field name="name" validate={this.validateName}>
+                  {({field, form}) => (
+                    <FormControl isInvalid={form.errors.name && form.touched.name}>
+                      <FormLabel mt={6} htmlFor="name"><Trans>loginScreen.username</Trans></FormLabel>
+                      <Input variant="filled" type="text" {...field} id="name" placeholder={t("loginScreen.username_placeholder")} />
+                      <FormErrorMessage>{form.errors.name}</FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+                <Field name="password" validate={this.validatePassword}>
+                  {({field, form}) => (
+                    <FormControl isInvalid={form.errors.password && form.touched.password}>
+                      <FormLabel mt={2} htmlFor="password"><Trans>loginScreen.password</Trans></FormLabel>
+                      <Input variant="filled" type="password" {...field} id="password" placeholder={t("loginScreen.password_placeholder")} />
+                      <FormErrorMessage>{form.errors.password}</FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+                <Button mt={6} width="100%" colorScheme="teal"
+                  type="submit" variantColor="blue"
+                  isLoading={props.isSubmitting}>
+                  <Trans>loginScreen.signin</Trans>
+                </Button>
+              </form>
+            )}
+          </Formik>
+          </TabPanel>
+          <TabPanel>
+          <Formik initialValues={{stunum: ''}}
+            onSubmit={this.onLogin}>
+            {(props) => (
+              <form onSubmit={props.handleSubmit}>
+                <Field name="stunum" validate={this.validateStunum}>
+                  {({field, form}) => (
+                    <FormControl isInvalid={form.touched.stunum && form.errors.stunum}>
+                      <FormLabel htmlFor="stunum"><Trans>loginScreen.stunum</Trans></FormLabel>
+                      <Input mb={4} variant="filled" type="number" {...field} id="name" placeholder={t("loginScreen.stunum_placeholder")} />
+                      <FormErrorMessage>{form.errors.stunum}</FormErrorMessage>
+                    </FormControl>
+                  )}
+                </Field>
+                <Button mt={6} width="100%" colorScheme="teal"
+                  type="submit" variantColor="blue"
+                  isLoading={props.isSubmitting}>
+                  <Trans>loginScreen.signin</Trans>
+                </Button>
+              </form>
+            )}  
+          </Formik>
+          </TabPanel>
+          </TabPanels>
+          </Tabs>
+        </Flex>
       </Flex>
     );
   }
