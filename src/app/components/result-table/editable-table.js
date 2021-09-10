@@ -118,9 +118,24 @@ class EditableTable extends Component {
     return true;
   };
 
+  classNamesGetter = (params) => {
+    //console.log("courseTeacherGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
+    let value = params.data[params.colDef.field];
+    //console.log("courseTeacherGetter: value:"+JSON.stringify(value));
+    //Data sample: {12: '20全科1', 13:'20全科2'}
+    if (!value) {
+      return "";
+    }
+    let short_names = Object.values(value);
+    return short_names.join(', ');
+  };
+
   buildColDef = (props) => {
     const { headers, defaultColWidth, colLineHeight, cellClassRules } = props;
     const columnDefs = [];
+    if (!headers || !Array.isArray(headers)) {
+      return;
+    }
     for (let i=0; i < headers.length; i++) {
       columnDefs[i] = {
         //colId: i,  // Do not set colId because field will not be used in startEditingCell or getColumn.
@@ -138,6 +153,9 @@ class EditableTable extends Component {
           columnDefs[i]["valueSetter"] = this.courseTeacherSetter;
           delete columnDefs[i]["cellRenderer"];
         }
+        else if (headers[i].renderer === "class_name_renderer") {
+          columnDefs[i]["valueGetter"] = this.classNamesGetter;
+        }
       }
     }
     this.columnDefs = columnDefs;
@@ -146,6 +164,9 @@ class EditableTable extends Component {
   buildData = (props) => {
     const { data } = props;
     const rowData = [];
+    if (!data || !Array.isArray(data)) {
+      return;
+    }
     for (let i=0; i < data.length; i++) {
       rowData[i] = data[i];
     }
@@ -288,7 +309,8 @@ class EditableTable extends Component {
               rowData={rowData}
               onGridReady={onGridReady}
               onCellValueChanged={onCellValueChanged}
-              onCellClicked={onCellClicked} >
+              onCellClicked={onCellClicked}
+              rowSelection="single" >
             </AgGridReact>
           </div>
         </Box>

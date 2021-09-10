@@ -117,7 +117,7 @@ class SubjectBoard extends PureComponent {
     if (onSelectionChangedCallback != null) {
       onSelectionChangedCallback(indexList);
     }
-    if (onSelectedIdsChangedCallback != null) {
+    if (onSelectedIdsChangedCallback != null && this.items) {
       let idArray = [];
       indexList.forEach(idx => {
         idArray.push(this.items[idx].id);

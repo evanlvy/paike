@@ -18,7 +18,7 @@ import {
     //const sizes = ["xs", "sm", "md", "lg", "xl", "full"]
     return (
       <>
-        <Button ref={btnRef} colorScheme="teal" onClick={onOpen}>
+        <Button ref={btnRef} colorScheme="teal" onClick={onOpen} mx={5}>
           {props.btnText}
         </Button>
         <Drawer
@@ -34,8 +34,8 @@ import {
             <DrawerHeader>{props.title?props.title:props.t("common.help")}</DrawerHeader>
   
             <DrawerBody>
-                <Text fontSize="lg">
-                    <pre>{props.promptText}</pre>
+                <Text fontSize="lg" as='pre'>
+                  {props.promptText /* Must use as='pre' for new line on /n */}
                 </Text>
             </DrawerBody>
   

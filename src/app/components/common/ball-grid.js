@@ -14,6 +14,7 @@ function BallGrid(props) {
   if (checkIconColor == null) {
     checkIconColor = DEFAULT_CHECK_ICON_COLOR;
   }
+  if (!balls) return "";
   return (
     <Flex height={height == null ? "100%" : height} maxHeight={maxHeight} overflowY="scroll">
       <SimpleGrid width="100%" columns={colCount} spacing={6}>

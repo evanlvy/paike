@@ -16,7 +16,10 @@
     "expand": "展开",
     "collapse": "收起",
     "select_all": "全选",
-    "help": "帮助"
+    "help": "帮助",
+    "save": "保存",
+    "close": "关闭",
+    "open": "打开"
   },
   "alert": {
     "default_title": "警告",
@@ -249,6 +252,8 @@
     "list_header_created": "创建时间",
     "list_header_updated": "更新时间",
     "list_header_comments": "注释",
-    "list_header_classes": "实施班级"
+    "list_header_classes": "实施班级",
+    "doclist_table_title_template": "教研室学期教学进度表 [{{jys_name}}]",
+    "doc_detail_title": "教学进度表格"
   }
 }

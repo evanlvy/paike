@@ -8,7 +8,13 @@ import {
   Flex,
   Button,
   Text,
+  Box,
+  Select,
+  Icon,
 } from '@chakra-ui/core';
+import {
+  MdTune
+} from 'react-icons/md';
 
 import {
   SubjectBoard,
@@ -19,40 +25,42 @@ import {
 import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getAllJiaoyanshiMap } from '../redux/modules/jiaoyanshi';
 import { actions as progressdocActions, getDocList, getSearchedDocList, getDocContents } from '../redux/modules/progressdoc';
-import { EditableTable } from '../components/result-table/editable-table';
+import PromptDrawer from '../components/overlays/prompt-drawer';
+import TableDialog from '../components/overlays/table-dialog';
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
-const PROGRESSDOC_COLOR = "purple";
+const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
 const SEMESTER_FIRST_HALF_MAX_WEEK = 9;
 const SEMESTER_HALF_BIAS_WEEK = 6;
 class ProgressdocScreen extends Component {
   constructor(props) {
     super(props);
-    const { t, schoolWeek } = props;
+    const { t, color, schoolYear } = props;
     this.state = {
+      selectStage: schoolYear,
       selectedJysIdList: [],
     };
+    this.color = color ? color : DEFAULT_COLOR;
+
     this.defaultselectedJysIdList = [0];
     this.semesterPages = [];
-    this.initSemesterPageIdx = -1;
 
-    this.tabTitles = [];
     this.docListHeaders = [
       {name: t("progressdocScreen.list_header_name"), field: "course_name"},
       {name: t("progressdocScreen.list_header_short"), field: "short_name"},
       {name: t("progressdocScreen.list_header_description"), field: "description"},
-      {name: t("progressdocScreen.list_header_hours_total"), field: "total_hours"},
-      {name: t("progressdocScreen.list_header_hours_theory"), field: "theory_hours"},
-      {name: t("progressdocScreen.list_header_hours_lab"), field: "lab_hours"},
-      {name: t("progressdocScreen.list_header_hours_flex"), field: "flex_hours"},
+      {name: t("progressdocScreen.list_header_hours_total"), field: "total_hours", width: 80},
+      {name: t("progressdocScreen.list_header_hours_theory"), field: "theory_hours", width: 80},
+      {name: t("progressdocScreen.list_header_hours_lab"), field: "lab_hours", width: 80},
+      {name: t("progressdocScreen.list_header_hours_flex"), field: "flex_hours", width: 80},
       {name: t("progressdocScreen.list_header_textbook"), field: "textbook"},
-      {name: t("progressdocScreen.list_header_exam"), field: "exam_type"},
+      {name: t("progressdocScreen.list_header_exam"), field: "exam_type", width: 120},
       {name: t("progressdocScreen.list_header_comments"), field: "comments"},
       {name: t("progressdocScreen.list_header_classes"), field: "classes", renderer: "class_name_renderer"},
       {name: t("progressdocScreen.list_header_created"), field: "created_at"},
       {name: t("progressdocScreen.list_header_updated"), field: "updated_at"},
-      {name: t("progressdocScreen.list_header_id"), field: "id"},
+      {name: t("progressdocScreen.list_header_id"), field: "id", width: 80},
     ];
 
     this.weekdayNames = [
@@ -66,6 +74,8 @@ class ProgressdocScreen extends Component {
     this.tableData = null;
     this.tabsListRef = React.createRef();
     this.jysTitle = t("kebiao.jys");
+
+    this.buildData();
   }
 
   componentDidMount() {
@@ -110,14 +120,11 @@ class ProgressdocScreen extends Component {
     this.buildKebiao();
   }
 
+  
   buildSemester = () => {
-    if (this.semesterPages.length === 0) {
-      console.log("buildSemester: stages: "+JSON.stringify(this.props.stageList));
-      this.semesterPages = [...Object.values(this.props.stageList)];
-      if (this.semesterPages.length > 0) {
-        // Set default semesterPageIndex
-        this.initSemesterPageIdx = Object.keys(this.props.stageList).indexOf(""+this.props.schoolYear);
-      }
+    if (Object.keys(this.semesterPages).length <= 0) {
+      this.semesterPages = {...this.props.stageList};
+      console.log("buildSemester: stages: "+JSON.stringify(this.semesterPages));
     }
   }
 
@@ -149,35 +156,17 @@ class ProgressdocScreen extends Component {
   }
 
   updateTitles = () => {
-    const { t } = this.props;
+    const { t, jysMap } = this.props;
     const { selectedJysIdList } = this.state;
-    this.tabTitles = [];
-    if (!selectedJysIdList || selectedJysIdList.length === 0) {
-      this.tabTitles = [];
-      //this.jysTitle = t("subjectBoard.title_no_jys_template");
-      return;
+    let jysName = t("subjectBoard.title_no_jys_template");
+    if (selectedJysIdList && selectedJysIdList.length > 0) {
+      jysName =  jysMap.get(""+selectedJysIdList[0]).name;
     }
-    let jys_info = "";
-    selectedJysIdList.every((item, index) => {
-      if (item.title != null) {
-        jys_info += item.title + " ";
-      }
-      if (jys_info.length > 30){
-        jys_info += "...";
-        return false;
-      }
-      return true;
-    });
-    //this.jysTitle = t("subjectBoard.title_jys_template", {jys_info: jys_info.trim()});
-    this.tabTitles = [jys_info];
-    console.log(`updateTabTitles: ${JSON.stringify(this.tabTitles)}`);
-    this.tableTitle = t("shixunKebiaoScreen.table_title_template", {jys_count: selectedJysIdList.length});
-    console.log(`updateTableTitle: ${this.tableTitle}`);
-    
+    this.tableTitle = t("progressdocScreen.doclist_table_title_template", {jys_name: jysName});    
   }
 
   buildKebiao = () => {
-    const { kebiaoByJysSched, schoolYear, schoolWeek } = this.props;
+    const { schoolYear, schoolWeek } = this.props;
     const { selectedJysIdList } = this.state;
     if (!selectedJysIdList || selectedJysIdList.length === 0 || !schoolYear || !schoolWeek) {
       return;
@@ -285,6 +274,12 @@ class ProgressdocScreen extends Component {
     this.hasFetchKebiao = true;
   }
 
+  loadDocDetails = (docId) => {
+    if (!docId || docId < 1) {
+      return;
+    }
+  }
+
   onJysIdsChanged = (jysIdList) => {
     console.log(`onJysIdsChanged ${jysIdList}`);
     this.setState({
@@ -303,58 +298,64 @@ class ProgressdocScreen extends Component {
     this.loadDocList(this.state.selectedJysIdList, stageId);
   }
 
+  onStageChanged = (event) => {
+    let target_stage = event.target.value;
+    this.setState({
+      selectStage: target_stage
+    });
+    this.loadDocList(this.state.selectedJysIdList, target_stage);
+  }
+
   render() {
     const { t, docList } = this.props;
-    this.buildData();
-    const { jysData, jysTitle, 
-      tabTitles, tableTitle, docListHeaders, tableData, semesterPages, initSemesterPageIdx,
-      onJysIdsChanged, onTabChanged, onSemesterPageChanged } = this;
-    const pageTables = [];
-    if (docList && docList.length > 0) {
-      pageTables[0] = (<ResultTable
-        height={450/*window.innerHeight*/}
-        titleHeight={50}
-        colLineHeight={20}
-        defaultColWidth={180}
-        title={tableTitle}
-        color={PROGRESSDOC_COLOR}
-        headers={docListHeaders}
-        data={docList}
-        pageNames={semesterPages}
-        pagePrevCaption={t("common.previous")}
-        pageNextCaption={t("common.next")}
-        onResultPageIndexChanged={onSemesterPageChanged}
-        initPageIndex={initSemesterPageIdx}
-        />);
-    } else {
-      pageTables[0] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
-    }
+    const { selectStage } = this.state;
+    const { color, jysData, jysTitle, tableTitle, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, selectedDocId, loadDocDetails} = this;
+    
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center">
-        <SubjectBoard
-          my={4}
-          color={PROGRESSDOC_COLOR}
+        <SubjectBoard t={t} my={4} color={color}
           title={jysTitle}
           subjects={jysData}
           initSelectedIndexList={this.defaultselectedJysIdList}
-          //onSubjectClicked={onJysClicked}
-          //selectionChanged={onJysChanged}
           selectedIdsChanged={onJysIdsChanged}
-          t={t}
           enableAutoTitle={true}
           enableSelect />
+        <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" minW={833} mb={4}>
+          <Flex direction="row" alignItems="center" px={5} py={2}>
+            <Icon as={MdTune} color={color+".200"} size={12} />
+            <Text mx={5} whiteSpace="break-spaces" flexWrap="true">{t("editRawplanScreen.hint_stageselector")}</Text>
+            {
+              (semesterPages && Object.keys(semesterPages).length > 0) &&
+              <Select width="100%" variant="filled" value={selectStage} onChange={onStageChanged}>
+              {
+                Object.keys(semesterPages).map((stage_id, index) => (
+                  <option key={stage_id} value={stage_id} >{semesterPages[stage_id]}</option>
+                ))
+              }
+              </Select>
+            }
+            <PromptDrawer t={t} btnText={t("common.help")} promptText={t("editRawplanScreen.prompt_text")}/>
+          </Flex>
+        </Box>
+        <TableDialog t={t} title={t("doc_detail_title")} btnText={t("common.help")} color={color} isSaveable
+        tableHeaders={docListHeaders} tableRows={docList} onOpenItem={()=>loadDocDetails(selectedDocId)}/>
         {
-          tabTitles && tabTitles.length > 0 &&
-          <ResultTabList
-            ref={this.tabsListRef}
-            my={4}
-            width="100%"
-            maxWidth={1444}
-            tabHeight={50}
-            color={PROGRESSDOC_COLOR}
-            titles={tabTitles}
-            onTabChange={onTabChanged}
-            pages={pageTables} />
+          docList && 
+          <ResultTable
+            height={450/*window.innerHeight*/}
+            titleHeight={50}
+            colLineHeight={20}
+            defaultColWidth={180}
+            title={tableTitle}
+            color={color}
+            headers={docListHeaders}
+            data={docList}
+            //pageNames={semesterPages}
+            //pagePrevCaption={t("common.previous")}
+            //pageNextCaption={t("common.next")}
+            //onResultPageIndexChanged={onSemesterPageChanged}
+            //initPageIndex={initSemesterPageIdx}
+          />
         }
       </Flex>
     );

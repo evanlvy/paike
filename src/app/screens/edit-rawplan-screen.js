@@ -24,7 +24,7 @@ import { getSchoolYear, getSchoolWeek, getStageList } from '../redux/modules/gra
 import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, countRowChanged, getTeacherStatistics} from '../redux/modules/rawplan';
 import { EditableTable } from '../components/result-table/editable-table';
 import { SEMESTER_WEEK_COUNT } from './common/info';
-import PromptDrawer from '../components/drawer/prompt-drawer';
+import PromptDrawer from '../components/overlays/prompt-drawer';
 
 const DEFAULT_COLOR = "red";
 const CANCEL_COLOR = "gray";
