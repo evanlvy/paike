@@ -270,7 +270,7 @@ class EditableTable extends Component {
       onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, defaultColWidth, cellClassRules, headers, data,
       title, color, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, onResultPageIndexChanged,
-      onCellClicked: onCellClickedCallback,onCellValueChanged, ...other_props } = this.props;
+      rowSelection, onCellClicked: onCellClickedCallback,onCellValueChanged, ...other_props } = this.props;
     const { curPageIndex } = this.state;
     //console.log("RowData: "+JSON.stringify(rowData));
     return (
@@ -310,7 +310,7 @@ class EditableTable extends Component {
               onGridReady={onGridReady}
               onCellValueChanged={onCellValueChanged}
               onCellClicked={onCellClicked}
-              rowSelection="single" >
+              rowSelection={rowSelection} >
             </AgGridReact>
           </div>
         </Box>

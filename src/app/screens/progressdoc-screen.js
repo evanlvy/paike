@@ -24,9 +24,9 @@ import {
 
 import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getAllJiaoyanshiMap } from '../redux/modules/jiaoyanshi';
-import { actions as progressdocActions, getDocList, getSearchedDocList, getDocContents } from '../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocList, getSearchedDocList } from '../redux/modules/progressdoc';
 import PromptDrawer from '../components/overlays/prompt-drawer';
-import TableDialog from '../components/overlays/table-dialog';
+import ProgressdocDialog from '../components/overlays/progressdoc-dialog';
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
 const DEFAULT_COLOR = "purple";
@@ -40,6 +40,7 @@ class ProgressdocScreen extends Component {
     this.state = {
       selectStage: schoolYear,
       selectedJysIdList: [],
+      selectedDocId: 0,
     };
     this.color = color ? color : DEFAULT_COLOR;
 
@@ -83,8 +84,8 @@ class ProgressdocScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { schoolYear, jysMap, stageList, docList/*, location*/ } = this.props;
-    const { selectedJysIdList } = this.state;
+    const { schoolYear, jysMap, stageList, docList, docDetails/*, location*/ } = this.props;
+    const { selectedJysIdList, selectedDocId } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
     /*if (nextProps.location.state.grd !== location.state.grd || nextProps.location.state.edu !== location.state.edu) {
@@ -96,7 +97,10 @@ class ProgressdocScreen extends Component {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedJysIdList !== selectedJysIdList) {
-      console.log("shouldComponentUpdate, state diff");
+      console.log("shouldComponentUpdate, selected_jys diff");
+      return true;
+    } else if (nextState.selectedDocId != selectedDocId) {
+      console.log("shouldComponentUpdate, selectedDocId diff");
       return true;
     }
     return false;
@@ -274,18 +278,19 @@ class ProgressdocScreen extends Component {
     this.hasFetchKebiao = true;
   }
 
-  loadDocDetails = (docId) => {
-    if (!docId || docId < 1) {
-      return;
-    }
-  }
-
   onJysIdsChanged = (jysIdList) => {
     console.log(`onJysIdsChanged ${jysIdList}`);
     this.setState({
       selectedJysIdList: jysIdList
     });
     this.loadDocList(jysIdList);
+  }
+
+  onRowSelected = (rowId, docId) => {
+    console.log(`onRowSelected: rowId=${rowId} docId=${docId}`);
+    this.setState({
+      selectedDocId: docId
+    });
   }
 
   onSemesterPageChanged = (index) => {
@@ -308,8 +313,8 @@ class ProgressdocScreen extends Component {
 
   render() {
     const { t, docList } = this.props;
-    const { selectStage } = this.state;
-    const { color, jysData, jysTitle, tableTitle, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, selectedDocId, loadDocDetails} = this;
+    const { selectStage, selectedDocId } = this.state;
+    const { color, jysData, jysTitle, tableTitle, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, loadDocDetails} = this;
     
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center">
@@ -337,8 +342,8 @@ class ProgressdocScreen extends Component {
             <PromptDrawer t={t} btnText={t("common.help")} promptText={t("editRawplanScreen.prompt_text")}/>
           </Flex>
         </Box>
-        <TableDialog t={t} title={t("doc_detail_title")} btnText={t("common.help")} color={color} isSaveable
-        tableHeaders={docListHeaders} tableRows={docList} onOpenItem={()=>loadDocDetails(selectedDocId)}/>
+        <ProgressdocDialog t={t} title={t("progressdocScreen.doc_detail_title")} btnText={t("common.help")} color={color} isSaveable
+        docId={selectedDocId} />
         {
           docList && 
           <ResultTable
@@ -350,6 +355,8 @@ class ProgressdocScreen extends Component {
             color={color}
             headers={docListHeaders}
             data={docList}
+            rowSelection="single"
+            onRowSelected={onRowSelected}
             //pageNames={semesterPages}
             //pagePrevCaption={t("common.previous")}
             //pageNextCaption={t("common.next")}

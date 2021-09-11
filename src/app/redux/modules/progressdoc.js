@@ -203,7 +203,7 @@ export const getSelectedDepartment = (state) => state.getIn(["progressdoc", "fet
 export const getSearchedList = (state) => state.getIn(["progressdoc", "searchedList", getSelectedSearch(state)]).valueSeq();
 export const getSelectedSearch = (state) => state.getIn(["progressdoc", "searchedList", "selected"]);
 
-export const getDoc = (state) => state.getIn(["progressdoc", "fetchedDoc", getSelectedDocId(state)]);
+export const getDoc = (state) => state.getIn(["progressdoc", "fetchedDoc", ""+getSelectedDocId(state)]);
 export const getSelectedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
 
 export const getDocList = createSelector(
@@ -225,6 +225,7 @@ export const getSearchedDocList = createSelector(
 export const getDocContents = createSelector(
   getDoc,
   (value) => {
+    console.log("getDocContents: "+JSON.stringify(value));
     return value;
   }
 );

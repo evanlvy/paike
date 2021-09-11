@@ -254,6 +254,17 @@
     "list_header_comments": "注释",
     "list_header_classes": "实施班级",
     "doclist_table_title_template": "教研室学期教学进度表 [{{jys_name}}]",
-    "doc_detail_title": "教学进度表格"
+    "doc_detail_title": "教学进度表格",
+    "items_header_id": "DBId",
+    "items_header_chapter_name": "章节",
+    "items_header_weekidx": "教学周",
+    "items_header_theory": "理论",
+    "items_header_theoryhours": "理论时数",
+    "items_header_labitem": "实训",
+    "items_header_labitem_id": "实训Id",
+    "items_header_labhours": "实训时数",
+    "items_header_teaching_mode": "教学方式",
+    "items_header_comment": "备注",
+    "items_header_docid": "进度表ID"
   }
 }

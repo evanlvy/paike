@@ -248,6 +248,18 @@ class ResultTableWrapper extends Component {
     }
   }
 
+  onRowSelected = (event) => {
+    const { onRowSelected: onRowSelectedCallback } = this.props;
+    if (onRowSelectedCallback != null) {
+      if (event.data.hasOwnProperty("id")) {
+        onRowSelectedCallback(event.rowIndex, event.data["id"]);
+      }
+      else {
+        onRowSelectedCallback(event.rowIndex);
+      }
+    }
+  }
+
   onPagePrevClicked = () => {
     const { curPageIndex } = this.state;
     if (curPageIndex > 0) {
@@ -315,10 +327,11 @@ class ResultTableWrapper extends Component {
   }
 
   render() {
-    const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, onCellClicked, onRowClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
+    const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, onCellClicked, onRowClicked, onRowSelected, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data,
       pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption,
       onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onResultPageIndexChanged,
+      onRowSelected: onRowSelectedCallback, rowSelection,
       ...other_props } = this.props;
     const { curPageIndex } = this.state;
     //console.log("render: curPageIndex: "+curPageIndex);
@@ -354,7 +367,9 @@ class ResultTableWrapper extends Component {
               rowData={rowData}
               rowClassRules={rowClassRules}
               onCellClicked={onCellClicked}
-              onRowClicked={onRowClicked} >
+              onRowClicked={onRowClicked}
+              rowSelection={rowSelection}
+              onRowSelected={onRowSelected} >
             </AgGridReact>
           </div>
         </Box>
