@@ -273,9 +273,8 @@ class MenuBarWrapped extends Component {
                   key={item.type}
                   ref={item.menu_ref}
                   menuType={item.type}
-                  mx={1}
+                  m={1}
                   width="11em"
-                  marginBottom="2"
                   title={item.title}
                   icon={item.icon}
                   bgColor={item.bgColor}
@@ -285,9 +284,8 @@ class MenuBarWrapped extends Component {
                   key={item.type}
                   ref={item.menu_ref}
                   menuType={item.type}
-                  mx={1}
+                  m={1}
                   width="11em"
-                  marginBottom="2"
                   title={item.title}
                   icon={item.icon}
                   bgColor={item.bgColor}
@@ -295,9 +293,8 @@ class MenuBarWrapped extends Component {
               default:
                 return <Button
                   key={item.type}
-                  mx={1}
+                  m={1}
                   width="11em"
-                  marginBottom="2"
                   leftIcon={item.icon}
                   variantColor={item.bgColor}
                   onClick={() => item.onClick(item.menu_type)}>

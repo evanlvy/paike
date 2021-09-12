@@ -14,12 +14,13 @@ class CommonRenderer extends Component {
     if (value == null) {
       console.error(`The value of header: ${headerName} is undefined`);
       return (
-        <div className="common-cell" style={{lineHeight: lineHeight+"px"}}></div>
+        <div className="common-cell" style={{lineHeight: lineHeight+"px"}}>{ editable && '\u26A1'}</div>
       );
     }
     //console.log("CommonRenderer render: value: "+JSON.stringify(value));
     return (
       <div className="common-cell" style={{lineHeight: lineHeight+"px"}}>
+        { editable && '\u26A1'}
         { value.title == null && value.titles == null && value }
         { value.title != null && value.title }
         {
@@ -28,7 +29,6 @@ class CommonRenderer extends Component {
             <div key={index+""}>{title}</div>
           ))
         }
-        { editable && <Icon name="edit" marginLeft="2" />}
       </div>
     );
   }

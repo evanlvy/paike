@@ -10,6 +10,10 @@ import { withTranslation } from 'react-i18next';
 import {
   Flex,
   Progress,
+  AlertDialog,
+  AlertDialogOverlay,
+  AlertDialogContent,
+  Spinner,
 } from '@chakra-ui/core';
 
 import {
@@ -139,9 +143,16 @@ class MainNavigatorWrapper extends PureComponent {
         </Flex>
         {
           requestsCount > 0 && !requestError &&
-          <Flex position="absolute" w="100%" h="100%" bg="#aaaa" color="black" alignItems="center" justify="center">
-            <Progress width="50%" height="20px" rounded="4px" value={100} hasStripe isAnimated />
-          </Flex>
+          <AlertDialog
+            isOpen={true}
+            motionPreset="scale"
+          >
+            <AlertDialogOverlay>
+              <Flex w="100%" h="100%" alignItems="center" justifyContent="center">
+                <Spinner size="8rem" thickness="8px" speed="0.65s" emptyColor="gray.200" color="blue.500"/>
+              </Flex>
+            </AlertDialogOverlay>
+          </AlertDialog>
         }
         <Alert
           ref={this.confirmErrorDialog}
@@ -150,7 +161,11 @@ class MainNavigatorWrapper extends PureComponent {
     )
   }
 }
-
+/*
+<Flex position="absolute" top="0" right="0" bottom="0" left="0" w="100%" h="100%" bg="#aaaa" color="black" alignItems="center" justify="center" overflow="hidden">
+            <Progress width="50%" height="20px" rounded="4px" value={100} hasStripe isAnimated />
+          </Flex>
+*/
 const mapStateToProps = (state) => {
   return {
     user: getLoggedUser(state),
