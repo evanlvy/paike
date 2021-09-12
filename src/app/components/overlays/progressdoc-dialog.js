@@ -10,13 +10,19 @@ import {
     ModalFooter,
     ModalBody,
     ModalCloseButton,
-    useDisclosure,
     Button,
-    Text,
+    FormControl,
+    FormLabel,
+    FormErrorMessage,
+    FormHelperText,
+    Flex,
+    Input,
+    Box,
   } from "@chakra-ui/core"
-  
+import { MdEdit } from "react-icons/md"
+
 import { EditableTable } from '../result-table/editable-table';
-import { actions as progressdocActions, getDocContents } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocContents, getSelectedDocId } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -31,24 +37,28 @@ class ProgressdocDialog extends Component {
     this.color = color ? color : DEFAULT_COLOR;
     this.tableHeaders = [
       {name: t("progressdocScreen.items_header_id"), field: "id", width: 80},
-      {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", width: 80},
-      {name: t("progressdocScreen.items_header_chapter_name"), field: "chapter_name"},
-      {name: t("progressdocScreen.items_header_theory"), field: "theory_item_content"},
-      {name: t("progressdocScreen.items_header_theoryhours"), field: "theory_item_hours", width: 80},
-      {name: t("progressdocScreen.items_header_labitem"), field: "labitem_content"},
-      {name: t("progressdocScreen.items_header_labhours"), field: "labitem_hours", width: 80},
+      {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", editable: true, width: 80},
+      {name: t("progressdocScreen.items_header_chapter_name"), field: "chapter_name", editable: true},
+      {name: t("progressdocScreen.items_header_theory"), field: "theory_item_content", editable: true, width: 380},
+      {name: t("progressdocScreen.items_header_theoryhours"), field: "theory_item_hours", editable: true, width: 80},
+      {name: t("progressdocScreen.items_header_labitem"), field: "labitem_content", editable: true, width: 380},
+      {name: t("progressdocScreen.items_header_labhours"), field: "labitem_hours", editable: true, width: 80},
       {name: t("progressdocScreen.items_header_labitem_id"), field: "labitem_id", width: 80},
-      {name: t("progressdocScreen.items_header_teaching_mode"), field: "teaching_mode", width: 80},
-      {name: t("progressdocScreen.items_header_comment"), field: "comment"},
-      {name: t("progressdocScreen.items_header_docid"), field: "doc_id"},
+      {name: t("progressdocScreen.items_header_teaching_mode"), field: "teaching_mode", editable: true},
+      {name: t("progressdocScreen.items_header_comment"), field: "comment", editable: true},
+      {name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
     ];
     this.btnRef = React.createRef()
   }
-  loadData = () => {
-    const { docDetails } = this.props;
+  loadData = (doc_from_prop) => {
+    let doc_object = doc_from_prop;
+    if (!doc_object) {
+      const { docDetails } = this.props;
+      doc_object = docDetails;
+    }
     let form_object = null;
-    if (docDetails) {
-      form_object = docDetails["props"];
+    if (doc_object) {
+      form_object = doc_object["props"];
     }
     if (!form_object || form_object === null) {
       form_object = {
@@ -67,8 +77,8 @@ class ProgressdocDialog extends Component {
     }
     let progress_items = null;
     let progress_items_array = null;
-    if (docDetails) {
-      progress_items = docDetails["items"];
+    if (doc_object) {
+      progress_items = doc_object["items"];
     }
     if (!progress_items || progress_items === null) {
       progress_items_array = [{
@@ -104,21 +114,28 @@ class ProgressdocDialog extends Component {
   }
 
   loadDocDetails = (docId) => {
+    console.log("loadDocDetails: "+docId);
     if (!docId || docId < 1) {
       return;
     }
     this.props.fetchDoc(docId);
+    if (this.props.prevDocId === docId) {
+      this.setState({ 
+        isOpen: true,
+      });  
+    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
     const { docId, docDetails } = this.props;
     const { isOpen, progressItems, formObject } = this.state;
     if (nextProps.docDetails !== docDetails){
-      this.loadData();
+      console.log("shouldComponentUpdate, docDetails diff: isdefined? next="+!nextProps.docDetails+" cur="+!docDetails);
+      this.loadData(nextProps.docDetails);
       return false;
     }
     if (nextProps.docId !== docId) {
-      console.log("shouldComponentUpdate, props diff");
+      console.log("shouldComponentUpdate, props diff: "+nextProps.docId+" "+docId);
       return true;
     } else if (nextState.isOpen !== isOpen || nextState.progressItems !== progressItems || nextState.formObject !== formObject) {
       console.log("shouldComponentUpdate, nextState diff");
@@ -128,30 +145,79 @@ class ProgressdocDialog extends Component {
   }
   
   render() {
-    const { isOpen, progressItems } = this.state;
+    const { isOpen, progressItems, formObject } = this.state;
     const { t, title, color, btnText, isSaveable, tableTitle, docId,
       tablePages, onPageChanged, onCellClicked, onCellValueChanged } = this.props;
     const { tableHeaders, btnRef, loadDocDetails, onClose } = this;
     return (
       <>
-        <Button mt={3} ref={btnRef} onClick={(e) => {
+        <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={btnRef} onClick={(e) => {
           loadDocDetails(docId);
         }}>
           {btnText}
         </Button>
-  
         <Modal
           onClose={onClose}
           finalFocusRef={btnRef}
           isOpen={isOpen}
           scrollBehavior="outside"
           closeOnOverlayClick={false}
+          closeOnEsc={false}
         >
           <ModalOverlay />
           <ModalContent maxW="100rem">
             <ModalHeader>{title}</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
+            {
+              formObject &&
+              <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
+              <FormControl id="course_name" isRequired minW={280} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_coursename")}</b></FormLabel>
+                <Input type="course_name" value={formObject["course_name"]}/>
+              </FormControl>
+              <FormControl id="short_name" isRequired minW={280} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_shortname")}</b></FormLabel>
+                <Input type="short_name" value={formObject["short_name"]}/>
+              </FormControl>
+              <FormControl id="description" minW={280} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_description")}</b></FormLabel>
+                <Input type="description" value={formObject["description"]}/>
+              </FormControl>
+              <FormControl id="department_id" isRequired maxW={100} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
+                <Input type="department_id" value={formObject["department_id"]}/>
+              </FormControl>
+              <FormControl id="total_hours" isRequired maxW={100} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_totalhours")}</b></FormLabel>
+                <Input type="total_hours" value={formObject["total_hours"]}/>
+              </FormControl>
+              <FormControl id="theory_hours" isRequired maxW={100} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_theoryhours")}</b></FormLabel>
+                <Input type="theory_hours" value={formObject["theory_hours"]}/>
+              </FormControl>
+              <FormControl id="lab_hours" isRequired maxW={100} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_labhours")}</b></FormLabel>
+                <Input type="lab_hours" value={formObject["lab_hours"]}/>
+              </FormControl>
+              <FormControl id="flex_hours" maxW={100} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_flexhours")}</b></FormLabel>
+                <Input type="flex_hours" value={formObject["flex_hours"]}/>
+              </FormControl>
+              <FormControl id="textbook" isRequired minW={280} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_textbook")}</b></FormLabel>
+                <Input type="textbook" value={formObject["textbook"]}/>
+              </FormControl>
+              <FormControl id="exam_type" isRequired minW={280} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_examtype")}</b></FormLabel>
+                <Input type="exam_type" value={formObject["exam_type"]}/>
+              </FormControl>
+              <FormControl id="comments" minW={280} m={2}>
+                <FormLabel><b>{t("progressdocScreen.form_label_comments")}</b></FormLabel>
+                <Input type="comments" value={formObject["comments"]}/>
+              </FormControl>
+              </Flex>
+            }
             {
               progressItems &&
               <EditableTable 
@@ -171,6 +237,7 @@ class ProgressdocDialog extends Component {
                 initPageIndex={0}
                 onCellValueChanged={onCellValueChanged}
                 onCellClicked={onCellClicked}
+                rowSelection="single"
                 //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
                 />
             }
@@ -191,6 +258,7 @@ class ProgressdocDialog extends Component {
 const mapStateToProps = (state) => {
   return {
     docDetails: getDocContents(state),
+    prevDocId: getSelectedDocId(state),
   }
 }
 

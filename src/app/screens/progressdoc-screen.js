@@ -13,7 +13,7 @@ import {
   Icon,
 } from '@chakra-ui/core';
 import {
-  MdTune
+  MdTune,
 } from 'react-icons/md';
 
 import {
@@ -317,7 +317,7 @@ class ProgressdocScreen extends Component {
     const { color, jysData, jysTitle, tableTitle, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, loadDocDetails} = this;
     
     return (
-      <Flex width="100%" minHeight={750} direction="column" align="center">
+      <Flex width="100%" minHeight={750} direction="column" align="center" mb={5}>
         <SubjectBoard t={t} my={4} color={color}
           title={jysTitle}
           subjects={jysData}
@@ -339,15 +339,13 @@ class ProgressdocScreen extends Component {
               }
               </Select>
             }
-            <PromptDrawer t={t} btnText={t("common.help")} promptText={t("editRawplanScreen.prompt_text")}/>
+            <PromptDrawer t={t} promptText={t("editRawplanScreen.prompt_text")}/>
           </Flex>
         </Box>
-        <ProgressdocDialog t={t} title={t("progressdocScreen.doc_detail_title")} btnText={t("common.help")} color={color} isSaveable
-        docId={selectedDocId} />
         {
           docList && 
           <ResultTable
-            height={450/*window.innerHeight*/}
+            minHeight={docList.length>3?800:180}
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}
@@ -364,6 +362,7 @@ class ProgressdocScreen extends Component {
             //initPageIndex={initSemesterPageIdx}
           />
         }
+        <ProgressdocDialog docId={selectedDocId} title={t("progressdocScreen.doc_detail_title")} btnText={t("common.open")} t={t} color={color} isSaveable/>
       </Flex>
     );
   }

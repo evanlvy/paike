@@ -208,7 +208,7 @@ class EditRawplanScreen extends Component {
     //console.log("render: group_id: "+groupStageWeekId+ " changedRows:"+changedRows, "statistics: "+JSON.stringify(statistics));
 
     return (
-      <Flex width="100%"  flex={1} direction="column" align="center">
+      <Flex width="100%"  flex={1} direction="column" align="center" mb={5}>
         <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" minW={833}>
           <Flex direction="row" alignItems="center" px={5} py={2}>
             <Icon as={MdTune} color={color+".200"} size={12} />
@@ -224,7 +224,7 @@ class EditRawplanScreen extends Component {
               </Select>
             }
             <Button mx={5} minW={20} variantColor="green" onClick={() => planTableRef.current.exportCsv()}>{t("editRawplanScreen.export")}</Button>
-            <PromptDrawer t={t} btnText={t("common.help")} promptText={t("editRawplanScreen.prompt_text")}></PromptDrawer>
+            <PromptDrawer t={t} promptText={t("editRawplanScreen.prompt_text")}></PromptDrawer>
           </Flex>
         </Box>
         {

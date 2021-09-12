@@ -265,6 +265,17 @@
     "items_header_labhours": "实训时数",
     "items_header_teaching_mode": "教学方式",
     "items_header_comment": "备注",
-    "items_header_docid": "进度表ID"
+    "items_header_docid": "进度表ID",
+    "form_label_coursename": "课程名",
+    "form_label_shortname": "课表名",
+    "form_label_description": "描述",
+    "form_label_departmentid": "教研室",
+    "form_label_totalhours": "总课时",
+    "form_label_theoryhours": "理论时数",
+    "form_label_labhours": "实训时数",
+    "form_label_flexhours": "可变时数",
+    "form_label_textbook": "教材",
+    "form_label_examtype": "考试形式",
+    "form_label_comments": "备注"
   }
 }

@@ -7,6 +7,7 @@ import { withTranslation } from 'react-i18next';
 import {
   Flex,
   Text,
+  Box,
 } from '@chakra-ui/core';
 
 import {
@@ -156,7 +157,7 @@ class JwcKebiaoScreen extends Component {
     console.log("render: group_id: "+groupStageWeekId);
 
     return (
-      <Flex width="100%" direction="column" align="center" flex={1}>
+      <Flex width="100%" direction="column" align="center" flex={1} mb={5}>
         {
           groupList && groupList.length > 0 &&
           <SubjectBoard

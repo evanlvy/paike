@@ -11,15 +11,17 @@ import {
     Button,
     Text,
   } from "@chakra-ui/core"
-
+  import {
+    MdHelp,
+  } from 'react-icons/md';
   const PromptDrawer = props => {
     const { isOpen, onOpen, onClose } = useDisclosure()
     const btnRef = React.useRef()
     //const sizes = ["xs", "sm", "md", "lg", "xl", "full"]
     return (
       <>
-        <Button ref={btnRef} colorScheme="teal" onClick={onOpen} mx={5}>
-          {props.btnText}
+        <Button ref={btnRef} leftIcon={MdHelp} variantColor="green" variant="solid" onClick={onOpen} mx={5}>
+          {props.t("common.help")}
         </Button>
         <Drawer
           isOpen={isOpen}

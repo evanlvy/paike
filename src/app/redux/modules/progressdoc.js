@@ -96,7 +96,7 @@ const shouldFetchList = (department_id, stage, state) => {
 }
 
 const shouldFetchDoc = (doc_id, state) => {
-  const doc = state.getIn(["progressdoc", "fetchedDoc", doc_id]);
+  const doc = state.getIn(["progressdoc", "fetchedDoc", ""+doc_id]);
   return !doc || doc.length === 0;
 }
 

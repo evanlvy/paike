@@ -139,7 +139,7 @@ class WrappedLoginScreen extends Component {
     const { t, error } = this.props;
     const { showError } = this.state;
     return (
-      <Flex direction="column" bg="white" height="100vh" align="center" alignItems="center" justify="center">
+      <Flex color="white" direction="column" bg="white" height="100vh" align="center" alignItems="center" justify="center">
         {
           showError &&
           <Alert status="error" >
@@ -149,7 +149,7 @@ class WrappedLoginScreen extends Component {
             <CloseButton onClick={this.dismissAlert}/>
           </Alert>
         }
-        <Flex direction="column" bg="gray.600" p={12} rounded={6}>
+        <Flex direction="column" bg="gray.800" p={12} rounded={6}>
           <Heading mb={6}><Trans>loginScreen.title</Trans></Heading>
           <Tabs isFitted >
           <TabList mb="1em">
