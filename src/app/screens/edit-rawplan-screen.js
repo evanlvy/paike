@@ -76,6 +76,7 @@ class EditRawplanScreen extends Component {
     this.planTableRef = React.createRef();
     let selectedSubject = {grade: 0, degree: 0}; // All grades, All degrees
     this.selectedSubject = selectedSubject;
+    this.buildData();
   }
 
   componentDidMount() {
@@ -83,13 +84,16 @@ class EditRawplanScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    const { schoolYear, planRows, changedRows, statistics } = this.props;
+    const { schoolYear, stageList, planRows, changedRows, statistics } = this.props;
     //const { selectedSubjectIndex } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
-    if (nextProps.schoolYear !== schoolYear || nextProps.statistics !== statistics //|| nextProps.groupStageWeekId !== groupStageWeekId
-      || nextProps.changedRows !== changedRows) {
+    if (nextProps.schoolYear !== schoolYear || nextProps.statistics !== statistics || nextProps.changedRows !== changedRows) {
       console.log("shouldComponentUpdate, props diff");
+      return true;
+    } else if (nextProps.stageList !== stageList) {
+      console.log("shouldComponentUpdate, stageList diff");
+      this.buildSemester();
       return true;
     } else if (nextProps.planRows !== planRows) {
       console.log("shouldComponentUpdate, planRows diff");
@@ -102,8 +106,14 @@ class EditRawplanScreen extends Component {
   }
 
   loadData = () => {
-    this.buildSemester();
+    if (!this.semesterPages || this.semesterPages.length === 0) {
+      this.props.fetchStageList();
+    }
     this.loadKebiao(this.state.selectStage, this.state.selectWeek);
+  }
+
+  buildData = () => {
+    this.buildSemester();
   }
 
   resetData = () => {
@@ -199,7 +209,7 @@ class EditRawplanScreen extends Component {
   }
 
   render() {
-    const { t, planRows, groupStageWeekId, schoolWeek, changedRows, statistics } = this.props;
+    const { t, planRows, schoolWeek, changedRows, statistics } = this.props;
     const { selectStage } = this.state;
     const { onSemiSemesterChanged, onCellClicked, onCellValueChanged, onCommit, onRevert, planTableRef, onConflictIndicatorClicked,
       plansTableHeaders, semiSemesterPages, color, semesterPages, onStageChanged, statisticsTableHeaders } = this;
@@ -285,7 +295,6 @@ const mapStateToProps = (state/*, props*/) => {
     schoolYear: getSchoolYear(state),
     schoolWeek: getSchoolWeek(state),
     stageList: getStageList(state),
-    groupList: getRawplanGroups(state),
     groupStageWeekId: getSelectedGroup(state),
     planRows: getPlansByGroup(state),
     changedRows: countRowChanged(state),

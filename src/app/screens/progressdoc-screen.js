@@ -83,8 +83,12 @@ class ProgressdocScreen extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, jysMap, stageList, docList, docDetails } = this.props;
     const { selectedJysIdList, selectedDocId } = this.state;
-    if (nextProps.schoolYear !== schoolYear || nextProps.jysMap !== jysMap || nextProps.stageList !== stageList || nextProps.docList !== docList) {
+    if (nextProps.schoolYear !== schoolYear || nextProps.jysMap !== jysMap || nextProps.docList !== docList) {
       console.log("shouldComponentUpdate, props diff");
+      return true;
+    } else if (nextProps.stageList !== stageList ) {
+      console.log("shouldComponentUpdate, stageList diff");
+      this.buildSemester();
       return true;
     } else if (nextState.selectedJysIdList !== selectedJysIdList) {
       console.log("shouldComponentUpdate, selected_jys diff");
