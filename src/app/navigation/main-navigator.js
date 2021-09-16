@@ -39,6 +39,7 @@ const AsyncJwcKeBiaoScreen = connectRoute(AsyncComponent(() => import('../screen
 const AsyncPaikeScreen = connectRoute(AsyncComponent(() => import('../screens/paike-screen')));
 const AsyncEditRawplan = connectRoute(AsyncComponent(() => import('../screens/edit-rawplan-screen')));
 const AsyncProgressdoc = connectRoute(AsyncComponent(() => import('../screens/progressdoc-screen')));
+const AsyncCurriculums = connectRoute(AsyncComponent(() => import('../screens/curriculums-screen')));
 const AsyncFrontPage = connectRoute(AsyncComponent(() => import('../screens/frontpage-screen')));
 
 
@@ -94,6 +95,9 @@ class MainNavigatorWrapper extends PureComponent {
         else if (menu_params.sub.name === t("maintainMenu.annualData_progressdoc")) {
           history.push('/maintain/progressdoc', menu_params);
         }
+        else if (menu_params.sub.name === t("maintainMenu.annualData_curriculums")) {
+          history.push('/maintain/curriculums', menu_params);
+        }
         break;
       default:
         break;
@@ -138,6 +142,7 @@ class MainNavigatorWrapper extends PureComponent {
             <Route path="/paike" component={AsyncPaikeScreen} />
             <Route path="/maintain/rawplan" component={AsyncEditRawplan} />
             <Route path="/maintain/progressdoc" component={AsyncProgressdoc} />
+            <Route path="/maintain/curriculums" component={AsyncCurriculums} />
             <Route path="/" component={AsyncFrontPage} />
           </Switch>
         </Flex>

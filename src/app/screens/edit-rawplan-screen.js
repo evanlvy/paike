@@ -227,7 +227,7 @@ class EditRawplanScreen extends Component {
               (semesterPages && Object.keys(semesterPages).length > 0) &&
               <Select width="100%" variant="filled" value={selectStage} onChange={onStageChanged}>
               {
-                Object.keys(semesterPages).map((stage_id, index) => (
+                Object.keys(semesterPages).map((stage_id) => (
                   <option key={stage_id} value={stage_id} >{semesterPages[stage_id]}</option>
                 ))
               }

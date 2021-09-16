@@ -30,7 +30,7 @@ const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
 const SEMESTER_FIRST_HALF_MAX_WEEK = 9;
 const SEMESTER_HALF_BIAS_WEEK = 6;
-class ProgressdocScreen extends Component {
+class CurriculumsScreen extends Component {
   constructor(props) {
     super(props);
     const { t, color, schoolYear } = props;
@@ -281,4 +281,4 @@ const mapDispatchToProps = (dispatch) => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(ProgressdocScreen));
+export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(CurriculumsScreen));
