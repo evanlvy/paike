@@ -73,7 +73,7 @@ export const actions = {
       try {
         dispatch(appActions.startRequest());
         dispatch(actions.clearError());
-        const result = await authApi.login("students@jxyxgz.com", "jxyxgz12345678");
+        const result = await authApi.login("students", "abcdefgh");
         console.log("login: Got data"+JSON.stringify(result));
         dispatch(appActions.finishRequest());
         dispatch(loginResult(result));
