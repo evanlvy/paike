@@ -84,7 +84,8 @@ class JwcKebiaoScreen extends Component {
   }
 
   loadData = () => {
-    if (!this.groups || this.groups.length === 0) { // only get subjects when it's empty
+    const { groupList } = this.props;
+    if (!groupList || groupList.length === 0) { // only get subjects when it's empty
       this.loadGroups();
     }
   }
@@ -114,7 +115,6 @@ class JwcKebiaoScreen extends Component {
     });
     this.setSubjectSelectedIndex(index);
     this.loadKebiao(this.state.selectWeek);
-    //this.tabTitles.push(this.groups[index].name);
   }
 
   setSubjectSelectedIndex = (index) => {
@@ -197,8 +197,7 @@ class JwcKebiaoScreen extends Component {
 }
 
 const mapStateToProps = (state, props) => {
-  const { groupStageWeekId, groupList } = props;
-  console.log("mapStateToProps: "+groupStageWeekId + groupList);
+  const { groupStageWeekId } = props;
   return {
     schoolYear: getSchoolYear(state),
     schoolWeek: getSchoolWeek(state),

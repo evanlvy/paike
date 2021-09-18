@@ -1,6 +1,6 @@
 /* @flow */
 
-import React, { Component } from 'react';
+import React, { Component, useEffect } from 'react';
 import { Redirect } from 'react-router-dom';
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
@@ -12,12 +12,8 @@ import {
   FormErrorMessage,
   Input,
   Button,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
-  CloseButton,
   Tabs, TabList, TabPanels, Tab, TabPanel,
+  useToast,
 } from '@chakra-ui/core';
 import {
   Formik,
@@ -26,6 +22,14 @@ import {
 import { Trans, withTranslation } from 'react-i18next';
 
 import { actions as authActions, getLoggedUser, getLoggedError } from '../redux/modules/auth';
+
+function Toast(props) {
+  const toast = useToast();
+  useEffect(() => {
+    toast(props.params);
+  }, []); // Passing in empty array so this will only get called on mount
+  return null;
+}
 
 class WrappedLoginScreen extends Component {
   constructor(props) {
@@ -83,12 +87,12 @@ class WrappedLoginScreen extends Component {
 
   onLogin = (values, {setSubmitting}) => {
     const { user } = this.props;
+    this.dismissAlert();
     if (user && user.token) {
       this.props.logout();
     }
     this.props.login(values.name, values.password);
     this.isNewRequest = true;
-    this.dismissAlert();
     this.setSubmittingCb = setSubmitting;
   }
 
@@ -142,12 +146,14 @@ class WrappedLoginScreen extends Component {
       <Flex color="white" direction="column" bg="white" height="100vh" align="center" alignItems="center" justify="center">
         {
           showError &&
-          <Alert status="error" >
-            <AlertIcon />
-            <AlertTitle mr={2}>{t("loginScreen.auth_failure")}</AlertTitle>
-            <AlertDescription>{t("loginScreen.error_code_template", {error_code: error.errorCode})}</AlertDescription>
-            <CloseButton onClick={this.dismissAlert}/>
-          </Alert>
+          <Toast params={{
+            title: t("loginScreen.auth_failure"),
+            description: t("loginScreen.error_code_template", {error_code: error.message}),
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+          }}>
+          </Toast>
         }
         <Flex direction="column" bg="gray.800" p={12} rounded={6}>
           <Heading mb={6}><Trans>loginScreen.title</Trans></Heading>
