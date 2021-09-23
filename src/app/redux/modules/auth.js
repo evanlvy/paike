@@ -9,6 +9,7 @@ import { api as authApi } from '../../services/auth';
 export const types = {
   LOGIN: "AUTH/LOGIN",
   LOGOUT: "AUTH/LOGOUT",
+  STUNUM: "AUTH/STUNUM",
   CLEAR_ERR: "AUTH/CLEARERR"
 };
 // 学号5，6位数字为学院
@@ -68,13 +69,20 @@ export const actions = {
       }
     }
   },
-  studentLogin: (student_id) => {
+  studentLogin: (stu_num) => {
     return async (dispatch) => {
       try {
+        // Check stunum at first
+        dispatch(appActions.startRequest());
+        const stunum_result = await authApi.queryStuNum(stu_num);
+        console.log("parseStuNum: Got data"+JSON.stringify(stunum_result));
+        dispatch(appActions.finishRequest());
+        dispatch(parseStuNumSuccess(stunum_result));
+        // Login as student
         dispatch(appActions.startRequest());
         dispatch(actions.clearError());
         const result = await authApi.login("students", "abcdefgh");
-        console.log("login: Got data"+JSON.stringify(result));
+        console.log("stuLogin: Got data"+JSON.stringify(result));
         dispatch(appActions.finishRequest());
         dispatch(loginResult(result));
       } catch (error) {
@@ -94,6 +102,7 @@ export const actions = {
 const loginResult = (authResult) => {
   let name = null;
   let token = null;
+  let department_id = -1, labdiv_id = -1;
   if (authResult) {
     token = authResult.api_token;
     if (authResult.user) {
@@ -104,16 +113,29 @@ const loginResult = (authResult) => {
       if (authResult.user.lastName) {
         name += authResult.user.lastName;
       }
+      if (authResult.user.department_id) {
+        department_id = authResult.user.department_id;
+      }
+      if (authResult.user.labdivision_id) {
+        labdiv_id = authResult.user.labdivision_id
+      }
     }
   }
   return {
     type: types.LOGIN,
     userToken: token,
     userName: name,
-    departmentId: authResult.user.department_id,
-    labdivisionId: authResult.user.labdivision_id,
+    departmentId: department_id,
+    labdivisionId: labdiv_id,
     error: authResult.error,
   }
+}
+
+const parseStuNumSuccess = (data) => {
+  return ({
+    type: types.STUNUM,
+    data
+  })
 }
 
 // reducers
@@ -140,8 +162,18 @@ const error = ( state = Immutable.fromJS({}), action) => {
   }
 }
 
+const stuInfo = ( state = Immutable.fromJS({}), action) => {
+  switch(action.type) {
+    case types.STUNUM:
+      return Immutable.fromJS(action.data);
+    default:
+      return state;
+  }
+}
+
 const reducer = combineReducers({
   userInfo,
+  stuInfo,
   error,
 });
 
@@ -161,6 +193,10 @@ export const getDepartmentId = state => {
 
 export const getLabdivisionId = state => {
   return state.getIn(["auth", "userInfo", "labdivisionId"]).toJS();
+};
+
+export const getStudentInfo = state => {
+  return state.getIn(["auth", "stuInfo"]).toJS();
 };
 
 export const isStudent = createSelector(

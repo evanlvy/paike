@@ -34,6 +34,30 @@ class Api {
       return { error: { errorCode: "EFFFFFFFF", message: "No response data defined"} };
     }
   }
+
+  queryStuNum = async (stu_num) => {
+    let response = null;
+    try {
+      const url = this.baseUrl+"/parse_studentnum";
+      console.log("Request url "+url+" with ("+stu_num+")");
+      response = await axios.post(url, {
+          stunum: stu_num
+        });
+    } catch (error) {
+      response = error.response;
+    }
+
+    if (response) {
+      const { success, data, message } = response.data;
+      if (!success) {
+        return { error: message };
+      }
+      console.log("queryStuNum: return data"+JSON.stringify(data));
+      return data;
+    } else {
+      return { error: { errorCode: "EFFFFFFFF", message: "No response data defined"} };
+    }
+  }
 }
 
 export const api = new Api();

@@ -21,7 +21,7 @@ import {
 } from 'formik';
 import { Trans, withTranslation } from 'react-i18next';
 
-import { actions as authActions, getLoggedUser, getLoggedError } from '../redux/modules/auth';
+import { actions as authActions, getLoggedUser, getLoggedError, getStudentInfo } from '../redux/modules/auth';
 
 function Toast(props) {
   const toast = useToast();
@@ -96,6 +96,17 @@ class WrappedLoginScreen extends Component {
     this.setSubmittingCb = setSubmitting;
   }
 
+  onStuLogin = (values, {setSubmitting}) => {
+    const { user } = this.props;
+    this.dismissAlert();
+    if (user && user.token) {
+      this.props.logout();
+    }
+    this.props.studentLogin(values.stunum);
+    this.isNewRequest = true;
+    this.setSubmittingCb = setSubmitting;
+  }
+
   validateName = (value) => {
     const { t } = this.props;
     let error;
@@ -121,7 +132,7 @@ class WrappedLoginScreen extends Component {
     if (typeof num === "number") {
       num = num.toString();
     }
-    if (typeof num === "string" && num.length < 10 && num.length > 0) {
+    if (typeof num === "string" && num.length < 8 && num.length > 0) {
       error = t("loginScreen.stunum_error_invalid");
     }
     return error;
@@ -197,14 +208,14 @@ class WrappedLoginScreen extends Component {
           </TabPanel>
           <TabPanel>
           <Formik initialValues={{stunum: ''}}
-            onSubmit={this.onLogin}>
+            onSubmit={this.onStuLogin}>
             {(props) => (
               <form onSubmit={props.handleSubmit}>
                 <Field name="stunum" validate={this.validateStunum}>
                   {({field, form}) => (
                     <FormControl isInvalid={form.touched.stunum && form.errors.stunum}>
                       <FormLabel htmlFor="stunum"><Trans>loginScreen.stunum</Trans></FormLabel>
-                      <Input mb={4} variant="filled" type="number" {...field} id="name" placeholder={t("loginScreen.stunum_placeholder")} />
+                      <Input mb={4} variant="filled" type="number" {...field} id="stunum" placeholder={t("loginScreen.stunum_placeholder")} />
                       <FormErrorMessage>{form.errors.stunum}</FormErrorMessage>
                     </FormControl>
                   )}
@@ -229,7 +240,8 @@ class WrappedLoginScreen extends Component {
 const mapStateToProps = (state) => {
   return {
     user: getLoggedUser(state),
-    error: getLoggedError(state)
+    error: getLoggedError(state),
+    stuinfo: getStudentInfo(state),
   }
 }
 
