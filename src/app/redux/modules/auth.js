@@ -72,12 +72,6 @@ export const actions = {
   studentLogin: (stu_num) => {
     return async (dispatch) => {
       try {
-        // Check stunum at first
-        dispatch(appActions.startRequest());
-        const stunum_result = await authApi.queryStuNum(stu_num);
-        console.log("parseStuNum: Got data"+JSON.stringify(stunum_result));
-        dispatch(appActions.finishRequest());
-        dispatch(parseStuNumSuccess(stunum_result));
         // Login as student
         dispatch(appActions.startRequest());
         dispatch(actions.clearError());
@@ -85,6 +79,12 @@ export const actions = {
         console.log("stuLogin: Got data"+JSON.stringify(result));
         dispatch(appActions.finishRequest());
         dispatch(loginResult(result));
+        // Check stunum at first
+        dispatch(appActions.startRequest());
+        const stunum_result = await authApi.queryStuNum(stu_num);
+        console.log("parseStuNum: Got data"+JSON.stringify(stunum_result));
+        dispatch(appActions.finishRequest());
+        dispatch(parseStuNumSuccess(stunum_result));
       } catch (error) {
         dispatch(appActions.setError(error))
         dispatch(loginResult({error: {message: error.message}}));
@@ -97,6 +97,46 @@ export const actions = {
   clearError: () => ({
     type: types.CLEAR_ERR
   }),
+  isAdmin: () => {
+    // Use thunk to call selector with State ref. In order to peek state value only.
+    return (dispatch, getState) => {
+      let roles = getRoles(getState());
+      if (!Array.isArray(roles) || roles.length < 1){
+        return false;
+      }
+      return roles.includes("superadmin");
+    }
+  },
+  isOfficer: () => {
+    // Use thunk to call selector with State ref. In order to peek state value only.
+    return (dispatch, getState) => {
+      let roles = getRoles(getState());
+      if (!Array.isArray(roles) || roles.length < 1){
+        return false;
+      }
+      return roles.includes("normaladmin");
+    }
+  },
+  isTeacher: () => {
+    // Use thunk to call selector with State ref. In order to peek state value only.
+    return (dispatch, getState) => {
+      let roles = getRoles(getState());
+      if (!Array.isArray(roles) || roles.length < 1){
+        return false;
+      }
+      return roles.includes("teacher");
+    }
+  },
+  isStudent: () => {
+    // Use thunk to call selector with State ref. In order to peek state value only.
+    return (dispatch, getState) => {
+      let stuInfo = getStudentInfo(getState());
+      if (!Array.isArray(stuInfo) || stuInfo.length < 1){
+        return false;
+      }
+      return !!stuInfo.major_name;
+    }
+  },
 }
 
 const loginResult = (authResult) => {
@@ -187,21 +227,36 @@ export const getLoggedError = state => {
   return state.getIn(["auth", "error"]).toJS();
 }
 
-export const getDepartmentId = state => {
-  return state.getIn(["auth", "userInfo", "departmentId"]).toJS();
-};
-
-export const getLabdivisionId = state => {
-  return state.getIn(["auth", "userInfo", "labdivisionId"]).toJS();
+export const getRoles = state => {
+  let roles = state.getIn(["auth", "userInfo", "groups"]);
+  return roles?roles.toJS():[];
 };
 
 export const getStudentInfo = state => {
   return state.getIn(["auth", "stuInfo"]).toJS();
 };
 
-export const isStudent = createSelector(
-  getDepartmentId, getLabdivisionId,
-  (depId, divId) => {
-    return ((!depId || depId <= 0) && (!divId || divId <= 0));
+export const getAccessLevel = createSelector(
+  getRoles, getStudentInfo,
+  (roles, stuInfo) => {
+    let level = "ZERO";
+    if (!Array.isArray(stuInfo) || stuInfo.length < 1){
+      if (!!stuInfo.major_name) {
+        level = "STUDENT";
+      }
+    }
+    if (!Array.isArray(roles) || roles.length < 1){
+      return level;
+    }
+    if (roles.includes("superadmin")) {
+      return "ADMIN";
+    }
+    if (roles.includes("normaladmin")) {
+      return "OFFICER";
+    }
+    if (roles.includes("teacher")) {
+      return "PROFESSOR";
+    }
+    return level;
   }
 );

@@ -6,6 +6,10 @@ import {
   Button,
   Menu,
   MenuButton,
+  Box,
+  Avatar,
+  AvatarBadge,
+  Text,
 } from '@chakra-ui/core';
 import {
   FiBookOpen
@@ -248,61 +252,77 @@ class MenuBarWrapped extends Component {
     const { grade_info, lab_centers, lab_buildings, jiaoyanshi_centers, maintain_menus } = this;
     const menus = [
       { type: MenuType.JIAOWUCHU, title: "menuBar.jiaowuchu_kebiao_title", icon: AiTwotoneExperiment, bgColor: "green", onClick: this.onJwcKebiaoClicked,
-              menu_ref: this.jwcMenuRef },
+              menu_ref: this.jwcMenuRef, access_level: "NONE" },
       { list_type: MenuListType.GROUP, type: MenuType.LILUN, title: "menuBar.lilunkebiao_title", icon: FiBookOpen, bgColor: "orange",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.lilunMenuRef },
+              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.lilunMenuRef, access_level: "NONE" },
       { list_type: MenuListType.GROUP, type: MenuType.BANJI, title: "menuBar.banjikebiao_title", icon: FaCalendarDay, bgColor: "cyan",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.banjiMenuRef },
+              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.banjiMenuRef, access_level: "NONE" },
       { type: MenuType.SHIXUN, title: "menuBar.shixunkebiao_title", icon: AiTwotoneExperiment, bgColor: "green", onClick: this.onDepartmentLabsSummaryClicked,
-              menu_ref: this.shixunMenuRef },
+              menu_ref: this.shixunMenuRef, access_level: "NONE" },
       { list_type: MenuListType.LAB, type: MenuType.SHIYANSHI, title: "menuBar.shiyanshi_anpai_title", icon: FaBuilding, bgColor: "blue",
-              menuListProps: {labCenters: lab_centers, labBuildings: lab_buildings, onLabChange: this.onLabChanged}, menu_ref: this.labMenuRef },
+              menuListProps: {labCenters: lab_centers, labBuildings: lab_buildings, onLabChange: this.onLabChanged}, menu_ref: this.labMenuRef, access_level: "PROFESSOR" },
       { list_type: MenuListType.GROUP, type: MenuType.JIAOYANSHI, title: "menuBar.jiaoyanshi_kebiao_title", icon: MdCollectionsBookmark, bgColor: "red",
-              menuListProps: {menuGroups: jiaoyanshi_centers, onGroupMenuSelected: this.onJiaoYanShiChange, height: 500}, menu_ref: this.jysMenuRef },
-      { type: MenuType.PAIKE, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink", onClick: this.onJiaoShiPaiKeClicked},
+              menuListProps: {menuGroups: jiaoyanshi_centers, onGroupMenuSelected: this.onJiaoYanShiChange, height: 500}, menu_ref: this.jysMenuRef, access_level: "PROFESSOR" },
+      { type: MenuType.PAIKE, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink", onClick: this.onJiaoShiPaiKeClicked, access_level: "PROFESSOR"},
       { list_type: MenuListType.GROUP, type: MenuType.BASIC_MAINTAIN, title: "menuBar.basic_maintain_title", icon: FaUserCog, bgColor: "purple",
-              menuListProps: {menuGroups: maintain_menus, onGroupMenuSelected: this.onMaintainMenuSelected, height: 500} },
-    ]
+              menuListProps: {menuGroups: maintain_menus, onGroupMenuSelected: this.onMaintainMenuSelected, height: 500}, access_level: "PROFESSOR"},
+    ];
+    const { t, accessLevel, userInfo, stuInfo } = this.props;
+    const { userName, department_name } = userInfo;
+    const { grade_name, major_name, class_seq} = stuInfo;
     return (
-      <Flex direction="row" justify="center" flexWrap="wrap" mt={5}>
-        {
-          menus.map((item) => {
-            switch(item.list_type){
-              case MenuListType.LAB:
-                return <LabsMenu
-                  key={item.type}
-                  ref={item.menu_ref}
-                  menuType={item.type}
-                  m={1}
-                  width="11em"
-                  title={item.title}
-                  icon={item.icon}
-                  bgColor={item.bgColor}
-                  menuListProps={item.menuListProps} />
-              case MenuListType.GROUP:
-                return <GroupMenu
-                  key={item.type}
-                  ref={item.menu_ref}
-                  menuType={item.type}
-                  m={1}
-                  width="11em"
-                  title={item.title}
-                  icon={item.icon}
-                  bgColor={item.bgColor}
-                  menuListProps={item.menuListProps} />
-              default:
-                return <Button
-                  key={item.type}
-                  m={1}
-                  width="11em"
-                  leftIcon={item.icon}
-                  variantColor={item.bgColor}
-                  onClick={() => item.onClick(item.menu_type)}>
-                    <Trans>{item.title}</Trans>
-                  </Button>
-            }
-          })
-        }
+      <Flex direction="column" justify="center" basis="100%" mt={5}>
+        <Flex direction="row" justify="center" flexWrap="wrap" mt={5}>
+          {
+            menus.map((item) => {
+              if (accessLevel < item.access_level) {
+                return null;
+              }
+              switch(item.list_type) {
+                case MenuListType.LAB:
+                  return <LabsMenu
+                    key={item.type}
+                    ref={item.menu_ref}
+                    menuType={item.type}
+                    m={1}
+                    width="11em"
+                    title={item.title}
+                    icon={item.icon}
+                    bgColor={item.bgColor}
+                    menuListProps={item.menuListProps} />
+                case MenuListType.GROUP:
+                  return <GroupMenu
+                    key={item.type}
+                    ref={item.menu_ref}
+                    menuType={item.type}
+                    m={1}
+                    width="11em"
+                    title={item.title}
+                    icon={item.icon}
+                    bgColor={item.bgColor}
+                    menuListProps={item.menuListProps} />
+                default:
+                  return <Button
+                    key={item.type}
+                    m={1}
+                    width="11em"
+                    leftIcon={item.icon}
+                    variantColor={item.bgColor}
+                    onClick={() => item.onClick(item.menu_type)}>
+                      <Trans>{item.title}</Trans>
+                    </Button>
+              }
+            })
+          }
+        </Flex>
+        <Box p="20px" color="white" mt="4" bg="teal.100" rounded="md" shadow="md">
+          <Flex direction="row" justify="center" flexWrap="wrap" mt={5}>
+            <Avatar>
+              <AvatarBadge boxSize="1.25em" bg="green.500" />
+            </Avatar>
+            <Text fontSize="2xl">{t(stuInfo.major_name?"menuBar.student_profile_template":"menuBar.teacher_profile_template")}</Text>
+          </Flex>
+        </Box>
       </Flex>
     );
   }

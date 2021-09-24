@@ -62,7 +62,7 @@ class GroupMenuListWrapped extends Component {
 
   render() {
     const { group_values } = this.state;
-    const { menuGroups, height } = this.props;
+    const { menuGroups, height, access_level } = this.props;
     if (menuGroups == null) {
       return null;
     }
@@ -73,9 +73,12 @@ class GroupMenuListWrapped extends Component {
             <div key={group_index}>
             <MenuOptionGroup title={group.name} type="radio" value={group_values[group_index]} onChange={(value) => { this.onGroupValueChanged(group_index, value); }}>
               {
-                group.items.map((item, index) => (
-                  <MenuItemOption key={index} value={index} isDisabled={item.isDisabled}>{item.name}</MenuItemOption>
-                ))
+                group.items.map((item, index) => {
+                  if (access_level > item.access_level) {
+                    return null;
+                  }
+                  return (<MenuItemOption key={index} value={index} isDisabled={item.isDisabled}>{item.name}</MenuItemOption>);
+                })
               }
             </MenuOptionGroup>
             { group_index < menuGroups.length-1 && <MenuDivider /> }

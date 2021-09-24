@@ -9,10 +9,8 @@ import { connect } from "react-redux";
 import { withTranslation } from 'react-i18next';
 import {
   Flex,
-  Progress,
   AlertDialog,
   AlertDialogOverlay,
-  AlertDialogContent,
   Spinner,
 } from '@chakra-ui/core';
 
@@ -22,7 +20,7 @@ import {
   Alert,
 } from '../components';
 
-import { actions as authActions, getLoggedUser } from '../redux/modules/auth';
+import { actions as authActions, getAccessLevel, getLoggedUser, getStudentInfo } from '../redux/modules/auth';
 import { actions as gradeActions, getGradesOfAllDegrees } from '../redux/modules/grade';
 import { actions as jysActions, getJiaoyanshiOfAllCenters } from '../redux/modules/jiaoyanshi';
 import { actions as requestActions, getRequestQuantity, getError } from '../redux/modules/app';
@@ -126,23 +124,34 @@ class MainNavigatorWrapper extends PureComponent {
       return <Redirect to="/login" />;
     }
     const { onConfirmError } = this;
-    const { gradeTypes, centers, labBuildings, requestsCount, requestError } = this.props;
+    const { gradeTypes, centers, labBuildings, requestsCount, requestError, user, accessLevel, stuInfo } = this.props;
     console.log("Request count: "+requestsCount);
     return (
       <Flex direction="column" justify="center" basis="100%">
         <Flex px="10%" direction="column" justify="flex-start" flex={1}>
-          <MenuBar gradeTypes={gradeTypes} centers={centers} labBuildings={labBuildings} onMenuSelected={this.onMenuSelected}/>
+          <MenuBar 
+            gradeTypes={gradeTypes} 
+            centers={centers} 
+            labBuildings={labBuildings} 
+            onMenuSelected={this.onMenuSelected}
+            accessLevel={accessLevel}
+            stuInfo={stuInfo}
+            userInfo={user}
+          />
           <Switch>
             <Route path="/kebiao/jwc" component={AsyncJwcKeBiaoScreen} />
             <Route path="/kebiao/lilun" component={AsyncLiLunKeBiaoScreen} />
             <Route path="/kebiao/banji" component={AsyncBanJiKeBiaoScreen} />
             <Route path="/kebiao/shixun" component={AsyncShiXunKeBiaoScreen} />
-            <Route path="/labs" component={AsyncCenterLabScreen} />
-            <Route path="/jys" component={AsyncJysKebiaoScreen} />
-            <Route path="/paike" component={AsyncPaikeScreen} />
-            <Route path="/maintain/rawplan" component={AsyncEditRawplan} />
-            <Route path="/maintain/progressdoc" component={AsyncProgressdoc} />
-            <Route path="/maintain/curriculums" component={AsyncCurriculums} />
+            { accessLevel <= "PROFESSOR" &&
+            <>
+              <Route path="/labs" component={AsyncCenterLabScreen} />
+              <Route path="/jys" component={AsyncJysKebiaoScreen} />
+              <Route path="/paike" component={AsyncPaikeScreen} />
+              <Route path="/maintain/rawplan" component={AsyncEditRawplan} />
+              <Route path="/maintain/progressdoc" component={AsyncProgressdoc} />
+              <Route path="/maintain/curriculums" component={AsyncCurriculums} />
+            </>}
             <Route path="/" component={AsyncFrontPage} />
           </Switch>
         </Flex>
@@ -178,6 +187,8 @@ const mapStateToProps = (state) => {
     centers: getJiaoyanshiOfAllCenters(state),
     requestsCount: getRequestQuantity(state),
     requestError: getError(state),
+    stuInfo: getStudentInfo(state),
+    accessLevel: getAccessLevel(state),
   }
 }
 

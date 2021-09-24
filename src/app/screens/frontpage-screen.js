@@ -15,9 +15,9 @@ import {
 } from '../components';
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
+import { getStudentInfo, isStudent } from '../redux/modules/auth';
 import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup} from '../redux/modules/rawplan';
 
-import { SEMESTER_WEEK_COUNT } from './common/info';
 import JwcKebiaoScreen from './jwc-kebiao-screen';
 
 class FrontpageScreen extends Component {

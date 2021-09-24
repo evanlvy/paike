@@ -62,7 +62,9 @@
     "jiaoyanshi_kebiao_title": "教师周课表",
     "jiaoshi_paike_title": "教师排课",
     "basic_maintain_title": "基础数据维护",
-    "jiaowuchu_kebiao_title": "教务处课表"
+    "jiaowuchu_kebiao_title": "教务处课表",
+    "student_profile_template": "您好！来自{{grade_name}}{{major_name}}{{class_seq}}班的同学",
+    "teacher_profile_template": "您好！{{userName}}教授/老师 [{{department_name}}教研室]"
   },
   "subjectBoard": {
     "title_prefix_unselected": "请选择",
