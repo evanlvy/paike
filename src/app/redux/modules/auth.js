@@ -75,7 +75,7 @@ export const actions = {
         // Login as student
         dispatch(appActions.startRequest());
         dispatch(actions.clearError());
-        const result = await authApi.login("students", "abcdefgh");
+        const result = await authApi.login("test@test.com", "abcdefgh");
         console.log("stuLogin: Got data"+JSON.stringify(result));
         dispatch(appActions.finishRequest());
         dispatch(loginResult(result));
@@ -143,6 +143,8 @@ const loginResult = (authResult) => {
   let name = null;
   let token = null;
   let department_id = -1, labdiv_id = -1;
+  let department_name = "", labdiv_name = "";
+  let roles = [];
   if (authResult) {
     token = authResult.api_token;
     if (authResult.user) {
@@ -155,9 +157,18 @@ const loginResult = (authResult) => {
       }
       if (authResult.user.department_id) {
         department_id = authResult.user.department_id;
+        if (authResult.user.department_name) {
+          department_name = authResult.user.department_name;
+        }
       }
       if (authResult.user.labdivision_id) {
         labdiv_id = authResult.user.labdivision_id
+        if (authResult.user.labdivision_name) {
+          labdiv_name = authResult.user.labdivision_name;
+        }
+      }
+      if (authResult.user.groups) {
+        roles = authResult.user.groups;
       }
     }
   }
@@ -166,7 +177,10 @@ const loginResult = (authResult) => {
     userToken: token,
     userName: name,
     departmentId: department_id,
+    departmentName: department_name,
     labdivisionId: labdiv_id,
+    labdivisionName: labdiv_name,
+    roles: roles,
     error: authResult.error,
   }
 }
@@ -182,9 +196,13 @@ const parseStuNumSuccess = (data) => {
 const userInfo = (state = Immutable.fromJS({}), action) => {
   switch(action.type) {
     case types.LOGIN:
-      return Immutable.fromJS({ token: action.userToken, name: action.userName, departmentId: action.departmentId, labdivisionId: action.labdivisionId});
+      return Immutable.fromJS({ token: action.userToken, name: action.userName, 
+        departmentId: action.departmentId, departmentName: action.departmentName,
+        labdivisionId: action.labdivisionId, labdivisionName: action.labdivisionName,
+        roles: action.roles
+      });
     case types.LOGOUT:
-      return Immutable.fromJS({ token: null, name: null, departmentId: 0, labdivisionId: 0});
+      return Immutable.fromJS({ token: null, name: null, departmentId: 0, departmentName: "", labdivisionId: 0, labdivisionName: "", roles: []});
     default:
       return state;
   }
@@ -228,7 +246,7 @@ export const getLoggedError = state => {
 }
 
 export const getRoles = state => {
-  let roles = state.getIn(["auth", "userInfo", "groups"]);
+  let roles = state.getIn(["auth", "userInfo", "roles"]);
   return roles?roles.toJS():[];
 };
 
@@ -240,10 +258,8 @@ export const getAccessLevel = createSelector(
   getRoles, getStudentInfo,
   (roles, stuInfo) => {
     let level = "ZERO";
-    if (!Array.isArray(stuInfo) || stuInfo.length < 1){
-      if (!!stuInfo.major_name) {
-        level = "STUDENT";
-      }
+    if (stuInfo && stuInfo.major_name){
+      level = "STUDENT";
     }
     if (!Array.isArray(roles) || roles.length < 1){
       return level;

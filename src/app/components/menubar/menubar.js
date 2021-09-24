@@ -268,8 +268,9 @@ class MenuBarWrapped extends Component {
               menuListProps: {menuGroups: maintain_menus, onGroupMenuSelected: this.onMaintainMenuSelected, height: 500}, access_level: "PROFESSOR"},
     ];
     const { t, accessLevel, userInfo, stuInfo } = this.props;
-    const { userName, department_name } = userInfo;
+    const { name, departmentName, labdivisionName } = userInfo;
     const { grade_name, major_name, class_seq} = stuInfo;
+    console.log("renderer, access level: "+accessLevel);
     return (
       <Flex direction="column" justify="center" basis="100%" mt={5}>
         <Flex direction="row" justify="center" flexWrap="wrap" mt={5}>
@@ -315,12 +316,14 @@ class MenuBarWrapped extends Component {
             })
           }
         </Flex>
-        <Box p="20px" color="white" mt="4" bg="teal.100" rounded="md" shadow="md">
+        <Box p="20px" color="white" mt="4" bg="blue.600" rounded="md" shadow="md">
           <Flex direction="row" justify="center" flexWrap="wrap" mt={5}>
             <Avatar>
               <AvatarBadge boxSize="1.25em" bg="green.500" />
             </Avatar>
-            <Text fontSize="2xl">{t(stuInfo.major_name?"menuBar.student_profile_template":"menuBar.teacher_profile_template")}</Text>
+            <Text fontSize="xl">{stuInfo.major_name?
+            t("menuBar.student_profile_template",{grade_name: grade_name, major_name: major_name, class_seq: class_seq})
+            :t("menuBar.teacher_profile_template",{teacherName: name, departmentName: departmentName})}</Text>
           </Flex>
         </Box>
       </Flex>
