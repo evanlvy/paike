@@ -142,7 +142,7 @@ export const actions = {
 const loginResult = (authResult) => {
   let name = null;
   let token = null;
-  let department_id = -1, labdiv_id = -1;
+  let user_id = -1, department_id = -1, labdiv_id = -1;
   let department_name = "", labdiv_name = "";
   let roles = [];
   if (authResult) {
@@ -154,6 +154,9 @@ const loginResult = (authResult) => {
       }
       if (authResult.user.lastName) {
         name += authResult.user.lastName;
+      }
+      if (authResult.user.id) {
+        user_id = authResult.user.id;
       }
       if (authResult.user.department_id) {
         department_id = authResult.user.department_id;
@@ -176,6 +179,7 @@ const loginResult = (authResult) => {
     type: types.LOGIN,
     userToken: token,
     userName: name,
+    id: user_id,
     departmentId: department_id,
     departmentName: department_name,
     labdivisionId: labdiv_id,
@@ -196,13 +200,13 @@ const parseStuNumSuccess = (data) => {
 const userInfo = (state = Immutable.fromJS({}), action) => {
   switch(action.type) {
     case types.LOGIN:
-      return Immutable.fromJS({ token: action.userToken, name: action.userName, 
+      return Immutable.fromJS({ token: action.userToken, name: action.userName, id: action.id,
         departmentId: action.departmentId, departmentName: action.departmentName,
         labdivisionId: action.labdivisionId, labdivisionName: action.labdivisionName,
         roles: action.roles
       });
     case types.LOGOUT:
-      return Immutable.fromJS({ token: null, name: null, departmentId: 0, departmentName: "", labdivisionId: 0, labdivisionName: "", roles: []});
+      return Immutable.fromJS({ token: null, name: null, id: 0, departmentId: 0, departmentName: "", labdivisionId: 0, labdivisionName: "", roles: []});
     default:
       return state;
   }

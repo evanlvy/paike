@@ -21,7 +21,8 @@ import {
 } from 'formik';
 import { Trans, withTranslation } from 'react-i18next';
 
-import { actions as authActions, getLoggedUser, getLoggedError, getStudentInfo } from '../redux/modules/auth';
+import { actions as authActions, getLoggedUser, getLoggedError, getAccessLevel } from '../redux/modules/auth';
+import PropTypes from 'prop-types';
 
 function Toast(props) {
   const toast = useToast();
@@ -40,6 +41,10 @@ class WrappedLoginScreen extends Component {
     this.state = {
       showError: false
     }
+  }
+
+  static contextTypes = {
+    router: PropTypes.object.isRequired,
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -148,6 +153,15 @@ class WrappedLoginScreen extends Component {
     const { from } = this.props.location.state || { from: { pathname: "/"}};
     this.checkNeedRedirect();
     if (this.redirectToReferer) {
+      const { accessLevel, user } = this.props;
+      let menu_params = {};
+      if (accessLevel === "PROFESSOR") {
+        menu_params =  {jys: {id: user.departmentId, name: user.departmentName}, teacherId: user.id};
+        return <Redirect to={{
+          pathname: '/jys',
+          state: menu_params
+        }}/>
+      }
       console.log("redirect to "+from.pathname);
       return <Redirect to={from.pathname} />;
     }
@@ -241,7 +255,7 @@ const mapStateToProps = (state) => {
   return {
     user: getLoggedUser(state),
     error: getLoggedError(state),
-    stuinfo: getStudentInfo(state),
+    accessLevel: getAccessLevel(state),
   }
 }
 

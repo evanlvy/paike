@@ -10,7 +10,8 @@ import { getJiaoyanshiIds, getJiaoyanshi } from './jiaoyanshi';
 
 // action types
 export const types = {
-  FETCH_TEACHERS: "TEACHER/FETCH_TEACHERS"
+  FETCH_TEACHERS: "TEACHER/FETCH_TEACHERS",
+  SET_SELECTED_JYS: "TEACHER/SELECTED_JYS"
 };
 
 // actions
@@ -25,6 +26,7 @@ export const actions = {
           const { teacherByIds, teacherIds, kebiaoByTeacherSched, kebiaoByIds } = convertTeachersToPlain(data, year, week);
           dispatch(fetchTeachersSuccess(jiaoyanshiId, teacherIds, teacherByIds, kebiaoByTeacherSched, kebiaoByIds));
         }
+        dispatch(setSelectedJys(jiaoyanshiId));
       } catch (error) {
         dispatch(appActions.setError(error));
       }
@@ -113,6 +115,13 @@ const fetchTeachersSuccess = (jiaoyanshiId, teacherIds, teacherByIds, kebiaoByTe
   })
 }
 
+const setSelectedJys = (jysId) => {
+  return ({
+    type: types.SET_SELECTED_JYS,
+    jysId
+  })
+}
+
 // reducers
 const byIds = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
@@ -127,6 +136,8 @@ const byJiaoyanshi = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_TEACHERS:
       return state.merge({[action.jiaoyanshiId]: action.teacherIds});
+    case types.SET_SELECTED_JYS:
+      return state.merge({selected: action.jysId});
     default:
       return state;
   }
@@ -156,7 +167,31 @@ export const getTeachers = state => state.getIn(["teacher", "byIds"]);
 
 export const getTeachersByJys = state => state.getIn(["teacher", "byJiaoyanshi"]);
 
+export const getSelectedJys = (state) => state.getIn(["teacher", "byJiaoyanshi", "selected"]);
+
+export const getTeacherIdsBySelectedJys = state => state.getIn(["teacher", "byJiaoyanshi", getSelectedJys(state)+""]);
+
 export const getKebiaoByTeacherSched = state => state.getIn(["teacher", "kebiaoByTeacherSched"]);
+
+export const getTeachersBySelectedJys = createSelector(
+  [getTeacherIdsBySelectedJys, getTeachers],
+  (teacherBySelectedJys, teachers) => {
+    if (!teacherBySelectedJys || !teachers) {
+      return [];
+    }
+    const teachersList = teacherBySelectedJys;
+    if (teachersList) {
+      let teacherListByJys = [];
+      teachersList.forEach(teacherId => {
+        const teacherInfo = teachers.get(teacherId+"");
+        teacherListByJys.push({id: teacherInfo.id, title: teacherInfo.name});
+      });
+      console.log("getTeachersBySelectedJys: "+JSON.stringify(teacherListByJys));
+      return teacherListByJys;
+    }
+    return [];
+  }
+)
 
 export const getTeachersByAllJys = createSelector(
   [getJiaoyanshiIds, getJiaoyanshi, getTeachersByJys, getTeachers],

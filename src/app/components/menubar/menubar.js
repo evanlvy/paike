@@ -322,8 +322,10 @@ class MenuBarWrapped extends Component {
               <AvatarBadge boxSize="1.25em" bg="green.500" />
             </Avatar>
             <Text fontSize="xl">{stuInfo.major_name?
-            t("menuBar.student_profile_template",{grade_name: grade_name, major_name: major_name, class_seq: class_seq})
-            :t("menuBar.teacher_profile_template",{teacherName: name, departmentName: departmentName})}</Text>
+              t("menuBar.student_profile_template",{grade_name: grade_name, major_name: major_name, class_seq: class_seq})
+              :t("menuBar.teacher_profile_template",{teacherName: name, 
+              departmentName: ((typeof(departmentName)=='string' && departmentName != "")?departmentName:labdivisionName)})}
+            </Text>
           </Flex>
         </Box>
       </Flex>

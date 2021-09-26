@@ -16,7 +16,7 @@ import {
 } from '../components';
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
-import { actions as teacherActions, buildTeacherSchedId, getTeachersByAllJys, getKebiaoByTeacherSched } from '../redux/modules/teacher';
+import { actions as teacherActions, buildTeacherSchedId, getTeachersByAllJys, getKebiaoByTeacherSched, getTeachersBySelectedJys } from '../redux/modules/teacher';
 import { getKebiao } from '../redux/modules/kebiao';
 
 import { SEMESTER_WEEK_COUNT } from './common/info';
@@ -26,9 +26,11 @@ const TEACHER_ITEM_COLOR = "pink.400";
 class JysKebiaoScreen extends Component {
   constructor(props) {
     super (props);
-    const { t, schoolWeek } = props;
+    const { t, schoolWeek, location } = props;
+    let default_tid = (location.state.teacherId)?location.state.teacherId:0;
     this.state = {
       selectedTeacherIndex: 0,
+      defaultTeacherId: default_tid,
       selectWeek: schoolWeek ? schoolWeek : 1,
     };
 
@@ -69,16 +71,17 @@ class JysKebiaoScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { schoolYear, schoolWeek, teachersByJys, kebiaoByTeacherSched, kebiaoByIds, location } = this.props;
+    const { schoolYear, schoolWeek, teachersBySelectedJys, teachersByJys, kebiaoByTeacherSched, kebiaoByIds, location } = this.props;
     const { selectedTeacherIndex, selectWeek } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
     if (nextProps.location.state.jys !== location.state.jys) {
       this.resetData();
       console.log("shouldComponentUpdate, location state diff");
+      this.loadTeachers(this.jysSelectWeek, nextProps.location.state.jys.id);
       return true;
-    } else if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
-    || nextProps.teachersByJys !== teachersByJys || nextProps.kebiaoByTeacherSched !== kebiaoByTeacherSched || nextProps.kebiaoByIds !== kebiaoByIds) {
+    } else if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek || nextProps.teachersBySelectedJys !== teachersBySelectedJys
+    || /*nextProps.teachersByJys !== teachersByJys ||*/ nextProps.kebiaoByTeacherSched !== kebiaoByTeacherSched || nextProps.kebiaoByIds !== kebiaoByIds) {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedTeacherIndex !== selectedTeacherIndex || nextState.selectWeek !== selectWeek) {
@@ -106,18 +109,20 @@ class JysKebiaoScreen extends Component {
     this.tableData = null;
     this.setState({
       selectedTeacherIndex: 0,
+      defaultTeacherId: -1,
       selectWeek: schoolWeek ? schoolWeek : 1,
     });
   }
 
-  loadTeachers = (selectWeek) => {
+  loadTeachers = (selectWeek, jysId=0) => {
     const { schoolYear, schoolWeek } = this.props;
     if (!schoolYear || !schoolWeek) {
       return;
     }
-    console.log("loadTeachers, year: "+schoolYear+" week: "+selectWeek);
     const { jys } = this.props.location.state;
-    this.props.fetchTeachersByJys(jys.id, schoolYear, selectWeek);
+    let dest_jydId = jysId>0?jysId:jys.id;
+    console.log("loadTeachers, jys: "+dest_jydId+" year: "+schoolYear+" week: "+selectWeek);
+    this.props.fetchTeachersByJys(dest_jydId, schoolYear, selectWeek);
   }
 
   buildData = () => {
@@ -136,7 +141,7 @@ class JysKebiaoScreen extends Component {
     }
   }
 
-  buildTeachers = () => {
+  buildTeachers = () => {/*
     const { jys } = this.props.location.state;
     const { t, teachersByJys } = this.props;
     const { selectedTeacherIndex } = this.state;
@@ -153,7 +158,7 @@ class JysKebiaoScreen extends Component {
         this.selectedTeacher = null;
       }
     }
-    this.updateTeacherTitle();
+    this.updateTeacherTitle();*/
   }
 
   updateTeacherTitle = () => {
@@ -314,7 +319,7 @@ class JysKebiaoScreen extends Component {
   }
 
   onTeacherClicked = (index) => {
-    console.log(`onTeacherClicked ${this.teacherList[index].title}`);
+    console.log(`onTeacherClicked`);
     this.setState({
       selectedTeacherIndex: index
     });
@@ -331,9 +336,9 @@ class JysKebiaoScreen extends Component {
   }
 
   render() {
-    const { t } = this.props;
+    const { t, teachersBySelectedJys } = this.props;
     this.buildData();
-    const { selectedTeacherIndex } = this.state;
+    const { selectedTeacherIndex, defaultTeacherId } = this.state;
     const { teacherTitle, teacherList, onTeacherClicked, jysSelectWeek,
       tabTitles, tableHeaders, tableTitle, tableData, semesterPages,
       onSemesterPageChanged } = this;
@@ -361,14 +366,18 @@ class JysKebiaoScreen extends Component {
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center">
         {
-          teacherList && teacherList.length > 0 &&
+          teachersBySelectedJys && teachersBySelectedJys.length > 0 &&
           <SubjectBoard
             my={4}
+            t={t}
             color={JYS_KEBIAO_COLOR}
             title={teacherTitle}
-            subjects={teacherList}
+            subjects={teachersBySelectedJys}
             onSubjectClicked={onTeacherClicked}
             initSelectIndex={selectedTeacherIndex}
+            initSelectId={defaultTeacherId}
+            enableSelectAll
+            enableAutoTitle
             enableSelect />
         }
         {
@@ -392,7 +401,8 @@ const mapStateToProps = (state) => {
   return {
     schoolYear: getSchoolYear(state),
     schoolWeek: getSchoolWeek(state),
-    teachersByJys: getTeachersByAllJys(state),
+    //teachersByJys: getTeachersByAllJys(state),
+    teachersBySelectedJys: getTeachersBySelectedJys(state),
     kebiaoByTeacherSched: getKebiaoByTeacherSched(state),
     kebiaoByIds:getKebiao(state),
   }

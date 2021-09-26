@@ -22,13 +22,12 @@ class SubjectBoard extends PureComponent {
   buildInitSelectedIndexList = () => {
     const { initSelectedIndexList, initSelectIndex } = this.props;
     let selectedIndexList = [];
-    console.log(`initSelectedIndexList bef: ${initSelectedIndexList}`);
     if (initSelectedIndexList !== undefined) {
       selectedIndexList = [...initSelectedIndexList];
     } else if (initSelectIndex !== undefined) {
       selectedIndexList = [initSelectIndex];
     }
-    console.log(`initSelectedIndexList after: ${selectedIndexList}`);
+    console.log(`buildSelectedIndexList: ${selectedIndexList}`);
     return selectedIndexList;
   }
 
@@ -160,6 +159,30 @@ class SubjectBoard extends PureComponent {
     return title;
   }
 
+  buildSelectedIndexById = () => {
+    const { enableMultiSelect, enableSelect, initSelectIds, initSelectId } = this.props;
+    if (enableSelect && this.items && this.items.length > 0) {
+      let selectedIndexList = [];
+      let ids = [];
+      if (enableMultiSelect && initSelectIds && initSelectIds.length > 0) {
+        ids = initSelectIds;
+      }
+      else if (initSelectId > 0) {
+        ids = [initSelectId];
+      }
+      if (ids.length > 0) {
+        for (let i=0; i < this.items.length; i++) {
+          if (ids.includes(this.items[i].id)) {
+            selectedIndexList.push(i);
+          }
+        }
+        this.setState({
+          selectedIndexList: selectedIndexList
+        })
+      }
+    }
+  }
+
   render() {
     const { t, subjects, color, title, enableSelectAll, enableAutoTitle, onSubjectClicked, ...other_props } = this.props;
     let { autoTitle, selectAllChecked } = this;
@@ -167,13 +190,14 @@ class SubjectBoard extends PureComponent {
       this.items = subjects; //[...subjects];
       //console.log("Render: Groups Data items: "+JSON.stringify(this.items));
       autoTitle = this.buildAutoTitle(this.items, this.state.selectedIndexList);
+      this.buildSelectedIndexById();
     }
     return (
       <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" {...other_props}>
         <Box display="flex" flexDirection="row" backgroundColor={color+".400"} px={5} py={2} color="white">
           <Text width="100%">{enableAutoTitle?(autoTitle.prefix+title+autoTitle.selected):title}</Text>
           {
-            (enableSelectAll===true) && 
+            enableSelectAll && 
             <Checkbox 
               //defaultIsChecked={false} 
               whiteSpace="nowrap" 
