@@ -27,9 +27,9 @@ class JysKebiaoScreen extends Component {
   constructor(props) {
     super (props);
     const { t, schoolWeek, location } = props;
-    let default_tid = (location.state.teacherId)?location.state.teacherId:0;
+    let default_tid = (location.state.teacherId)?location.state.teacherId:-1;
     this.state = {
-      selectedTeacherIndex: 0,
+      selectedTeacherIds: [],
       defaultTeacherId: default_tid,
       selectWeek: schoolWeek ? schoolWeek : 1,
     };
@@ -71,8 +71,8 @@ class JysKebiaoScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { schoolYear, schoolWeek, teachersBySelectedJys, teachersByJys, kebiaoByTeacherSched, kebiaoByIds, location } = this.props;
-    const { selectedTeacherIndex, selectWeek } = this.state;
+    const { schoolYear, schoolWeek, teachersBySelectedJys, kebiaoByTeacherSched, kebiaoByIds, location } = this.props;
+    const { selectedTeacherIndex, selectWeek, selectedTeacherIds } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
     if (nextProps.location.state.jys !== location.state.jys) {
@@ -84,7 +84,7 @@ class JysKebiaoScreen extends Component {
     || /*nextProps.teachersByJys !== teachersByJys ||*/ nextProps.kebiaoByTeacherSched !== kebiaoByTeacherSched || nextProps.kebiaoByIds !== kebiaoByIds) {
       console.log("shouldComponentUpdate, props diff");
       return true;
-    } else if (nextState.selectedTeacherIndex !== selectedTeacherIndex || nextState.selectWeek !== selectWeek) {
+    } else if (nextState.selectedTeacherIndex !== selectedTeacherIndex || nextState.selectWeek !== selectWeek || nextState.selectedTeacherIds !== selectedTeacherIds) {
       console.log("shouldComponentUpdate, state diff");
       return true;
     }
@@ -127,8 +127,8 @@ class JysKebiaoScreen extends Component {
 
   buildData = () => {
     this.buildSemester();
-    this.buildTeachers();
-    this.buildKebiao();
+    //this.buildTeachers();
+    //this.buildKebiao();
   }
 
   buildSemester = () => {
@@ -172,18 +172,24 @@ class JysKebiaoScreen extends Component {
     }
   }
 
-  buildKebiao = () => {
+  buildKebiao = (selectedTeacherIds=[]) => {
     const { jys } = this.props.location.state;
-    const { t } = this.props;
-    const { selectedTeacher } = this;
-    if (selectedTeacher) {
-      this.tableTitle = t("jysKebiaoScreen.table_title_template", {teacher_info: jys.name+" "+selectedTeacher.title});
-      this.tableData = this.buildTeacherKebiaoTable(selectedTeacher.id);
-    } else { // No selected Teacher, it's table of the whole Jys
-      this.tableTitle = t("jysKebiaoScreen.table_title_template", {teacher_info: jys.name});
+    const { t, teachersBySelectedJys } = this.props;
+    this.tableTitle = t("jysKebiaoScreen.table_title_template", {teacher_info: jys.name});
+    if (selectedTeacherIds.length < 1) {
+      // Select none teacher
+      this.tableTitle += " "+t("jysKebiaoScreen.no_selection");
+      this.tableData = [];
+    }
+    else if (selectedTeacherIds.length === teachersBySelectedJys.length){
+      // Select all teachers
       this.tableData = this.buildJysKebiaoTable();
     }
-    this.updateTabTitles();
+    else {
+      this.tableData = this.buildTeacherKebiaoTable(selectedTeacherIds[0]);
+    }
+    console.log("buildKebiao: tableData:"+JSON.stringify(this.tableData));
+    //this.updateTabTitles();
   }
 
   buildJysKebiaoTable = () => {
@@ -304,7 +310,7 @@ class JysKebiaoScreen extends Component {
     return resultList;
   }
 
-  updateTabTitles = () => {
+  /*updateTabTitles = () => {
     this.tabTitles = [];
     if (!this.teacherList) {
       return;
@@ -316,13 +322,21 @@ class JysKebiaoScreen extends Component {
     } else {
       this.tabTitles = [t("jysKebiaoScreen.all_teachers")];
     }
-  }
+  }*/
 
-  onTeacherClicked = (index) => {
+  /*onTeacherClicked = (index) => {
     console.log(`onTeacherClicked`);
     this.setState({
       selectedTeacherIndex: index
     });
+  }*/
+
+  selectedIdsChanged = (teacherIds) => {
+    console.log(`selectedIdsChanged ${teacherIds}`);
+    this.setState({
+      selectedTeacherIds: teacherIds
+    });
+    this.buildKebiao(teacherIds);
   }
 
   onSemesterPageChanged = (index) => {
@@ -339,30 +353,11 @@ class JysKebiaoScreen extends Component {
     const { t, teachersBySelectedJys } = this.props;
     this.buildData();
     const { selectedTeacherIndex, defaultTeacherId } = this.state;
-    const { teacherTitle, teacherList, onTeacherClicked, jysSelectWeek,
-      tabTitles, tableHeaders, tableTitle, tableData, semesterPages,
+    const { jysSelectWeek,  //teacherTitle, teacherList, onTeacherClicked,
+      tabTitles, tableHeaders, tableTitle, tableData, semesterPages, selectedIdsChanged,
       onSemesterPageChanged } = this;
-    const pageTables = [];
-    if (tableData) {
-      pageTables[0] = (<ResultTable
-        height={450}
-        titleHeight={50}
-        colLineHeight={20}
-        defaultColWidth={180}
-        title={tableTitle}
-        color={JYS_KEBIAO_COLOR}
-        headers={tableHeaders}
-        data={tableData}
-        pageNames={semesterPages}
-        pagePrevCaption={t("kebiao.prev_semester_week")}
-        pageNextCaption={t("kebiao.next_semester_week")}
-        onResultPageIndexChanged={onSemesterPageChanged}
-        initPageIndex={jysSelectWeek-1}
-        pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}/>);
-    } else {
-      pageTables[0] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
-    }
-
+    //const pageTables = [];
+    console.log("renderer: tableData:"+JSON.stringify(tableData));
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center">
         {
@@ -371,26 +366,33 @@ class JysKebiaoScreen extends Component {
             my={4}
             t={t}
             color={JYS_KEBIAO_COLOR}
-            title={teacherTitle}
+            title={t("menuBar.jiaoyanshi_kebiao_title")}
             subjects={teachersBySelectedJys}
-            onSubjectClicked={onTeacherClicked}
-            initSelectIndex={selectedTeacherIndex}
+            //onSubjectClicked={onTeacherClicked}
+            selectedIdsChanged={selectedIdsChanged}
+            //initSelectIndex={selectedTeacherIndex}
             initSelectId={defaultTeacherId}
             enableSelectAll
             enableAutoTitle
             enableSelect />
         }
         {
-          tabTitles && tabTitles.length > 0 &&
-          <ResultTabList
-            ref={this.tabsListRef}
-            my={4}
-            width="100%"
-            maxWidth={1444}
-            tabHeight={50}
+          tableData && 
+          <ResultTable
+            height={450}
+            titleHeight={50}
+            colLineHeight={20}
+            defaultColWidth={180}
+            title={tableTitle}
             color={JYS_KEBIAO_COLOR}
-            titles={tabTitles}
-            pages={pageTables} />
+            headers={tableHeaders}
+            data={tableData}
+            pageNames={semesterPages}
+            pagePrevCaption={t("kebiao.prev_semester_week")}
+            pageNextCaption={t("kebiao.next_semester_week")}
+            onResultPageIndexChanged={onSemesterPageChanged}
+            initPageIndex={jysSelectWeek-1}
+            pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}/>
         }
       </Flex>
     );

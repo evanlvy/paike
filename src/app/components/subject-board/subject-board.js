@@ -170,16 +170,15 @@ class SubjectBoard extends PureComponent {
       else if (initSelectId > 0) {
         ids = [initSelectId];
       }
-      if (ids.length > 0) {
-        for (let i=0; i < this.items.length; i++) {
-          if (ids.includes(this.items[i].id)) {
-            selectedIndexList.push(i);
-          }
+      for (let i=0; i < this.items.length; i++) {
+        if (ids.includes(this.items[i].id)) {
+          selectedIndexList.push(i);
         }
-        this.setState({
-          selectedIndexList: selectedIndexList
-        })
       }
+      this.setState({
+        selectedIndexList: selectedIndexList
+      })
+      this.selectorCallbackInvoker(selectedIndexList);
     }
   }
 
@@ -187,10 +186,12 @@ class SubjectBoard extends PureComponent {
     const { t, subjects, color, title, enableSelectAll, enableAutoTitle, onSubjectClicked, ...other_props } = this.props;
     let { autoTitle, selectAllChecked } = this;
     if (!this.items || this.items.length <= 0) {
-      this.items = subjects; //[...subjects];
-      //console.log("Render: Groups Data items: "+JSON.stringify(this.items));
-      autoTitle = this.buildAutoTitle(this.items, this.state.selectedIndexList);
-      this.buildSelectedIndexById();
+      if (subjects.length > 0){
+        this.items = subjects; //[...subjects];
+        //console.log("Render: Groups Data items: "+JSON.stringify(this.items));
+        autoTitle = this.buildAutoTitle(this.items, this.state.selectedIndexList);
+        this.buildSelectedIndexById();
+      }
     }
     return (
       <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" {...other_props}>

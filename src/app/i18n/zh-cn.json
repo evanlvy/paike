@@ -140,7 +140,8 @@
   },
   "jysKebiaoScreen": {
     "all_teachers": "全教研室",
-    "table_title_template": "{{teacher_info}} 排班表"
+    "table_title_template": "{{teacher_info}} 排班表",
+    "no_selection": "请选择教师"
   },
   "jwcKebiaoScreen": {
     "title": "全校课表",
