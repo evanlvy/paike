@@ -109,7 +109,8 @@ class JwcKebiaoScreen extends Component {
     this.props.fetchRawplanGroups(schoolYear);
   }
 
-  onSubjectClicked = (index) => {
+  onSubjectSelected = (index_array) => {
+    let index = index_array[0];
     this.setState({
       selectedSubjectIndex: index,
     });
@@ -150,7 +151,7 @@ class JwcKebiaoScreen extends Component {
   render() {
     const { t, groupList, planRows, groupStageWeekId, schoolWeek, } = this.props;
     const { selectedSubjectIndex } = this.state;
-    const { groupTitle, onSubjectClicked, onSemesterPageChanged, 
+    const { groupTitle, onSubjectSelected, onSemesterPageChanged, 
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
     //console.log("render: plans "+JSON.stringify(planRows));
@@ -166,7 +167,7 @@ class JwcKebiaoScreen extends Component {
             title={groupTitle}
             subjects={groupList}
             initSelectIndex={selectedSubjectIndex}
-            onSubjectClicked={onSubjectClicked}
+            selectionChanged={onSubjectSelected}
             t = {t}
             enableSelect={true}
             enableAutoTitle={true} />
