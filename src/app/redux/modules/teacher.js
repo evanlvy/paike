@@ -187,7 +187,9 @@ export const getTeachersBySelectedJys = createSelector(
         teacherListByJys.push({id: teacherInfo.id, title: teacherInfo.name});
       });
       console.log("getTeachersBySelectedJys: "+JSON.stringify(teacherListByJys));
-      return teacherListByJys;
+      return teacherListByJys.sort(function(a, b) {
+        return a["id"]-b["id"];
+      });
     }
     return [];
   }

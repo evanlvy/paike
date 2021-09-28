@@ -38,11 +38,18 @@ class SubjectBoard extends Component {
     const { selectedIndexList } = this.state;
     console.log("LIFECYCLE: shouldComponentUpdate");
     if (nextState.selectedIndexList !== selectedIndexList) {      
-      console.log("shouldComponentUpdate, selectedIndexList diff");
+      console.log("LIFECYCLE: shouldComponentUpdate, selectedIndexList diff");
       return true;
     } else if (nextProps.subjects !== subjects) {
-      console.log("shouldComponentUpdate, subjects diff");
-      return true;
+      console.log("LIFECYCLE: shouldComponentUpdate, subjects diff");
+      let subjects_unchanged = true;
+      if (!Array.isArray(nextProps.subjects) || !Array.isArray(subjects)) {
+        subjects_unchanged = false;
+      } else {
+        subjects_unchanged = (nextProps.subjects.toString() === subjects.toString());
+        console.log("LIFECYCLE: shouldComponentUpdate: subjects_unchanged="+subjects_unchanged);
+      }
+      return !subjects_unchanged;
     }
     return false;
   }
@@ -59,9 +66,17 @@ class SubjectBoard extends Component {
     if (prevState.selectedIndexList !== this.state.selectedIndexList) {
       this.selectorCallbackInvoker(this.state.selectedIndexList);
     }
-    if (prevProps.enableSelect !== this.props.enableSelect || 
+    let subjects_unchanged = true;
+    if (prevProps.subjects !== this.props.subjects) {
+      if (!Array.isArray(prevProps.subjects) || !Array.isArray(this.props.subjects)) {
+        subjects_unchanged = false;
+      } else {
+        subjects_unchanged = (prevProps.subjects.toString() === this.props.subjects.toString());
+        console.log("LIFECYCLE: componentDidUpdate: subjects_unchanged="+subjects_unchanged);
+      }
+    }
+    if (!subjects_unchanged || prevProps.enableSelect !== this.props.enableSelect || 
       prevProps.initSelectAll !== this.props.initSelectAll ||
-      prevProps.subjects !== this.props.subjects || 
       prevProps.initSelectIds !== this.props.initSelectIds ||
       prevProps.initSelectId !== this.props.initSelectId ||
       prevProps.initSelectedIndexList !== this.props.initSelectedIndexList ||
