@@ -1,6 +1,6 @@
 /* @flow */
 
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import {
   Box,
   Text,
@@ -9,17 +9,19 @@ import {
 
 import { BallGrid } from '../common/ball-grid';
 
-class SubjectBoard extends PureComponent {
+class SubjectBoard extends Component {
   constructor(props) {
     super (props);
+    let selected = SubjectBoard.getInitialSelectedIdsFromProps(this.props);
     this.state = {
-      selectedIndexList: this.buildInitSelectedIndexList(),
+      selectedIndexList: selected
     }
     this.autoTitle = {prefix: "", selected: ""};
     this.selectAllChecked = false;
+    this.autoTitle = this.buildAutoTitle();
   }
 
-  buildInitSelectedIndexList = () => {
+  /*buildInitSelectedIndexList = () => {
     const { initSelectedIndexList, initSelectIndex } = this.props;
     let selectedIndexList = [];
     if (initSelectedIndexList !== undefined) {
@@ -29,34 +31,92 @@ class SubjectBoard extends PureComponent {
     }
     console.log(`buildSelectedIndexList: ${selectedIndexList}`);
     return selectedIndexList;
+  }*/
+
+  shouldComponentUpdate(nextProps, nextState) {
+    const { subjects } = this.props;
+    const { selectedIndexList } = this.state;
+    console.log("LIFECYCLE: shouldComponentUpdate");
+    if (nextState.selectedIndexList !== selectedIndexList) {      
+      console.log("shouldComponentUpdate, selectedIndexList diff");
+      return true;
+    } else if (nextProps.subjects !== subjects) {
+      console.log("shouldComponentUpdate, subjects diff");
+      return true;
+    }
+    return false;
   }
 
   componentDidMount() {
+    console.log("LIFECYCLE: componentDidMount");
     // Work for initial selection callback
-    const {onSubjectClicked: onSubjectClickedCallback, initSelectIndex, initSelectedIndexList } = this.props;
-    if (initSelectedIndexList && initSelectedIndexList.length > 0) {
-      this.autoTitle = this.buildAutoTitle(this.items, initSelectedIndexList);
-      this.selectorCallbackInvoker(initSelectedIndexList);
+    this.selectorCallbackInvoker(this.state.selectedIndexList);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    console.log("LIFECYCLE: componentDidUpdate");
+    // Subjects items content changed!
+    if (prevState.selectedIndexList !== this.state.selectedIndexList) {
+      this.selectorCallbackInvoker(this.state.selectedIndexList);
     }
-    else if (initSelectIndex >= 0) {
-      if (onSubjectClickedCallback != null) {
-        onSubjectClickedCallback(initSelectIndex);
+    if (prevProps.enableSelect !== this.props.enableSelect || 
+      prevProps.initSelectAll !== this.props.initSelectAll ||
+      prevProps.subjects !== this.props.subjects || 
+      prevProps.initSelectIds !== this.props.initSelectIds ||
+      prevProps.initSelectId !== this.props.initSelectId ||
+      prevProps.initSelectedIndexList !== this.props.initSelectedIndexList ||
+      prevProps.initSelectIndex !== this.props.initSelectIndex) {
+        console.log("LIFECYCLE: componentDidUpdate: initial SelectedIds");
+        this.setState({
+          selectedIndexList: SubjectBoard.getInitialSelectedIdsFromProps(this.props)
+        });
+    }
+  }
+
+  static getInitialSelectedIdsFromProps(props) {
+    console.log("getInitialSelectedIdsFromProps");
+    // Build selection index array (not id array)
+    if (props.enableSelect && Array.isArray(props.subjects) && props.subjects.length > 0 ) {
+      let selections = [];
+      if (props.initSelectAll) {
+        selections = [...Array(props.subjects.length).keys()];
+      } else {
+        if (props.enableMultiSelect && Array.isArray(props.initSelectedIndexList)) {
+          selections = props.initSelectedIndexList;
+        } else if (typeof props.initSelectIndex === 'number') {
+          selections.push(props.initSelectIndex);
+        }
+        if (props.enableMultiSelect && Array.isArray(props.initSelectIds)) {
+          let idxes = SubjectBoard.getIndexesFromIds(props.initSelectIds, props.subjects);
+          if (idxes.length > 0) {
+            selections = selections.concat(idxes);
+          }
+        } else if (typeof props.initSelectId === 'number') {
+          let idx = SubjectBoard.getIndexesFromIds(props.initSelectId, props.subjects);
+          if ( idx >= 0) {
+            selections.push(idx);
+          }
+        }
       }
-      this.autoTitle = this.buildAutoTitle(this.items, [initSelectIndex]);
-      this.selectorCallbackInvoker([initSelectIndex]);
+      if (selections.length < 1) {
+        selections = [0];  // Select index 0 by fail-safe
+      }
+      console.log("getInitialSelectedIdsFromProps, ret: "+JSON.stringify(selections));
+      return selections;
     }
+    return [];
   }
 
   reset = () => {
     this.setState({
-      selectedIndexList: this.buildInitSelectedIndexList()
+      selectedIndexList: [] //this.buildInitSelectedIndexList()
     })
   }
 
   onSubjectClicked = (index) => {
     const { onSubjectClicked: onSubjectClickedCallback, 
-      enableMultiSelect, enableSelect, enableSelectAll } = this.props;
-    console.log(`onSubjectClicked ${this.items[index].title}`);
+      enableMultiSelect, enableSelect, enableSelectAll, subjects } = this.props;
+    console.log(`onSubjectClicked ${subjects[index].title}`);
     if (onSubjectClickedCallback != null) {
       onSubjectClickedCallback(index);
     }
@@ -74,7 +134,7 @@ class SubjectBoard extends PureComponent {
         newIndexList.push(index);
       }
       if (enableSelectAll === true) {
-        this.selectAllChecked = (newIndexList.length === this.items.length);
+        this.selectAllChecked = (newIndexList.length === subjects.length);
       }
     } else if (enableSelect) {
       newIndexList = [index];
@@ -84,31 +144,31 @@ class SubjectBoard extends PureComponent {
     this.setState({
       selectedIndexList: newIndexList
     });
-    this.autoTitle = this.buildAutoTitle(this.items, newIndexList);
-    this.selectorCallbackInvoker(newIndexList);
+    this.autoTitle = this.buildAutoTitle(newIndexList);
+    //this.selectorCallbackInvoker(newIndexList);
   }
 
   onSelectAll = (isSelectAll) => {
     let newIndexList = [];
     if (!isSelectAll) {
       // Uncheck ALL
-      newIndexList = [];
+      newIndexList = SubjectBoard.getInitialSelectedIdsFromProps(this.props);
     }
     else {
       // Check ALL
-      newIndexList = [...Array(this.items.length).keys()];
+      newIndexList = [...Array(this.props.subjects.length).keys()];
     }
     console.log(`onSelectAll newlist: ${newIndexList}`);
     this.setState({
       selectedIndexList: newIndexList
     });
     this.selectAllChecked = isSelectAll;
-    this.autoTitle = this.buildAutoTitle(this.items, newIndexList);
-    this.selectorCallbackInvoker(newIndexList);
+    this.autoTitle = this.buildAutoTitle(newIndexList);
+    //this.selectorCallbackInvoker(newIndexList);
   }
 
   selectorCallbackInvoker = (indexList) => {
-    const { selectionChanged: onSelectionChangedCallback, selectedIdsChanged: onSelectedIdsChangedCallback } = this.props;
+    const { selectionChanged: onSelectionChangedCallback, selectedIdsChanged: onSelectedIdsChangedCallback, subjects } = this.props;
     // Construct index array returned to parent component
     indexList.sort(function(a, b) {
       return a - b;
@@ -116,26 +176,30 @@ class SubjectBoard extends PureComponent {
     if (onSelectionChangedCallback != null) {
       onSelectionChangedCallback(indexList);
     }
-    if (onSelectedIdsChangedCallback != null && this.items) {
+    if (onSelectedIdsChangedCallback != null && subjects) {
       let idArray = [];
       indexList.forEach(idx => {
-        idArray.push(this.items[idx].id);
+        idArray.push(subjects[idx].id);
       });
       console.log(`onSelectedIds: ${idArray}`);
       onSelectedIdsChangedCallback(idArray);
     }
   }
 
-  buildAutoTitle = (subjects, indexList) => {
-    const { t, enableSelectAll, enableAutoTitle } = this.props;
+  buildAutoTitle = (selectedIdx=null) => {
+    const { t, enableSelectAll, enableAutoTitle, subjects } = this.props;
+    let dest_selected = selectedIdx
+    if (!Array.isArray(selectedIdx)) {
+      dest_selected = this.state.selectedIndexList;
+    }
     // Construct tab title
-    console.log(`buildAutoTitle: ${indexList}`);
+    console.log(`buildAutoTitle: ${dest_selected}`);
     // prefix: fix prefix. selected: selected subjects
     let title = {prefix: "", selected: ""};
     if (!enableAutoTitle || enableAutoTitle === false) {
       return title;
     }
-    if (!subjects || !indexList || indexList.length <= 0) {
+    if (!subjects || !dest_selected || dest_selected.length <= 0) {
       title.prefix = t("subjectBoard.title_prefix_unselected");
       return title;
     }
@@ -145,7 +209,7 @@ class SubjectBoard extends PureComponent {
     else {
       subjects.every((item, index) => {
         if (!item.title) return false;
-        if (indexList.includes(index)) {
+        if (dest_selected.includes(index)) {
           title.selected += item.title + " ";
         }
         if (title.selected.length > 30){
@@ -159,9 +223,9 @@ class SubjectBoard extends PureComponent {
     return title;
   }
 
-  buildSelectedIndexById = () => {
-    const { enableMultiSelect, enableSelect, initSelectIds, initSelectId } = this.props;
-    if (enableSelect && this.items && this.items.length > 0) {
+  /*buildSelectedIndexById = () => {
+    const { enableMultiSelect, enableSelect, initSelectIds, initSelectId, subjects } = this.props;
+    if (enableSelect && subjects && subjects.length > 0) {
       let selectedIndexList = [];
       let ids = [];
       if (enableMultiSelect && initSelectIds && initSelectIds.length > 0) {
@@ -170,8 +234,8 @@ class SubjectBoard extends PureComponent {
       else if (initSelectId > 0) {
         ids = [initSelectId];
       }
-      for (let i=0; i < this.items.length; i++) {
-        if (ids.includes(this.items[i].id)) {
+      for (let i=0; i < subjects.length; i++) {
+        if (ids.includes(subjects[i].id)) {
           selectedIndexList.push(i);
         }
       }
@@ -180,19 +244,30 @@ class SubjectBoard extends PureComponent {
       })
       this.selectorCallbackInvoker(selectedIndexList);
     }
+  }*/
+
+  static getIndexesFromIds = (itemIds, items) => {
+    if (!Array.isArray(items)) return [];
+    let ids = itemIds;
+    if (typeof itemIds === 'number') {
+      ids = [itemIds];
+    }
+    let result_array = [];
+    for (let i=0; i < items.length; i++) {
+      if (ids.includes(items[i].id)) {
+        result_array.push(i);
+      }
+    }
+    if (result_array.length < 1) {
+      return (typeof itemIds === 'number')?-1:[];
+    }
+    return (typeof itemIds === 'number')?result_array[0]:result_array;
   }
 
   render() {
     const { t, subjects, color, title, enableSelectAll, enableAutoTitle, onSubjectClicked, ...other_props } = this.props;
     let { autoTitle, selectAllChecked } = this;
-    if (!this.items || this.items.length <= 0) {
-      if (subjects.length > 0){
-        this.items = subjects; //[...subjects];
-        //console.log("Render: Groups Data items: "+JSON.stringify(this.items));
-        autoTitle = this.buildAutoTitle(this.items, this.state.selectedIndexList);
-        this.buildSelectedIndexById();
-      }
-    }
+
     return (
       <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" {...other_props}>
         <Box display="flex" flexDirection="row" backgroundColor={color+".400"} px={5} py={2} color="white">
@@ -208,7 +283,7 @@ class SubjectBoard extends PureComponent {
         </Box>
         <BallGrid
           colCount={6}
-          balls={this.items}
+          balls={subjects}
           ballSize={100}
           maxHeight={250}
           selectedBallIndexList={this.state.selectedIndexList}

@@ -32,8 +32,9 @@ class JysKebiaoScreen extends Component {
       defaultTeacherId: -1,
       selectedJysId: -1,
       selectWeek: schoolWeek ? schoolWeek : 1,
+      updateTableFlag: 0,
     };
-
+    console.log("LIFECYCLE: constructor");
     this.tabTitles = [];
     this.semesterPages = [];
     this.tableHeaders = [
@@ -64,7 +65,7 @@ class JysKebiaoScreen extends Component {
     this.buildSemester();
   }
 
-  static getDerivedStateFromProps(props) {
+  static getStateFromProps(props) {
     let result = {};
     if (props.location.state.jys && props.location.state.jys.id) {
       result = {...result, ...{
@@ -73,19 +74,22 @@ class JysKebiaoScreen extends Component {
     }
     if (typeof props.location.state.teacherId === 'number') {
       result = {...result, ...{
-        selectedTeacherIds: [props.location.state.teacherId],
         defaultTeacherId: props.location.state.teacherId
        }};
     }
-    console.log("getDerivedStateFromProps, ret: "+JSON.stringify(result));
+    console.log("getStateFromProps, ret: "+JSON.stringify(result));
     return result;
+  }
+
+  static getDerivedStateFromProps(props) {
+    console.log("LIFECYCLE: getDerivedStateFromProps");
+    return JysKebiaoScreen.getStateFromProps(props);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, schoolWeek, teachersBySelectedJys, kebiaoByTeacherSched, kebiaoByIds } = this.props;
-    const { selectWeek, selectedJysId, selectedTeacherIds } = this.state;
-    // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
-    // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
+    const { selectWeek, selectedJysId, selectedTeacherIds, updateTableFlag } = this.state;
+    console.log("LIFECYCLE: shouldComponentUpdate");
     if (nextState.selectedJysId !== selectedJysId) {      
       console.log("shouldComponentUpdate, location state diff");
       return true;
@@ -93,22 +97,23 @@ class JysKebiaoScreen extends Component {
     || nextProps.kebiaoByTeacherSched !== kebiaoByTeacherSched || nextProps.kebiaoByIds !== kebiaoByIds) {
       console.log("shouldComponentUpdate, props diff");
       return true;
-    } else if (nextState.selectWeek !== selectWeek || nextState.selectedTeacherIds !== selectedTeacherIds) {
-      console.log("shouldComponentUpdate, week or teacher diff");
-      //this.buildKebiao(nextState.selectedTeacherIds);
+    } else if (nextState.selectWeek !== selectWeek || nextState.selectedTeacherIds !== selectedTeacherIds || nextState.updateTableFlag !== updateTableFlag) {
+      console.log("shouldComponentUpdate, week/teacher diff");
       return true;
     }
     return false;
   }
 
   componentDidMount() {
-    this.loadTeachers(this.state.selectWeek, this.state.selectedJysId);
+    console.log("LIFECYCLE: componentDidMount");
+    this.loadTeachers();
   }
 
   componentDidUpdate(prevProps, prevState) {
+    console.log("LIFECYCLE: componentDidUpdate");
     if (prevState.selectedJysId !== this.state.selectedJysId) {
       this.resetData();
-      this.loadTeachers(this.state.selectWeek, this.state.selectedJysId);
+      this.loadTeachers();
     }
     if (prevState.selectWeek !== this.state.selectWeek || prevState.selectedTeacherIds !== this.state.selectedTeacherIds) {
       this.buildKebiao(this.state.selectedTeacherIds);
@@ -128,15 +133,21 @@ class JysKebiaoScreen extends Component {
     });
   }
 
-  loadTeachers = (selectWeek, jysId=0) => {
-    const { schoolYear, schoolWeek } = this.props;
-    if (!schoolYear || !schoolWeek) {
+  loadTeachers = (weekIdx=0, jysId=0) => {
+    let dest_week = weekIdx, dest_jys = jysId;
+    const { schoolYear } = this.props;
+    const { selectedJysId, selectWeek } = this.state;
+    if (!schoolYear) {
       return;
     }
-    const { jys } = this.props.location.state;
-    let dest_jydId = jysId>0?jysId:jys.id;
-    console.log("loadTeachers, jys: "+dest_jydId+" year: "+schoolYear+" week: "+selectWeek);
-    this.props.fetchTeachersByJys(dest_jydId, schoolYear, selectWeek);
+    if (dest_week <= 0) {
+      dest_week = selectWeek;
+    }
+    if (dest_jys <= 0) {
+      dest_jys = selectedJysId;
+    }
+    console.log("WEBAPI: loadTeachers, jys: "+dest_jys+" year: "+schoolYear+" week: "+dest_week);
+    this.props.fetchTeachersByJys(dest_jys, schoolYear, dest_week);
   }
 
   //buildData = () => {
@@ -203,6 +214,9 @@ class JysKebiaoScreen extends Component {
       this.tableData = this.buildTeacherKebiaoTable(selectedTeacherIds[0]);
     }
     console.log("buildKebiao: tableData:"+JSON.stringify(this.tableData));
+    this.setState({
+      updateTableFlag: this.state.updateTableFlag+1
+    });
     //this.updateTabTitles();
   }
 
