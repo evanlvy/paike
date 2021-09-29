@@ -22,7 +22,7 @@ class EditableTable extends Component {
       editPageNum: ""
     };
     this.defaultColDef = {
-      autoHeight: true,
+      autoHeight: !!this.props.autoRowHeight,
     }
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,

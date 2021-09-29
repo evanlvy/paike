@@ -300,6 +300,7 @@ class SubjectBoard extends Component {
           colCount={6}
           balls={subjects}
           ballSize={100}
+          ballColor={color+".600"}
           maxHeight={250}
           selectedBallIndexList={this.state.selectedIndexList}
           onBallClicked={this.onSubjectClicked} />

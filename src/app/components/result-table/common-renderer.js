@@ -12,7 +12,7 @@ class CommonRenderer extends Component {
     const { value, colDef } = this.props;
     const { lineHeight, headerName, editable } = colDef;
     if (value == null) {
-      console.error(`The value of header: ${headerName} is undefined`);
+      console.warn(`NULL cell value of: ${headerName}`);
       return (
         <div className="common-cell" style={{lineHeight: lineHeight+"px"}}>{ editable && '\u26A1'}</div>
       );

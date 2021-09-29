@@ -115,7 +115,10 @@ class JysKebiaoScreen extends Component {
       this.resetData();
       this.loadTeachers();
     }
-    if (prevState.selectWeek !== this.state.selectWeek || prevState.selectedTeacherIds !== this.state.selectedTeacherIds) {
+    if (prevState.selectWeek !== this.state.selectWeek 
+       || prevProps.kebiaoByTeacherSched !== this.props.kebiaoByTeacherSched
+       || prevState.selectedTeacherIds !== this.state.selectedTeacherIds) {
+      // BuildKebiao required once week changed-->get teacher job for new week-->kebiaoByTeacherSched
       this.buildKebiao(this.state.selectedTeacherIds);
     }
   }
@@ -406,7 +409,8 @@ class JysKebiaoScreen extends Component {
           <ResultTable
             height={450}
             titleHeight={50}
-            colLineHeight={20}
+            autoRowHeight
+            colLineHeight={15}
             defaultColWidth={180}
             title={tableTitle}
             color={JYS_KEBIAO_COLOR}

@@ -38,7 +38,7 @@ class ResultTableWrapper extends Component {
     };
 
     this.defaultColDef = {
-      autoHeight: true,
+      autoHeight: !!this.props.autoRowHeight,
     };
 
     this.rowClassRules = {
@@ -107,7 +107,7 @@ class ResultTableWrapper extends Component {
         headerName: headers[i].name,
         field: headers[i].field,
         width: headers[i].width ? headers[i].width: defaultColWidth,
-        autoHeight: false,
+        //autoHeight: false,
         sortable: headers[i].sortable ? headers[i].sortable: false,
         filter: headers[i].filter ? headers[i].filter: false,
         lineHeight: colLineHeight,
@@ -330,7 +330,7 @@ class ResultTableWrapper extends Component {
   render() {
     const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, 
       onCellClicked, onRowClicked, onRowSelected, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
-    const { t, width, title, titleHeight, colLineHeight, defaultColWidth, color, headers, data,
+    const { t, width, title, titleHeight, autoHeight, colLineHeight, defaultColWidth, color, headers, data,
       pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption,
       onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onResultPageIndexChanged,
       rowSelection, ...other_props } = this.props;
