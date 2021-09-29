@@ -30,6 +30,9 @@ class BanJiKeBiaoScreen extends Component {
     this.state = {
       selectedSubjectIndex: 0,
       selectedBanjiIndex: 0,
+      selectedMajorIds: [],
+      initMajorId: props.location.state.major?props.location.state.major.id:-1,
+      initBanjiIndex: props.location.state.clas?props.location.state.clas.idx:0,
       selectWeek: schoolWeek ? schoolWeek : 1,
       hasFetchKebiao: true,
     };
@@ -51,15 +54,31 @@ class BanJiKeBiaoScreen extends Component {
     this.curDataIndex = 0;
 
     this.tabsListRef = React.createRef();
+    this.buildSemester();
+    this.buildGradeInfo();
   }
 
-  componentDidMount() {
-    this.loadData();
+  static getDerivedStateFromProps(props) {
+    console.log("LIFECYCLE: getDerivedStateFromProps");
+    let result = {};
+    const { edu, grd, major, clas } = props.location.state;
+    if (!Array.isArray(props.subjects) && edu && edu.id && grd && grd.id) {
+      props.fetchSubjects(edu.id, grd.id);
+    }
+    if (!Array.isArray(props.banjiBySubject) && major && major.id && grd && grd.id) {
+      result = {...result, ...{initMajorId: major.id}};
+      props.fetchBanji(grd.id, major.id);
+    }
+    if (clas && clas.idx) {
+      result = {...result, ...{initBanjiIndex: clas.idx}};
+    }
+    console.log("getStateFromProps, ret: "+JSON.stringify(result));
+    return result;
   }
 
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, schoolWeek, subjects, banjiBySubject, kebiaoByBanjiSched, location } = this.props;
-    const { selectedSubjectIndex, selectedBanjiIndex, selectWeek, hasFetchKebiao } = this.state;
+    const { selectedMajorIds, selectedBanjiIndex, selectWeek, hasFetchKebiao } = this.state;
     // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
     // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
     if (nextProps.location.state.grd !== location.state.grd || nextProps.location.state.edu !== location.state.edu) {
@@ -70,7 +89,7 @@ class BanJiKeBiaoScreen extends Component {
     || nextProps.subjects !== subjects || nextProps.banjiBySubject !== banjiBySubject || nextProps.kebiaoByBanjiSched !== kebiaoByBanjiSched) {
       console.log("shouldComponentUpdate, props diff");
       return true;
-    } else if (nextState.selectedSubjectIndex !== selectedSubjectIndex || nextState.selectedBanjiIndex !== selectedBanjiIndex
+    } else if (nextState.selectedMajorIds !== selectedMajorIds || nextState.selectedBanjiIndex !== selectedBanjiIndex
     || nextState.selectWeek !== selectWeek || nextState.hasFetchKebiao !== hasFetchKebiao) {
       console.log("shouldComponentUpdate, state diff");
       return true;
@@ -78,16 +97,38 @@ class BanJiKeBiaoScreen extends Component {
     return false;
   }
 
-  componentDidUpdate() {
+  componentDidMount() {
     this.loadData();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    console.log("LIFECYCLE: componentDidUpdate");
+    const { edu, grd, major, clas } = prevProps.location.state;
+    const { edu2, grd2, major2, clas2 } = this.props.location.state;
+    if (edu !== edu2 || grd !== grd2) {
+      this.resetData();
+      this.buildGradeInfo();
+      this.props.fetchSubjects(edu2.id, grd2.id);
+    }
+    if (major !== major2 || grd !== grd2) {
+      this.props.fetchBanji(grd2.id, major2.id);
+      this.updateSubjectTitle();
+    }
+    if (prevState.selectWeek !== this.state.selectWeek 
+       || prevProps.banjiBySubject !== this.props.banjiBySubject
+       || prevProps.kebiaoByBanjiSched !== this.props.kebiaoByBanjiSched
+       || prevState.selectedMajorIds !== this.state.selectedMajorIds) {
+      // BuildKebiao required once week changed-->get teacher job for new week-->kebiaoByTeacherSched
+      this.buildKebiao(this.state.selectedMajorIds);
+    }
   }
 
   loadData = () => {
     if (!this.subjectsData || this.subjectsData.length === 0) { // only get subjects when it's empty
-      this.loadSubjects();
+      //this.loadSubjects();
     }
     if (this.selectedSubject && !this.hasFetchBanji) {
-      this.loadBanji();
+      //this.loadBanji();
     }
     if (this.selectedBanji && !this.state.hasFetchKebiao) {
       const { schoolWeek } = this.props;
@@ -108,7 +149,7 @@ class BanJiKeBiaoScreen extends Component {
     this.selectedSubject = null;
     this.hasFetchBanji = false;
     this.setState({
-      selectedSubjectIndex: 0,
+      selectedMajorIds: [],
     });
   }
 
@@ -131,8 +172,8 @@ class BanJiKeBiaoScreen extends Component {
   }
 
   buildData = () => {
-    this.buildSemester();
-    this.buildGradeInfo();
+    //this.buildSemester();
+    //this.buildGradeInfo();
     this.buildSubjects();
     this.buildBanji();
     this.buildKebiao();
@@ -157,18 +198,20 @@ class BanJiKeBiaoScreen extends Component {
     if (this.subjectsData == null || this.subjectsData.length === 0) {
       const { subjects } = this.props;
       this.subjectsData = !subjects ? [] : subjects;
-      this.setSubjectSelectedIndex(this.state.selectedSubjectIndex);
+      this.setSubjectSelectedIndex(this.state.selectedMajorIds);
     }
     this.updateSubjectTitle();
   }
 
   updateSubjectTitle = () => {
-    const { t } = this.props;
-    const { selectedSubject, gradeInfo } = this;
-    if (selectedSubject) {
-      this.subjectTitle = t("subjectBoard.title_template", {subject_name: selectedSubject.title, grade_info: gradeInfo})
+    const { t, subjects } = this.props;
+    const { selectedMajorIds } = this.state;
+    //const { selectedSubject, gradeInfo } = this;
+    let selectedSubject = subjects[selectedMajorIds[0]]
+    if (subjects && selectedMajorIds.length > 0) {
+      this.subjectTitle = t("subjectBoard.title_template", {subject_name: selectedSubject.title, grade_info: this.gradeInfo})
     } else {
-      this.subjectTitle = t("subjectBoard.title_no_subject_template", {grade_info: gradeInfo})
+      this.subjectTitle = t("subjectBoard.title_no_subject_template", {grade_info: this.gradeInfo})
     }
   }
 
@@ -239,7 +282,7 @@ class BanJiKeBiaoScreen extends Component {
     this.resetBanjiData();
   }
 
-  buildKebiao = () => {
+  buildKebiao = (selectedMajorIds=[]) => {
     const { kebiaoByBanjiSched, schoolYear, schoolWeek } = this.props;
     const { banjiSelectWeek } = this;
     if (!this.selectedBanji || !schoolYear || !schoolWeek) {
@@ -350,6 +393,13 @@ class BanJiKeBiaoScreen extends Component {
     this.loadBanji();
   }
 
+  selectedIdsChanged = (majorIds) => {
+    console.log(`selectedIdsChanged ${majorIds}`);
+    this.setState({
+      selectedMajorIds: majorIds
+    });
+  }
+
   onTabChanged = (index) => {
     console.log(`onTabChanged ${this.banjiData[index].name}`);
     this.curDataIndex = index;
@@ -373,12 +423,12 @@ class BanJiKeBiaoScreen extends Component {
   }
 
   render() {
-    const { t } = this.props;
-    const { selectedSubjectIndex } = this.state;
+    const { t, subjects } = this.props;
+    const { initMajorId, selectedMajorIds, initBanjiIndex } = this.state;
     this.buildData();
-    const { subjectsData, subjectTitle, banjiName, banjiSelectWeek,
+    const { subjectTitle, banjiName, banjiSelectWeek,
       tabTitles, tableHeaders, tableDataList, semesterPages,
-      onSubjectClicked, onTabChanged, onSemesterPageChanged } = this;
+      selectedIdsChanged, onTabChanged, onSemesterPageChanged } = this;
     const pageTables = [];
     console.log("render: banjiSelectWeek: "+banjiSelectWeek);
     for (let i=0; i < tabTitles.length; i++) {
@@ -402,15 +452,26 @@ class BanJiKeBiaoScreen extends Component {
         pageTables[i] = (<Flex alignItems='center' justifyContent='center'><Text>{t("common.no_data")}</Text></Flex>);
       }
     }
+    if (banjiBySubject && Array.isArray(banjiBySubject) && selectedMajorIds.length > 0) {
+      if (initBanjiIndex <= 0 || initBanjiIndex > banjiBySubject[selectedMajorIds[0]].length) {
+        initBanjiIndex = 1;
+      }
+    }
+    else {
+      initBanjiIndex = 1;
+    }
+    
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center">
         <SubjectBoard
           my={4}
           color={BANJIKEBIAO_COLOR}
           title={subjectTitle}
-          subjects={subjectsData}
-          initSelectIndex={selectedSubjectIndex}
-          onSubjectClicked={onSubjectClicked}
+          subjects={subjects}
+          //initSelectIndex={selectedMajorIds}
+          initSelectId={initMajorId}
+          //onSubjectClicked={onSubjectClicked}
+          selectedIdsChanged={selectedIdsChanged}
           enableSelect />
         {
           tabTitles && tabTitles.length > 0 &&
@@ -423,7 +484,8 @@ class BanJiKeBiaoScreen extends Component {
             color={BANJIKEBIAO_COLOR}
             titles={tabTitles}
             onTabChange={onTabChanged}
-            pages={pageTables} />
+            pages={pageTables}
+            defaultIndex={initBanjiIndex-1} />
         }
       </Flex>
     );

@@ -72,6 +72,12 @@ export const actions = {
   studentLogin: (stu_num) => {
     return async (dispatch) => {
       try {
+        // Check stunum at first
+        dispatch(appActions.startRequest());
+        const stunum_result = await authApi.queryStuNum(stu_num);
+        console.log("parseStuNum: Got data"+JSON.stringify(stunum_result));
+        dispatch(appActions.finishRequest());
+        dispatch(parseStuNumSuccess(stunum_result));
         // Login as student
         dispatch(appActions.startRequest());
         dispatch(actions.clearError());
@@ -79,12 +85,6 @@ export const actions = {
         console.log("stuLogin: Got data"+JSON.stringify(result));
         dispatch(appActions.finishRequest());
         dispatch(loginResult(result));
-        // Check stunum at first
-        dispatch(appActions.startRequest());
-        const stunum_result = await authApi.queryStuNum(stu_num);
-        console.log("parseStuNum: Got data"+JSON.stringify(stunum_result));
-        dispatch(appActions.finishRequest());
-        dispatch(parseStuNumSuccess(stunum_result));
       } catch (error) {
         dispatch(appActions.setError(error))
         dispatch(loginResult({error: {message: error.message}}));

@@ -35,10 +35,10 @@ class ResultTabList extends Component {
   }
 
   render() {
-    const { titles, tabHeight, pages, color, onTabChange, ...other_props } = this.props;
+    const { titles, tabHeight, pages, color, onTabChange, defaultIndex, ...other_props } = this.props;
     const { tabIndex } = this.state;
     return (
-      <Tabs variant="enclosed" index={tabIndex} onChange={this.handleTabsChange} {...other_props}>
+      <Tabs variant="enclosed" index={tabIndex} defaultIndex={defaultIndex} onChange={this.handleTabsChange} {...other_props}>
         <TabList>
           {
             titles.map((title, index) => (

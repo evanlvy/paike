@@ -21,7 +21,7 @@ import {
 } from 'formik';
 import { Trans, withTranslation } from 'react-i18next';
 
-import { actions as authActions, getLoggedUser, getLoggedError, getAccessLevel } from '../redux/modules/auth';
+import { actions as authActions, getLoggedUser, getLoggedError, getAccessLevel, getStudentInfo } from '../redux/modules/auth';
 import PropTypes from 'prop-types';
 
 function Toast(props) {
@@ -48,10 +48,10 @@ class WrappedLoginScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { user, error } = this.props;
+    const { user, error, stuInfo } = this.props;
     const { showError } = this.state;
 
-    if (nextProps.user !== user || nextProps.error !== error) {
+    if (nextProps.user !== user || nextProps.stuInfo !== stuInfo || nextProps.error !== error) {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.showError !== showError) {
@@ -153,12 +153,23 @@ class WrappedLoginScreen extends Component {
     const { from } = this.props.location.state || { from: { pathname: "/"}};
     this.checkNeedRedirect();
     if (this.redirectToReferer) {
-      const { accessLevel, user } = this.props;
+      const { accessLevel, user, stuInfo } = this.props;
       let menu_params = {};
       if (accessLevel === "PROFESSOR") {
         menu_params =  {jys: {id: user.departmentId, name: user.departmentName}, teacherId: user.id};
         return <Redirect to={{
           pathname: '/jys',
+          state: menu_params
+        }}/>
+      } else if (accessLevel === "STUDENT" && stuInfo) {
+        menu_params =  {
+          edu: {id: stuInfo.degree_id, name: stuInfo.degree_name}, 
+          grd: {id: stuInfo.grade_id, name: stuInfo.grade_name},
+          major: {id: stuInfo.major_id, name: stuInfo.major_name},
+          clas: {idx: stuInfo.class_seq}
+        };
+        return <Redirect to={{
+          pathname: '/kebiao/banji',
           state: menu_params
         }}/>
       }
@@ -256,6 +267,7 @@ const mapStateToProps = (state) => {
     user: getLoggedUser(state),
     error: getLoggedError(state),
     accessLevel: getAccessLevel(state),
+    stuInfo: getStudentInfo(state),
   }
 }
 
