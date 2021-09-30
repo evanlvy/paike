@@ -128,7 +128,9 @@
     "year_template": "{{year}}年度"
   },
   "banjiKebiaoScreen": {
+    "subject_board_title": "就读专业",
     "warning_major_without_class": "该专业没有对应班！",
+    "warning_class_without_schedule": "该班级没有排课！",
     "prev_semester_page": "上一学习周期",
     "next_semester_page": "下一学习周期"
   },

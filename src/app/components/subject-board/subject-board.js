@@ -63,7 +63,8 @@ class SubjectBoard extends Component {
   componentDidUpdate(prevProps, prevState) {
     console.log("LIFECYCLE: componentDidUpdate");
     // Subjects items content changed!
-    if (prevState.selectedIndexList !== this.state.selectedIndexList) {
+    if (prevState.selectedIndexList !== this.state.selectedIndexList 
+      && JSON.stringify(prevState.selectedIndexList) !== JSON.stringify(this.state.selectedIndexList)) {
       this.selectorCallbackInvoker(this.state.selectedIndexList);
     }
     let subjects_unchanged = true;
@@ -211,7 +212,7 @@ class SubjectBoard extends Component {
     console.log(`buildAutoTitle: ${dest_selected}`);
     // prefix: fix prefix. selected: selected subjects
     let title = {prefix: "", selected: ""};
-    if (!enableAutoTitle || enableAutoTitle === false) {
+    if (!enableAutoTitle) {
       return title;
     }
     if (!subjects || !dest_selected || dest_selected.length <= 0) {
@@ -265,7 +266,7 @@ class SubjectBoard extends Component {
     if (!Array.isArray(items)) return [];
     let ids = itemIds;
     if (typeof itemIds === 'number') {
-      ids = [itemIds];
+      ids = [itemIds+""];
     }
     let result_array = [];
     for (let i=0; i < items.length; i++) {
