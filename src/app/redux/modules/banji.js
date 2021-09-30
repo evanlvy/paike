@@ -7,7 +7,8 @@ import { api as subjectApi } from '../../services/subject';
 
 // action types
 export const types = {
-  FETCH_BANJI: "BANJI/FETCH_BANJI"
+  FETCH_BANJI: "BANJI/FETCH_BANJI",
+  SET_SELECTED_SUBJECT: "BANJI/SET_SELECTED",
 };
 
 // actions
@@ -23,6 +24,7 @@ export const actions = {
           const { banjiByIds, banjiIds } = convertBanjiToPlain(data);
           dispatch(fetchBanjiSuccess(gradeSubjectId, banjiIds, banjiByIds));
         }
+        dispatch(setSelectedSubject(gradeSubjectId));
       } catch (error) {
         dispatch(appActions.setError(error));
       }
@@ -61,6 +63,13 @@ const fetchBanjiSuccess = (gradeSubjectId, banjiIds, banjiByIds) => {
   })
 }
 
+const setSelectedSubject = (gradeSubjectId) => {
+  return ({
+    type: types.SET_SELECTED_SUBJECT,
+    gradeSubjectId
+  })
+}
+
 // reducers
 const byIds = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
@@ -80,9 +89,19 @@ const bySubject = (state = Immutable.fromJS({}), action) => {
   }
 }
 
+const selected = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.SET_SELECTED_SUBJECT:
+      return state.merge({id: action.gradeSubjectId});
+    default:
+      return state;
+  }
+}
+
 const reducer = combineReducers({
   byIds,
   bySubject,
+  selected,
 });
 
 export default reducer;
@@ -93,6 +112,24 @@ export const getBanji = state => state.getIn(["banji", "byIds"]);
 export const getBanjiById = (state, id) => state.getIn(["banji", "byIds", id]);
 
 export const getBanjiByAllSubject = state => state.getIn(["banji", "bySubject"]);
+
+export const getSelectedSubject = (state) => state.getIn(["banji", "selected", "id"]);
+
+export const getBanjiOfSelectedSubject = state => state.getIn(["banji", "bySubject", getSelectedSubject(state)]);
+
+export const getBanjiBySelectedSubject = createSelector(
+  [getBanji, getBanjiOfSelectedSubject],
+  (banji, banjiIds) => {
+    let banjiList = [];
+    if (banjiIds && banjiIds.length > 0) {
+      banjiIds.forEach(banjiId => {
+        const banjiInfo = banji.get(banjiId);
+        banjiList.push(banjiInfo);
+      })
+    }
+    return banjiList;
+  }
+);
 
 export const getBanjiBySubject = createSelector(
   [getBanji, getBanjiByAllSubject],

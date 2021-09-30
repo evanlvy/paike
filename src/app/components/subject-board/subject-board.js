@@ -46,7 +46,7 @@ class SubjectBoard extends Component {
       if (!Array.isArray(nextProps.subjects) || !Array.isArray(subjects)) {
         subjects_unchanged = false;
       } else {
-        subjects_unchanged = (nextProps.subjects.toString() === subjects.toString());
+        subjects_unchanged = (JSON.stringify(nextProps.subjects) === JSON.stringify(subjects));
         console.log("LIFECYCLE: shouldComponentUpdate: subjects_unchanged="+subjects_unchanged);
       }
       return !subjects_unchanged;
