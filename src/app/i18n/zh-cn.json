@@ -64,7 +64,7 @@
     "basic_maintain_title": "基础数据维护",
     "jiaowuchu_kebiao_title": "教务处课表",
     "student_profile_template": "您好！来自{{grade_name}}{{major_name}}{{class_seq}}班的同学",
-    "teacher_profile_template": "您好！{{teacherName}}教授/老师 [{{departmentName}}教研室]"
+    "teacher_profile_template": "您好！{{teacherName}}教授/老师"
   },
   "subjectBoard": {
     "title_prefix_unselected": "请选择",
@@ -128,7 +128,7 @@
     "year_template": "{{year}}年度"
   },
   "banjiKebiaoScreen": {
-    "subject_board_title": "就读专业",
+    "subject_board_title": "查询专业",
     "warning_major_without_class": "该专业没有对应班！",
     "warning_class_without_schedule": "该班级没有排课！",
     "prev_semester_page": "上一学习周期",

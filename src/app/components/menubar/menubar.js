@@ -7,6 +7,7 @@ import {
   Menu,
   MenuButton,
   Box,
+  Badge,
   Avatar,
   AvatarBadge,
   Text,
@@ -252,13 +253,13 @@ class MenuBarWrapped extends Component {
     const { grade_info, lab_centers, lab_buildings, jiaoyanshi_centers, maintain_menus } = this;
     const menus = [
       { type: MenuType.JIAOWUCHU, title: "menuBar.jiaowuchu_kebiao_title", icon: AiTwotoneExperiment, bgColor: "green", onClick: this.onJwcKebiaoClicked,
-              menu_ref: this.jwcMenuRef, access_level: "NONE" },
+              menu_ref: this.jwcMenuRef, access_level: "ZERO" },
       { list_type: MenuListType.GROUP, type: MenuType.LILUN, title: "menuBar.lilunkebiao_title", icon: FiBookOpen, bgColor: "orange",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.lilunMenuRef, access_level: "NONE" },
+              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.lilunMenuRef, access_level: "ZERO" },
       { list_type: MenuListType.GROUP, type: MenuType.BANJI, title: "menuBar.banjikebiao_title", icon: FaCalendarDay, bgColor: "cyan",
-              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.banjiMenuRef, access_level: "NONE" },
+              menuListProps: {menuGroups: grade_info, onGroupMenuSelected: this.onGradeGroupChanged }, menu_ref: this.banjiMenuRef, access_level: "ZERO" },
       { type: MenuType.SHIXUN, title: "menuBar.shixunkebiao_title", icon: AiTwotoneExperiment, bgColor: "green", onClick: this.onDepartmentLabsSummaryClicked,
-              menu_ref: this.shixunMenuRef, access_level: "NONE" },
+              menu_ref: this.shixunMenuRef, access_level: "ZERO" },
       { list_type: MenuListType.LAB, type: MenuType.SHIYANSHI, title: "menuBar.shiyanshi_anpai_title", icon: FaBuilding, bgColor: "blue",
               menuListProps: {labCenters: lab_centers, labBuildings: lab_buildings, onLabChange: this.onLabChanged}, menu_ref: this.labMenuRef, access_level: "PROFESSOR" },
       { list_type: MenuListType.GROUP, type: MenuType.JIAOYANSHI, title: "menuBar.jiaoyanshi_kebiao_title", icon: MdCollectionsBookmark, bgColor: "red",
@@ -276,7 +277,7 @@ class MenuBarWrapped extends Component {
         <Flex direction="row" justify="center" flexWrap="wrap" mt={5}>
           {
             menus.map((item) => {
-              if (accessLevel < item.access_level) {
+              if (accessLevel > item.access_level) {
                 return null;
               }
               switch(item.list_type) {
@@ -316,16 +317,17 @@ class MenuBarWrapped extends Component {
             })
           }
         </Flex>
-        <Box p="20px" color="white" mt="4" bg="blue.600" rounded="md" shadow="md">
-          <Flex direction="row" justify="center" flexWrap="wrap" mt={5}>
-            <Avatar>
-              <AvatarBadge boxSize="1.25em" bg="green.500" />
-            </Avatar>
+        <Box p="20px" color="white" mt="2" bg="gray.700" rounded="lg" boxShadow="lg">
+          <Flex direction="row" justify="center" flexWrap="wrap">
             <Text fontSize="xl">{stuInfo.major_name?
               t("menuBar.student_profile_template",{grade_name: grade_name, major_name: major_name, class_seq: class_seq})
-              :t("menuBar.teacher_profile_template",{teacherName: name, 
-              departmentName: ((typeof(departmentName)=='string' && departmentName != "")?departmentName:labdivisionName)})}
+              :t("menuBar.teacher_profile_template",{teacherName: name})}
             </Text>
+            <Badge borderRadius="full" mx="5" px="4" colorScheme="blue" fontWeight="semibold"
+              letterSpacing="wide"
+              fontSize="l">
+              {((typeof(departmentName)=='string' && departmentName != "")?departmentName:labdivisionName)}
+            </Badge>
           </Flex>
         </Box>
       </Flex>
