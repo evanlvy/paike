@@ -11,7 +11,12 @@ import {
   Avatar,
   AvatarBadge,
   Text,
+  Icon,
+  Select,
 } from '@chakra-ui/core';
+import {
+  MdTune
+} from 'react-icons/md';
 import {
   FiBookOpen
 } from 'react-icons/fi';
@@ -31,6 +36,7 @@ import { Trans, withTranslation } from 'react-i18next';
 
 import { LabType } from '../../models/lab';
 import { LabsMenu, GroupMenu } from './';
+import PromptDrawer from '../../components/overlays/prompt-drawer';
 
 function withMenu(WrappedMenuList) {
   class withMenuComponent extends Component {
@@ -67,11 +73,15 @@ const MenuListType = {
   LAB: 1,
   GROUP: 2,
 }
+const DEFAULT_COLOR = "gray";
 
 class MenuBarWrapped extends Component {
   constructor(props) {
     super(props);
-
+    const { initStage, color } = props;
+    this.state = {
+      selectStage: initStage,
+    };
     this.lilunMenuRef = React.createRef();
     this.banjiMenuRef = React.createRef();
     this.shixunMenuRef = React.createRef();
@@ -80,6 +90,12 @@ class MenuBarWrapped extends Component {
     this.jwcMenuRef = React.createRef();
 
     this.menuRefs = [this.lilunMenuRef, this.banjiMenuRef, this.shixunMenuRef, this.labMenuRef, this.jysMenuRef, null, null];
+    this.semesterPages = {};
+    if (Object.keys(this.semesterPages).length <= 0) {
+      this.semesterPages = {...this.props.stageList};
+      console.log("buildSemester: stages: "+JSON.stringify(this.semesterPages));
+    }
+    this.color = color ? color : DEFAULT_COLOR;
   }
 
   initMenu = () => {
@@ -175,6 +191,16 @@ class MenuBarWrapped extends Component {
     }
   }
 
+  onStageChanged = (event) => {
+    let target_stage = event.target.value;
+    this.setState({
+      selectStage: target_stage
+    });
+    if (this.props.onStageChanged) {
+      this.props.onStageChanged(target_stage);
+    }
+  }
+
   onGradeGroupChanged = (menu_type, grade_type_index, grade_index) => {
     const { gradeTypes } = this.props;
     const grade_info = gradeTypes;
@@ -250,7 +276,7 @@ class MenuBarWrapped extends Component {
 
   render() {
     this.initMenu();
-    const { grade_info, lab_centers, lab_buildings, jiaoyanshi_centers, maintain_menus } = this;
+    const { color, grade_info, lab_centers, lab_buildings, jiaoyanshi_centers, maintain_menus, semesterPages, onStageChanged } = this;
     const menus = [
       { type: MenuType.JIAOWUCHU, title: "menuBar.jiaowuchu_kebiao_title", icon: AiTwotoneExperiment, bgColor: "green", onClick: this.onJwcKebiaoClicked,
               menu_ref: this.jwcMenuRef, access_level: "ZERO" },
@@ -269,6 +295,7 @@ class MenuBarWrapped extends Component {
               menuListProps: {menuGroups: maintain_menus, onGroupMenuSelected: this.onMaintainMenuSelected, height: 500}, access_level: "PROFESSOR"},
     ];
     const { t, accessLevel, userInfo, stuInfo } = this.props;
+    const { selectStage } = this.state;
     const { name, departmentName, labdivisionName } = userInfo;
     const { grade_name, major_name, class_seq} = stuInfo;
     console.log("renderer, access level: "+accessLevel);
@@ -317,18 +344,30 @@ class MenuBarWrapped extends Component {
             })
           }
         </Flex>
-        <Box p="20px" color="white" mt="2" bg="gray.700" rounded="lg" boxShadow="lg">
-          <Flex direction="row" justify="center" flexWrap="wrap">
-            <Text fontSize="xl">{stuInfo.major_name?
-              t("menuBar.student_profile_template",{grade_name: grade_name, major_name: major_name, class_seq: class_seq})
-              :t("menuBar.teacher_profile_template",{teacherName: name})}
-            </Text>
+        <Box display="flex" p="20px" color="white" mt="2" bg="gray.700" rounded="lg" boxShadow="lg" 
+        alignItems="center" flexWrap="no-wrap" justifyContent="space-between">
             <Badge borderRadius="full" mx="5" px="4" colorScheme="blue" fontWeight="semibold"
               letterSpacing="wide"
               fontSize="l">
               {((typeof(departmentName)=='string' && departmentName != "")?departmentName:labdivisionName)}
             </Badge>
-          </Flex>
+            <Text fontSize="xl" width="30%">{stuInfo.major_name?
+              t("menuBar.student_profile_template",{grade_name: grade_name, major_name: major_name, class_seq: class_seq})
+              :t("menuBar.teacher_profile_template",{teacherName: name})}
+            </Text>
+            <Icon as={MdTune} color={color+".200"} size={12} />
+            <Text mx={5} whiteSpace="break-spaces" flexWrap="true">{t("editRawplanScreen.hint_stageselector")}</Text>
+            {
+              (semesterPages && Object.keys(semesterPages).length > 0) &&
+              <Select color="gray.500" width="60%" variant="filled" value={selectStage} onChange={onStageChanged}>
+              {
+                Object.keys(semesterPages).map((stage_id) => (
+                  <option key={stage_id} value={stage_id} >{semesterPages[stage_id]}</option>
+                ))
+              }
+              </Select>
+            }
+            <PromptDrawer t={t} promptText={t("editRawplanScreen.prompt_text")}></PromptDrawer>
         </Box>
       </Flex>
     );

@@ -10,7 +10,9 @@ import { format } from 'date-fns';
 export const types = {
   FETCH_DEGREE_GRADE: "GRADE/FETCH_DEGREE_GRADE",
   UPDATE_SCHOOL_YEARWEEK: "GRADE/UPDATE_SCHOOL_YEARWEEK",
-  FETCH_STAGE_LIST: "GRADE/FETCH_STAGE_LIST"
+  FETCH_STAGE_LIST: "GRADE/FETCH_STAGE_LIST",
+  SET_CURRENT_STAGE: "GRADE/SET_CURRENT_STAGE",
+  RECOVER_STAGE: "GRADE/RECOVER_STAGE",
 };
 // action creators
 export const actions = {
@@ -38,6 +40,7 @@ export const actions = {
           const dateString = format(curDate, 'yyyy-MM-dd');
           const data = await gradeApi.querySchoolYearWeek(dateString);
           dispatch(appActions.finishRequest());
+          data["yearOriginal"] = data["year"];
           dispatch(fetchSchoolYearWeekSuccess(data));
         }
       } catch (error) {
@@ -59,6 +62,13 @@ export const actions = {
       }
     }
   },
+  setStage: (stageId) => ({
+    type: types.SET_CURRENT_STAGE,
+    stageId: Number(stageId),
+  }),
+  recoverStage: () => ({
+    type: types.RECOVER_STAGE,
+  }),
 }
 
 const shouldFetchAllGradeInfo = (state) => {
@@ -169,6 +179,14 @@ const schoolYearWeek = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.UPDATE_SCHOOL_YEARWEEK:
       return state.merge(action.info);
+    case types.SET_CURRENT_STAGE:
+      return state.merge({year: action.stageId});
+    case types.RECOVER_STAGE:
+      let oriStage = Number(state.getIn(["yearOriginal"]));
+      if (oriStage) {
+        return state.merge({year: oriStage});
+      }
+      return state;
     default:
       return state;
   }

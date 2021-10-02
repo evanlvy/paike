@@ -21,7 +21,7 @@ import {
 } from '../components';
 
 import { actions as authActions, getAccessLevel, getLoggedUser, getStudentInfo } from '../redux/modules/auth';
-import { actions as gradeActions, getGradesOfAllDegrees } from '../redux/modules/grade';
+import { actions as gradeActions, getGradesOfAllDegrees, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getJiaoyanshiOfAllCenters } from '../redux/modules/jiaoyanshi';
 import { actions as requestActions, getRequestQuantity, getError } from '../redux/modules/app';
 
@@ -119,17 +119,29 @@ class MainNavigatorWrapper extends PureComponent {
     return !user || !user.token;
   }
 
+  onStageChanged = (stageId) => {
+    if (stageId <= 0) {
+      this.props.recoverStage();
+    }
+    else {
+      this.props.setStage(stageId);
+    }
+  }
+
   render() {
     if (this.needLogin()) {
       return <Redirect to="/login" />;
     }
-    const { onConfirmError } = this;
-    const { gradeTypes, centers, labBuildings, requestsCount, requestError, user, accessLevel, stuInfo } = this.props;
+    const { onConfirmError, onStageChanged } = this;
+    const { initStage, stageList, gradeTypes, centers, labBuildings, requestsCount, requestError, user, accessLevel, stuInfo } = this.props;
     console.log("Request count: "+requestsCount);
     return (
       <Flex direction="column" justify="center" basis="100%">
         <Flex px="10%" direction="column" justify="flex-start" flex={1}>
           <MenuBar 
+            stageList={stageList}
+            initStage={initStage}
+            onStageChanged={onStageChanged}
             gradeTypes={gradeTypes} 
             centers={centers} 
             labBuildings={labBuildings} 
@@ -183,6 +195,8 @@ class MainNavigatorWrapper extends PureComponent {
 const mapStateToProps = (state) => {
   return {
     user: getLoggedUser(state),
+    stageList: getStageList(state),
+    initStage: getSchoolYear(state),
     gradeTypes: getGradesOfAllDegrees(state),
     centers: getJiaoyanshiOfAllCenters(state),
     requestsCount: getRequestQuantity(state),
