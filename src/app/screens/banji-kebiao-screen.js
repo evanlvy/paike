@@ -132,7 +132,8 @@ class BanJiKeBiaoScreen extends Component {
       //this.updateSubjectTitle();
     }
     if (/*prevState.selectWeek !== this.state.selectWeek 
-       || */prevProps.banjiBySubject !== this.props.banjiBySubject
+       || */prevProps.schoolYear !== this.props.schoolYear
+       || prevProps.banjiBySubject !== this.props.banjiBySubject
        || prevState.selectedBanjiIndex !== this.state.selectedBanjiIndex
        || prevState.selectedMajorId !== this.state.selectedMajorId) {
       if (prevState.selectedMajorId !== this.state.selectedMajorId) {

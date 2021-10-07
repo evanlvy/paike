@@ -149,11 +149,14 @@ class SubjectBoard extends Component {
       if (newIndexList.length === oldIndexList.length) { // nothing removed, it's a checked click
         newIndexList.push(index);
       }
-      if (enableSelectAll === true) {
+      if (enableSelectAll) {
         this.selectAllChecked = (newIndexList.length === subjects.length);
       }
     } else if (enableSelect) {
       newIndexList = [index];
+      if (enableSelectAll) {
+        this.selectAllChecked = false;
+      }
     } else {
       return;
     }
@@ -219,7 +222,7 @@ class SubjectBoard extends Component {
       title.prefix = t("subjectBoard.title_prefix_unselected");
       return title;
     }
-    if (enableSelectAll === true && (this.selectAllChecked === true)){
+    if (enableSelectAll && this.selectAllChecked){
       title.selected = t("common.select_all");
     }
     else {

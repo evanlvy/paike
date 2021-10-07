@@ -69,6 +69,7 @@ export const actions = {
             let groups = convertGroupsToPlain(stage, data);
             dispatch(fetchRawplanGroupsSuccess(stage, groups));
           }
+          dispatch(setSelectedGroup(null));
         } catch (error) {
           dispatch(appActions.setError(error));
         }

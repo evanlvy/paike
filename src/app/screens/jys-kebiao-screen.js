@@ -111,12 +111,25 @@ class JysKebiaoScreen extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     console.log("LIFECYCLE: componentDidUpdate");
-    if (prevState.selectedJysId !== this.state.selectedJysId) {
-      this.resetData();
-      this.loadTeachers();
+    if (prevState.selectedJysId !== this.state.selectedJysId
+      || prevProps.schoolYear !== this.props.schoolYear) {
+     this.resetData();
+   }
+    if (prevState.selectedJysId !== this.state.selectedJysId
+       || prevState.selectWeek !== this.state.selectWeek 
+       || prevProps.schoolYear !== this.props.schoolYear) {
+        const teacherSchedId = buildTeacherSchedId(this.state.selectedTeacherIds[0], this.props.schoolYear, this.state.selectWeek);
+        console.log("Get kebiao of "+teacherSchedId);
+        const kebiaoInfo = this.props.kebiaoByTeacherSched.get(teacherSchedId);
+        if (!kebiaoInfo || kebiaoInfo.length < 1) {
+          this.loadTeachers();
+        }
+        else {
+          this.buildKebiao(this.state.selectedTeacherIds);
+        }
     }
-    if (prevState.selectWeek !== this.state.selectWeek 
-       || prevProps.kebiaoByTeacherSched !== this.props.kebiaoByTeacherSched
+    if (prevProps.kebiaoByTeacherSched !== this.props.kebiaoByTeacherSched
+       || prevProps.teachersBySelectedJys !== this.props.teachersBySelectedJys
        || prevState.selectedTeacherIds !== this.state.selectedTeacherIds) {
       // BuildKebiao required once week changed-->get teacher job for new week-->kebiaoByTeacherSched
       this.buildKebiao(this.state.selectedTeacherIds);

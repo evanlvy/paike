@@ -344,28 +344,33 @@ class MenuBarWrapped extends Component {
             })
           }
         </Flex>
-        <Box display="flex" p="20px" color="white" mt="2" bg="gray.700" rounded="lg" boxShadow="lg" 
+        <Box display="inline-flex" p="20px" color="white" mt="2" bg="gray.700" rounded="lg" boxShadow="lg" 
         alignItems="center" flexWrap="no-wrap" justifyContent="space-between">
             <Badge borderRadius="full" mx="5" px="4" colorScheme="blue" fontWeight="semibold"
               letterSpacing="wide"
               fontSize="l">
               {((typeof(departmentName)=='string' && departmentName != "")?departmentName:labdivisionName)}
             </Badge>
-            <Text fontSize="xl" width="30%">{stuInfo.major_name?
+            <Text flex-basis="60px" flex-grow="2" fontSize="xl">{stuInfo.major_name?
               t("menuBar.student_profile_template",{grade_name: grade_name, major_name: major_name, class_seq: class_seq})
               :t("menuBar.teacher_profile_template",{teacherName: name})}
             </Text>
-            <Icon as={MdTune} color={color+".200"} size={12} />
-            <Text mx={5} whiteSpace="break-spaces" flexWrap="true">{t("editRawplanScreen.hint_stageselector")}</Text>
             {
-              (semesterPages && Object.keys(semesterPages).length > 0) &&
-              <Select color="gray.500" width="60%" variant="filled" value={selectStage} onChange={onStageChanged}>
+              accessLevel <= "OFFICER" &&
+              <Flex width="25em" alignItems="center">
+              <Icon as={MdTune} color={color+".200"} size={8} />
+              <Text width="5em" mx={2} whiteSpace="break-spaces">{t("editRawplanScreen.hint_stageselector")}</Text>
               {
-                Object.keys(semesterPages).map((stage_id) => (
-                  <option key={stage_id} value={stage_id} >{semesterPages[stage_id]}</option>
-                ))
+                (semesterPages && Object.keys(semesterPages).length > 0) &&
+                <Select color="gray.500" variant="filled" value={selectStage} onChange={onStageChanged}>
+                {
+                  Object.keys(semesterPages).map((stage_id) => (
+                    <option key={stage_id} value={stage_id} >{semesterPages[stage_id]}</option>
+                  ))
+                }
+                </Select>
               }
-              </Select>
+              </Flex>
             }
             <PromptDrawer t={t} promptText={t("editRawplanScreen.prompt_text")}></PromptDrawer>
         </Box>

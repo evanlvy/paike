@@ -38,7 +38,7 @@ class JwcKebiaoScreen extends Component {
     this.semesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
     this.tableHeaders = [
       {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class_name"},
-      {name: t("jwcKebiaoScreen.classroom"), field: "classroom"},
+      {name: t("jwcKebiaoScreen.classroom"), field: "classroom", width: 65},
       {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", renderer: "course_teacher_renderer"},
       {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", renderer: "course_teacher_renderer"},
       {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", renderer: "course_teacher_renderer"},
@@ -83,6 +83,23 @@ class JwcKebiaoScreen extends Component {
     return false;
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    console.log("LIFECYCLE: componentDidUpdate");
+    if (prevProps.schoolYear !== this.props.schoolYear) {
+      console.log("LIFECYCLE: componentDidUpdate: LoadGroups");
+      this.resetData();
+      this.loadGroups();
+    }
+    if (prevProps.groupList !== this.props.groupList) {
+      if (JSON.stringify(prevProps.groupList) !== JSON.stringify(this.props.groupList) ||   // Group content changed
+      (prevProps.groupStageWeekId !== this.props.groupStageWeekId && (!this.props.planRows || this.props.planRows.length < 1))) { // Stage changed but group content don't change
+        console.log("LIFECYCLE: componentDidUpdate: loadKebiao");
+        this.setSubjectSelectedIndex(this.state.selectedSubjectIndex);
+        this.loadKebiao(this.state.selectWeek);
+      }
+    }
+  }
+
   loadData = () => {
     const { groupList } = this.props;
     if (!groupList || groupList.length === 0) { // only get subjects when it's empty
@@ -95,8 +112,8 @@ class JwcKebiaoScreen extends Component {
     const { schoolWeek } = this.props;
     this.tableData = null;
     this.setState({
-      selectedSubjectIndex: 0,
-      selectWeek: schoolWeek ? schoolWeek : 1,
+      //selectedSubjectIndex: 0,
+      selectWeek: schoolWeek ? schoolWeek : 1,  // Reset to 1st semi-semenster everytime stage changed.
     });
   }
 
@@ -149,7 +166,7 @@ class JwcKebiaoScreen extends Component {
   }
 
   render() {
-    const { t, groupList, planRows, groupStageWeekId, schoolWeek, } = this.props;
+    const { t, groupList, planRows, groupStageWeekId, schoolWeek } = this.props;
     const { selectedSubjectIndex } = this.state;
     const { groupTitle, onSubjectSelected, onSemesterPageChanged, 
       tableTitle, tableHeaders, semesterPages } = this;
@@ -180,7 +197,7 @@ class JwcKebiaoScreen extends Component {
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}
-            title={t("jwcKebiaoScreen.title")}
+            title={t("jwcKebiaoScreen.title")+" ["+groupStageWeekId+"]"}
             color={JYS_KEBIAO_COLOR}
             headers={tableHeaders}
             data={planRows}
