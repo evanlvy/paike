@@ -38,7 +38,10 @@ class ResultTableWrapper extends Component {
     };
 
     this.defaultColDef = {
-      autoHeight: !!this.props.autoRowHeight,
+      autoHeight: !this.props.fixedRowHeight,
+      flex: 1,
+      minWidth: 80,
+      resizable: !this.props.fixedColWidth,
     };
 
     this.rowClassRules = {
@@ -106,13 +109,13 @@ class ResultTableWrapper extends Component {
         //colId: i,  // Do not set colId because field will not be used in startEditingCell or getColumn.
         headerName: headers[i].name,
         field: headers[i].field,
-        width: headers[i].width ? headers[i].width: defaultColWidth,
+        minWidth: headers[i].width ? headers[i].width: defaultColWidth,
         //autoHeight: false,
         sortable: headers[i].sortable ? headers[i].sortable: false,
         filter: headers[i].filter ? headers[i].filter: false,
         lineHeight: colLineHeight,
         cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
-        resizable: headers[i].resizable,
+        //resizable: headers[i].resizable,
       };
       if (headers[i].children && headers[i].children.length > 0) {
         columnDefs[i]["children"] = this.buildColDefArray(headers[i].children, defaultColWidth/2, colLineHeight);

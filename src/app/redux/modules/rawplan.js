@@ -8,6 +8,7 @@ import { api as rawplanApi } from '../../services/rawplan';
 // action types
 export const types = {
     FETCH_RAWPLAN_GROUPS: "RAWPLAN/FETCH_GROUPS",
+    SET_SELECTED_STAGE: "RAWPLAN/SET_SELECTED_STAGE",
     FETCH_RAWPLAN: "RAWPLAN/FETCH_RAWPLAN",
     SET_SELECTED_GROUP: "RAWPLAN/SET_SELECTEDGROUP",
     SET_ROW_CHANGED: "RAWPLAN/SET_ROWCHANGED",
@@ -56,10 +57,11 @@ export const slotsTranslation = {
   "fri": "周五",
 };
 
+const STATE_PREFIX = "rawplan";
 // actions
 export const actions = {
-    fetchRawplanGroups: (stage) => {
-      console.log(`fetchRawplanGroups: ids: year: ${stage}`);
+    fetchGroups: (stage) => {
+      console.log(`fetchGroups: ids: year: ${stage}`);
       return async (dispatch, getState) => {
         try {
           if (shouldFetchGroups(stage, getState())) {
@@ -67,9 +69,9 @@ export const actions = {
             const data = await rawplanApi.queryGroups(stage);
             dispatch(appActions.finishRequest());
             let groups = convertGroupsToPlain(stage, data);
-            dispatch(fetchRawplanGroupsSuccess(stage, groups));
+            dispatch(fetchGroupsSuccess(stage, groups));
           }
-          dispatch(setSelectedGroup(null));
+          dispatch(setSelectedStage(stage))
         } catch (error) {
           dispatch(appActions.setError(error));
         }
@@ -108,7 +110,7 @@ export const actions = {
               let plans = convertRawplanToPlain(data);
               dispatch(fetchRawplanSuccess(groupStageWeekId, plans));
               // Clear changed rows, this will trigger rerender
-              dispatch(actions.clearChanges(groupStageWeekId));
+              dispatch(actions.clearRowChanges(groupStageWeekId));
             }
         } catch (error) {
           dispatch(appActions.setError(error));
@@ -124,12 +126,16 @@ export const actions = {
             console.log("updateRow: return ok for rowId: "+data.id);
             dispatch(appActions.finishRequest());
             const groupStageWeekId = getSelectedGroup(getState());
-            dispatch(actions.clearChanges(groupStageWeekId));
+            dispatch(actions.clearRowChanges(groupStageWeekId));
         } catch (error) {
           dispatch(appActions.setError(error));
         }
       }
     },
+    clearSelectedGroup: () => ({
+      type: types.SET_SELECTED_GROUP,
+      groupStageWeekId: 'null'
+    }),
     setRowChanged: (groupStageWeekId, rowId, colId, planItem) => ({
       type: types.SET_ROW_CHANGED,
       groupStageWeekId,
@@ -137,7 +143,7 @@ export const actions = {
       colId,
       planItem
     }),
-    clearChanges: (groupStageWeekId) => ({
+    clearRowChanges: (groupStageWeekId) => ({
       type: types.CLEAR_ROW_CHANGES,
       groupStageWeekId
     }),
@@ -151,12 +157,12 @@ export const actions = {
 }
 
 const shouldFetchGroups = (stage, state) => {
-    const prev_stage = state.getIn(["rawplan", "yearId"]);
-    return prev_stage !== stage;
+    const groupList = state.getIn([STATE_PREFIX, "groupList", stage]);
+    return !groupList || groupList.length === 0;
 }
 
 const shouldFetchRawplan = (groupStageWeekId, state) => {
-  const planList = state.getIn(["rawplan", "planRows", groupStageWeekId, 'plans']);
+  const planList = state.getIn([STATE_PREFIX, "planRows", groupStageWeekId, 'rows']);
   console.log("shouldFetchRawplan: "+groupStageWeekId);
   return !planList || planList.length === 0;
 }
@@ -170,7 +176,7 @@ const convertGroupsToPlain = (stage, groupsInfo) => {
     return groupsByIds;
 }
 
-const fetchRawplanGroupsSuccess = (stage, groups) => {
+const fetchGroupsSuccess = (stage, groups) => {
     return ({
       type: types.FETCH_RAWPLAN_GROUPS,
       stage,
@@ -178,11 +184,11 @@ const fetchRawplanGroupsSuccess = (stage, groups) => {
     })
 }
 
-const fetchRawplanSuccess = (groupStageWeekId, plans) => {
+const fetchRawplanSuccess = (groupStageWeekId, rows) => {
   return ({
     type: types.FETCH_RAWPLAN,
     groupStageWeekId,
-    plans
+    rows
   })
 }
 
@@ -193,28 +199,35 @@ const setSelectedGroup = (groupStageWeekId) => {
   })
 }
 
+const setSelectedStage = (stage) => {
+  return ({
+    type: types.SET_SELECTED_STAGE,
+    stage
+  })
+}
+
 const convertRawplanToPlain = (plans) => {
   let data_dict = {};
   //console.log("Got rawplan rows: "+JSON.stringify(plans));
   plans.forEach(plan_row => {
     data_dict[plan_row.id] = parsePlan(plan_row);
   });
-  return {plans: data_dict, update: Date.now()};
+  return {rows: data_dict, update: Date.now()};
 }
 
 // reducers
 const groupList = (state = Immutable.fromJS({}), action) => {
     switch (action.type) {
       case types.FETCH_RAWPLAN_GROUPS:
-        return state.merge(action.groups);
+        return state.merge({[action.stage]: action.groups});
       default:
         return state;
     }
   }
 
-const yearId = (state = Immutable.fromJS({}), action) => {
+const selectedStage = (state = Immutable.fromJS({}), action) => {
     switch (action.type) {
-        case types.FETCH_RAWPLAN_GROUPS:
+        case types.SET_SELECTED_STAGE:
             return state.merge({id: action.stage});
         default:
             return state;
@@ -224,7 +237,7 @@ const yearId = (state = Immutable.fromJS({}), action) => {
 const planRows = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_RAWPLAN:
-      return state.merge({[action.groupStageWeekId]: action.plans});
+      return state.merge({[action.groupStageWeekId]: action.rows});
     default:
       return state;
   }
@@ -306,7 +319,7 @@ const combinePlanItem = (item) => {
 
 const reducer = combineReducers({
   groupList,
-  yearId,
+  selectedStage,
   planRows,
   groupStageWeekId,
   rowChanged,
@@ -316,37 +329,39 @@ const reducer = combineReducers({
 export default reducer;
 
 // selectors
-export const getGroups = state => state.getIn(["rawplan", "groupList"]).valueSeq();
+export const getGroups = state => state.getIn([STATE_PREFIX, "groupList", ""+getSelectedStage(state)]);
 
-export const getStage = (state) => state.getIn(["rawplan", "yearId", "id"]);
+export const getSelectedStage = (state) => state.getIn([STATE_PREFIX, "selectedStage", "id"]);
 
-export const getSelectedGroup = (state) => state.getIn(["rawplan", "groupStageWeekId", "id"]);
+export const getSelectedGroup = (state) => state.getIn([STATE_PREFIX, "groupStageWeekId", "id"]);
 
-export const getRows = (state) => state.getIn(["rawplan", "planRows", getSelectedGroup(state), 'plans']);
+export const getRows = (state) => state.getIn([STATE_PREFIX, "planRows", getSelectedGroup(state), 'rows']);
 
-export const getRowDiff = (state, rowId) => state.getIn(["rawplan", "rowChanged", getSelectedGroup(state), rowId]);
+export const getRowDiff = (state, rowId) => state.getIn([STATE_PREFIX, "rowChanged", getSelectedGroup(state), rowId]);
 
-export const getRowDiffArray = (state) => state.getIn(["rawplan", "rowChanged", getSelectedGroup(state)]);
+export const getRowDiffArray = (state) => state.getIn([STATE_PREFIX, "rowChanged", getSelectedGroup(state)]);
 
 export const countChangedRows = (state) => {
   let combined_id = getSelectedGroup(state);
   if (combined_id) {
-    if (state.hasIn(["rawplan", "rowChanged", combined_id])) {
+    if (state.hasIn([STATE_PREFIX, "rowChanged", combined_id])) {
       // The deep in object is not immutable!
-      return Object.keys(state.getIn(["rawplan", "rowChanged", combined_id])).length;
+      return Object.keys(state.getIn([STATE_PREFIX, "rowChanged", combined_id])).length;
     }
   }
   return 0;
 }
 
-//export const getChangedRowIds = (state) => state.getIn(["rawplan", "rowChanged", getSelectedGroup(state)]).keySeq().toJS();
-export const getChangedRowIds = (state) => Object.keys(state.getIn(["rawplan", "rowChanged", getSelectedGroup(state)]));
+//export const getChangedRowIds = (state) => state.getIn([STATE_PREFIX, "rowChanged", getSelectedGroup(state)]).keySeq().toJS();
+export const getChangedRowIds = (state) => Object.keys(state.getIn([STATE_PREFIX, "rowChanged", getSelectedGroup(state)]));
 
 export const getRawplanGroups = createSelector(
+  getSelectedStage,
   getGroups,
-  (groups) => {
+  (stage, groups) => {
+    //console.log("Selector: getRawplanGroups triggered");
     if (!groups) return [];
-    return groups.toJS();
+    return Object.values(groups);
   }
 );
 

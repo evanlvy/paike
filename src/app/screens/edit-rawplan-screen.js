@@ -197,7 +197,7 @@ class EditRawplanScreen extends Component {
     row_ids.forEach(element => {
       this.props.commitRow(element);
     });
-    this.props.clearChanges();
+    this.props.clearRowChanges();
   }
 
   onRevert = () => {

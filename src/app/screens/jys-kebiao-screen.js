@@ -422,7 +422,6 @@ class JysKebiaoScreen extends Component {
           <ResultTable
             height={450}
             titleHeight={50}
-            autoRowHeight
             colLineHeight={15}
             defaultColWidth={180}
             title={tableTitle}

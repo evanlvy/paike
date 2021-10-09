@@ -16,7 +16,7 @@ import {
 } from '../components';
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
-import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup} from '../redux/modules/rawplan';
+import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, buildGroupStageWeekId} from '../redux/modules/rawplan';
 
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
@@ -71,29 +71,26 @@ class JwcKebiaoScreen extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, groupList, planRows, groupStageWeekId } = this.props;
     const { selectedSubjectIndex } = this.state;
-    // console.log("shouldComponentUpdate, origin grd: "+JSON.stringify(location.state.grd)+", origin edu: "+JSON.stringify(location.state.edu));
-    // console.log("shouldComponentUpdate, grd: "+JSON.stringify(nextProps.location.state.grd)+", edu: "+JSON.stringify(nextProps.location.state.edu));
     if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.planRows !== planRows || nextProps.groupStageWeekId !== groupStageWeekId) {
-      console.log("shouldComponentUpdate, props diff");
+      //console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedSubjectIndex !== selectedSubjectIndex) {
-      console.log("shouldComponentUpdate, state diff");
+      //console.log("shouldComponentUpdate, state diff");
       return true;
     }
     return false;
   }
 
   componentDidUpdate(prevProps, prevState) {
-    console.log("LIFECYCLE: componentDidUpdate");
-    if (prevProps.schoolYear !== this.props.schoolYear) {
-      console.log("LIFECYCLE: componentDidUpdate: LoadGroups");
-      this.resetData();
-      this.loadGroups();
-    }
-    if (prevProps.groupList !== this.props.groupList) {
-      if (JSON.stringify(prevProps.groupList) !== JSON.stringify(this.props.groupList) ||   // Group content changed
-      (prevProps.groupStageWeekId !== this.props.groupStageWeekId && (!this.props.planRows || this.props.planRows.length < 1))) { // Stage changed but group content don't change
-        console.log("LIFECYCLE: componentDidUpdate: loadKebiao");
+    //console.log("LIFECYCLE: componentDidUpdate");
+    if (this.props.groupStageWeekId !== this.getCurrentSelectionId(this.props, this.state)) {
+      // Whatever stage, degree, grade, week differs with STATE, it goes here.
+      if (prevProps.schoolYear !== this.props.schoolYear) {
+        //console.log("LIFECYCLE: componentDidUpdate: LoadGroups");
+        this.resetData();
+        this.loadGroups();
+      } else {
+        //console.log("LIFECYCLE: componentDidUpdate: loadKebiao");
         this.setSubjectSelectedIndex(this.state.selectedSubjectIndex);
         this.loadKebiao(this.state.selectWeek);
       }
@@ -109,12 +106,14 @@ class JwcKebiaoScreen extends Component {
 
   resetData = () => {
     console.log("reset raw plan data");
-    const { schoolWeek } = this.props;
     this.tableData = null;
-    this.setState({
+    // Decide if selections will be cleared when OFFICER change the stage selector.
+    //const { schoolWeek } = this.props;
+    //this.setState({
       //selectedSubjectIndex: 0,
-      selectWeek: schoolWeek ? schoolWeek : 1,  // Reset to 1st semi-semenster everytime stage changed.
-    });
+      //selectWeek: schoolWeek ? schoolWeek : 1,  // Reset to 1st semi-semenster everytime stage changed.
+    //});
+    //this.props.clearSelectedGroup();
   }
 
   loadGroups = () => {
@@ -123,7 +122,7 @@ class JwcKebiaoScreen extends Component {
       return;
     }
     console.log("loadGroups of year: "+schoolYear);
-    this.props.fetchRawplanGroups(schoolYear);
+    this.props.fetchGroups(schoolYear);
   }
 
   onSubjectSelected = (index_array) => {
@@ -142,6 +141,18 @@ class JwcKebiaoScreen extends Component {
     } else {
       this.selectedSubject = null;
     }
+  }
+
+  getCurrentSelectionId = (props, state) => {
+    const { groupList, schoolYear } = props;
+    const { selectedSubjectIndex, selectWeek } = state;
+    let group_info = groupList[selectedSubjectIndex];
+    if (!group_info) {
+      group_info = {degree: 0, grade: 0};
+    }
+    let ret = buildGroupStageWeekId(schoolYear, selectWeek, group_info.degree, group_info.grade);
+    console.log("getCurrentSelectionId: "+ret);
+    return ret;
   }
 
   loadKebiao = (weekIdx) => {

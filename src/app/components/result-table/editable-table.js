@@ -22,7 +22,10 @@ class EditableTable extends Component {
       editPageNum: ""
     };
     this.defaultColDef = {
-      autoHeight: !!this.props.autoRowHeight,
+      autoHeight: !this.props.fixedRowHeight,
+      flex: 1,
+      minWidth: 80,
+      resizable: !this.props.fixedColWidth,
     }
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
@@ -141,7 +144,7 @@ class EditableTable extends Component {
         //colId: i,  // Do not set colId because field will not be used in startEditingCell or getColumn.
         headerName: headers[i].name,
         field: headers[i].field,
-        width: headers[i].width ? headers[i].width : defaultColWidth,
+        minWidth: headers[i].width ? headers[i].width : defaultColWidth,
         lineHeight: colLineHeight,
         cellClassRules: cellClassRules,
         cellRenderer: "commonRenderer",
@@ -156,6 +159,10 @@ class EditableTable extends Component {
         else if (headers[i].renderer === "class_name_renderer") {
           columnDefs[i]["valueGetter"] = this.classNamesGetter;
         }
+      }
+      if (headers[i].width && headers[i].width>=200) {
+        // Use Large text editor for super long text!
+        columnDefs[i]["cellEditor"] = 'agLargeTextCellEditor';
       }
     }
     this.columnDefs = columnDefs;
