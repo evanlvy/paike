@@ -284,5 +284,22 @@
     "form_label_textbook": "教材",
     "form_label_examtype": "考试形式",
     "form_label_comments": "备注"
+  },
+  "curriculumsScreen": {
+    "list_header_id": "记录号",
+    "list_header_name": "课程名",
+    "list_header_short": "简称",
+    "list_header_description": "描述",
+    "list_header_hours_total": "总课时",
+    "list_header_hours_theory": "理论时数",
+    "list_header_hours_lab": "实训时数",
+    "list_header_class_name": "班级",
+    "list_header_department_id": "课程教研室",
+    "list_header_major_id": "班级专业号",
+    "list_header_doc_id": "教学进度表",
+    "list_header_teachers": "教师",
+    "list_header_priority": "优先级",
+    "list_header_created": "创建时间",
+    "list_header_updated": "更新时间"
   }
 }

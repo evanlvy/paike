@@ -15,7 +15,7 @@ export const types = {
     CLEAR_ROW_CHANGES: "RAWPLAN/CLEAR_ROWCHANGES"
   };
 
-export const buildGroupStageWeekId = (stage, weekIdx, degreeId, gradeId) => {
+export const buildDataIdentifier = (stage, weekIdx, degreeId, gradeId) => {
   return stage+"_"+weekIdx+"_"+degreeId+"_"+gradeId;
 }
 
@@ -81,16 +81,16 @@ export const actions = {
       console.log(`fetchRawplan: stage: ${stage}, weekIdx: ${weekIdx}, degreeId: ${degreeId}, gradeId: ${gradeId}`);
       return async (dispatch, getState) => {
         try {
-            const groupStageWeekId = buildGroupStageWeekId(stage, weekIdx, degreeId, gradeId);
-            if (shouldFetchRawplan(groupStageWeekId, getState())) {
+            const selectedDataId = buildDataIdentifier(stage, weekIdx, degreeId, gradeId);
+            if (shouldFetchRawplan(selectedDataId, getState())) {
               console.log("shouldFetchRawplan: return yes!");
               dispatch(appActions.startRequest());
               const data = await rawplanApi.queryRawplan(stage, weekIdx, degreeId, gradeId);
               dispatch(appActions.finishRequest());
               let plans = convertRawplanToPlain(data);
-              dispatch(fetchRawplanSuccess(groupStageWeekId, plans));
+              dispatch(fetchRawplanSuccess(selectedDataId, plans));
             }
-            dispatch(setSelectedGroup(groupStageWeekId));
+            dispatch(setSelectedGroup(selectedDataId));
         } catch (error) {
           dispatch(appActions.setError(error));
         }
@@ -100,17 +100,17 @@ export const actions = {
       return async (dispatch, getState) => {
         try {
             // Get stage week info from state
-            const groupStageWeekId = getSelectedGroup(getState());
-            let item_splited = groupStageWeekId.split('_');
+            const selectedDataId = getSelectedDataId(getState());
+            let item_splited = selectedDataId.split('_');
             if (item_splited.length === 4) {
               console.log("reloadRows!");
               dispatch(appActions.startRequest());
               const data = await rawplanApi.queryRawplan(item_splited[0], item_splited[1], item_splited[2], item_splited[3]);
               dispatch(appActions.finishRequest());
               let plans = convertRawplanToPlain(data);
-              dispatch(fetchRawplanSuccess(groupStageWeekId, plans));
+              dispatch(fetchRawplanSuccess(selectedDataId, plans));
               // Clear changed rows, this will trigger rerender
-              dispatch(actions.clearRowChanges(groupStageWeekId));
+              dispatch(actions.clearRowChanges(selectedDataId));
             }
         } catch (error) {
           dispatch(appActions.setError(error));
@@ -125,8 +125,8 @@ export const actions = {
             const data = await rawplanApi.updateRow(rowId, getRowDiff(getState(), rowId));
             console.log("updateRow: return ok for rowId: "+data.id);
             dispatch(appActions.finishRequest());
-            const groupStageWeekId = getSelectedGroup(getState());
-            dispatch(actions.clearRowChanges(groupStageWeekId));
+            const selectedDataId = getSelectedDataId(getState());
+            dispatch(actions.clearRowChanges(selectedDataId));
         } catch (error) {
           dispatch(appActions.setError(error));
         }
@@ -134,18 +134,18 @@ export const actions = {
     },
     clearSelectedGroup: () => ({
       type: types.SET_SELECTED_GROUP,
-      groupStageWeekId: 'null'
+      selectedDataId: 'null'
     }),
-    setRowChanged: (groupStageWeekId, rowId, colId, planItem) => ({
+    setRowChanged: (selectedDataId, rowId, colId, planItem) => ({
       type: types.SET_ROW_CHANGED,
-      groupStageWeekId,
+      selectedDataId,
       rowId,
       colId,
       planItem
     }),
-    clearRowChanges: (groupStageWeekId) => ({
+    clearRowChanges: (selectedDataId) => ({
       type: types.CLEAR_ROW_CHANGES,
-      groupStageWeekId
+      selectedDataId
     }),
     getChangedRowIds: () => {
       // Use thunk to call selector with State ref. In order to peek state value only.
@@ -161,10 +161,10 @@ const shouldFetchGroups = (stage, state) => {
     return !groupList || groupList.length === 0;
 }
 
-const shouldFetchRawplan = (groupStageWeekId, state) => {
-  const planList = state.getIn([STATE_PREFIX, "planRows", groupStageWeekId, 'rows']);
-  console.log("shouldFetchRawplan: "+groupStageWeekId);
-  return !planList || planList.length === 0;
+const shouldFetchRawplan = (selectedDataId, state) => {
+  const planList = state.getIn([STATE_PREFIX, "dataStore", selectedDataId, 'rows']);
+  console.log("shouldFetchRawplan: "+selectedDataId);
+  return !planList || JSON.stringify(planList) === '{}';
 }
 
 const convertGroupsToPlain = (stage, groupsInfo) => {
@@ -184,18 +184,18 @@ const fetchGroupsSuccess = (stage, groups) => {
     })
 }
 
-const fetchRawplanSuccess = (groupStageWeekId, rows) => {
+const fetchRawplanSuccess = (selectedDataId, rows) => {
   return ({
     type: types.FETCH_RAWPLAN,
-    groupStageWeekId,
+    selectedDataId,
     rows
   })
 }
 
-const setSelectedGroup = (groupStageWeekId) => {
+const setSelectedGroup = (selectedDataId) => {
   return ({
     type: types.SET_SELECTED_GROUP,
-    groupStageWeekId
+    selectedDataId
   })
 }
 
@@ -234,19 +234,19 @@ const selectedStage = (state = Immutable.fromJS({}), action) => {
     }
 }
 
-const planRows = (state = Immutable.fromJS({}), action) => {
+const dataStore = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_RAWPLAN:
-      return state.merge({[action.groupStageWeekId]: action.rows});
+      return state.merge({[action.selectedDataId]: action.rows});
     default:
       return state;
   }
 }
 
-const groupStageWeekId = (state = Immutable.fromJS({}), action) => {
+const selectedDataId = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.SET_SELECTED_GROUP:
-      return state.merge({id: action.groupStageWeekId});
+      return state.merge({id: action.selectedDataId});
     default:
       return state;
   }
@@ -259,14 +259,14 @@ const rowChanged = (state = Immutable.fromJS({}), action) => {
       // How to change deep level state!
       // Ref: https://stackoverflow.com/questions/36031590/right-way-to-update-state-in-redux-reducers
       return state.mergeDeep({
-        [action.groupStageWeekId]: {
+        [action.selectedDataId]: {
           [action.rowId]: {
             [action.colId]: combinePlanItem(action.planItem)
           }
         }
       });
     case types.CLEAR_ROW_CHANGES:
-      return state.remove(action.groupStageWeekId);  // Should return ImmutableJS object instead of empty obj {} directly!
+      return state.remove(action.selectedDataId);  // Should return ImmutableJS object instead of empty obj {} directly!
     default:
       return state;
   }
@@ -320,8 +320,8 @@ const combinePlanItem = (item) => {
 const reducer = combineReducers({
   groupList,
   selectedStage,
-  planRows,
-  groupStageWeekId,
+  dataStore,
+  selectedDataId,
   rowChanged,
   //planItem,
 });
@@ -333,16 +333,16 @@ export const getGroups = state => state.getIn([STATE_PREFIX, "groupList", ""+get
 
 export const getSelectedStage = (state) => state.getIn([STATE_PREFIX, "selectedStage", "id"]);
 
-export const getSelectedGroup = (state) => state.getIn([STATE_PREFIX, "groupStageWeekId", "id"]);
+export const getSelectedDataId = (state) => state.getIn([STATE_PREFIX, "selectedDataId", "id"]);
 
-export const getRows = (state) => state.getIn([STATE_PREFIX, "planRows", getSelectedGroup(state), 'rows']);
+export const getRows = (state) => state.getIn([STATE_PREFIX, "dataStore", getSelectedDataId(state), 'rows']);
 
-export const getRowDiff = (state, rowId) => state.getIn([STATE_PREFIX, "rowChanged", getSelectedGroup(state), rowId]);
+export const getRowDiff = (state, rowId) => state.getIn([STATE_PREFIX, "rowChanged", getSelectedDataId(state), rowId]);
 
-export const getRowDiffArray = (state) => state.getIn([STATE_PREFIX, "rowChanged", getSelectedGroup(state)]);
+export const getRowDiffArray = (state) => state.getIn([STATE_PREFIX, "rowChanged", getSelectedDataId(state)]);
 
 export const countChangedRows = (state) => {
-  let combined_id = getSelectedGroup(state);
+  let combined_id = getSelectedDataId(state);
   if (combined_id) {
     if (state.hasIn([STATE_PREFIX, "rowChanged", combined_id])) {
       // The deep in object is not immutable!
@@ -352,8 +352,8 @@ export const countChangedRows = (state) => {
   return 0;
 }
 
-//export const getChangedRowIds = (state) => state.getIn([STATE_PREFIX, "rowChanged", getSelectedGroup(state)]).keySeq().toJS();
-export const getChangedRowIds = (state) => Object.keys(state.getIn([STATE_PREFIX, "rowChanged", getSelectedGroup(state)]));
+//export const getChangedRowIds = (state) => state.getIn([STATE_PREFIX, "rowChanged", getSelectedDataId(state)]).keySeq().toJS();
+export const getChangedRowIds = (state) => Object.keys(state.getIn([STATE_PREFIX, "rowChanged", getSelectedDataId(state)]));
 
 export const getRawplanGroups = createSelector(
   getSelectedStage,

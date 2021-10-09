@@ -16,7 +16,7 @@ import {
 } from '../components';
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
-import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, buildGroupStageWeekId} from '../redux/modules/rawplan';
+import { actions as rawplanActions, getRawplanGroups, getSelectedDataId, getPlansByGroup, buildDataIdentifier} from '../redux/modules/rawplan';
 
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
@@ -72,9 +72,9 @@ class JwcKebiaoScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { schoolYear, groupList, planRows, groupStageWeekId } = this.props;
+    const { schoolYear, groupList, planRows, selectedDataId } = this.props;
     const { selectedGroupIndex, selectedGrade, selectedDegree } = this.state;
-    if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.planRows !== planRows || nextProps.groupStageWeekId !== groupStageWeekId) {
+    if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.planRows !== planRows || nextProps.selectedDataId !== selectedDataId) {
       //console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedGrade !== selectedGrade || nextState.selectedDegree !== selectedDegree) {
@@ -90,7 +90,7 @@ class JwcKebiaoScreen extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     //console.log("LIFECYCLE: componentDidUpdate");
-    if (this.props.groupStageWeekId !== this.getCurrentSelectionId(this.props, this.state)) {
+    if (this.props.selectedDataId !== this.getCurrentSelectionId(this.props, this.state)) {
       // Whatever stage, degree, grade, week differs with STATE, it goes here.
       if (prevProps.schoolYear !== this.props.schoolYear) {
         //console.log("LIFECYCLE: componentDidUpdate: LoadGroups");
@@ -158,7 +158,7 @@ class JwcKebiaoScreen extends Component {
   getCurrentSelectionId = (props, state) => {
     const { schoolYear } = props;
     const { selectedGrade, selectedDegree, selectedWeek } = state;
-    let ret = buildGroupStageWeekId(schoolYear, selectedWeek, selectedDegree, selectedGrade);
+    let ret = buildDataIdentifier(schoolYear, selectedWeek, selectedDegree, selectedGrade);
     console.log("getCurrentSelectionId: "+ret);
     return ret;
   }
@@ -184,13 +184,13 @@ class JwcKebiaoScreen extends Component {
   }
 
   render() {
-    const { t, groupList, planRows, groupStageWeekId, schoolWeek } = this.props;
+    const { t, groupList, planRows, selectedDataId, schoolWeek } = this.props;
     const { selectedGroupIndex } = this.state;
     const { color, groupTitle, onSubjectSelected, onSemesterPageChanged, 
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
     //console.log("render: plans "+JSON.stringify(planRows));
-    console.log("render: group_id: "+groupStageWeekId);
+    console.log("render: group_id: "+selectedDataId);
 
     return (
       <Flex width="100%" direction="column" align="center" flex={1} mb={5}>
@@ -215,7 +215,7 @@ class JwcKebiaoScreen extends Component {
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}
-            title={t("jwcKebiaoScreen.title")+" ["+groupStageWeekId+"]"}
+            title={t("jwcKebiaoScreen.title")+" ["+selectedDataId+"]"}
             color={color}
             headers={tableHeaders}
             data={planRows}
@@ -233,13 +233,13 @@ class JwcKebiaoScreen extends Component {
 }
 
 const mapStateToProps = (state, props) => {
-  const { groupStageWeekId } = props;
+  const { selectedDataId } = props;
   return {
     schoolYear: getSchoolYear(state),
     schoolWeek: getSchoolWeek(state),
     groupList: getRawplanGroups(state),
-    groupStageWeekId: getSelectedGroup(state),
-    planRows: getPlansByGroup(state, groupStageWeekId),
+    selectedDataId: getSelectedDataId(state),
+    planRows: getPlansByGroup(state, selectedDataId),
   }
 }
 

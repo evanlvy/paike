@@ -21,7 +21,7 @@ import {
 } from '../components';
 
 import { getSchoolYear, getSchoolWeek, getStageList } from '../redux/modules/grade';
-import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup, countRowChanged, getTeacherStatistics} from '../redux/modules/rawplan';
+import { actions as rawplanActions, getSelectedDataId, getPlansByGroup, countRowChanged, getTeacherStatistics} from '../redux/modules/rawplan';
 import { EditableTable } from '../components/result-table/editable-table';
 import { SEMESTER_WEEK_COUNT } from './common/info';
 import PromptDrawer from '../components/overlays/prompt-drawer';
@@ -188,7 +188,7 @@ class EditRawplanScreen extends Component {
       return;
     }*/
     //Dispatch action for the value change!
-    this.props.setRowChanged(this.props.groupStageWeekId, params.data["id"], dest_col, params.data[dest_col]);
+    this.props.setRowChanged(this.props.selectedDataId, params.data["id"], dest_col, params.data[dest_col]);
   }
 
   onCommit = () => {
@@ -215,7 +215,7 @@ class EditRawplanScreen extends Component {
       plansTableHeaders, semiSemesterPages, color, semesterPages, onStageChanged, statisticsTableHeaders } = this;
     //const pageTables = [];
     //console.log("render: plans "+JSON.stringify(planRows));
-    //console.log("render: group_id: "+groupStageWeekId+ " changedRows:"+changedRows, "statistics: "+JSON.stringify(statistics));
+    //console.log("render: group_id: "+selectedDataId+ " changedRows:"+changedRows, "statistics: "+JSON.stringify(statistics));
 
     return (
       <Flex width="100%"  flex={1} direction="column" align="center" mb={5}>
@@ -289,13 +289,13 @@ class EditRawplanScreen extends Component {
 }
 
 const mapStateToProps = (state/*, props*/) => {
-  //const { groupStageWeekId, groupList } = props;
-  //console.log("mapStateToProps: "+groupStageWeekId + groupList);
+  //const { selectedDataId, groupList } = props;
+  //console.log("mapStateToProps: "+selectedDataId + groupList);
   return {
     schoolYear: getSchoolYear(state),
     schoolWeek: getSchoolWeek(state),
     stageList: getStageList(state),
-    groupStageWeekId: getSelectedGroup(state),
+    selectedDataId: getSelectedDataId(state),
     planRows: getPlansByGroup(state),
     changedRows: countRowChanged(state),
     statistics: getTeacherStatistics(state),

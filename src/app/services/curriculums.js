@@ -7,13 +7,16 @@ class Api {
     this.baseUrl = server.url + "/api/v1";
   }
 
-  queryCurriculums = async (stage, department_id=-1, teacher_id=-1, major_id=-1, class_id=-1, items_per_page=-1, page_id=-1) => {
+  queryCurriculumsWithSuspects = async (stage, department_id=null, degree_id=null, grade_id=null, teacher_id=null, major_id=null, class_id=null, items_per_page=null, page_id=null) => {
     try {
       const url = this.baseUrl+"/get_curriculums";
       console.log("Request url "+url+" with stage: "+stage+", department: "+department_id+", teacher: "+teacher_id+", class_id: "+class_id);
       let input_param = {
+        course_name_requery: 1,
         stage_id: stage,
         department_id: department_id,
+        grade_id: degree_id,
+        degree_id: grade_id,
         class_id: class_id,
         major_id: major_id,
         user_id: teacher_id,
@@ -22,7 +25,7 @@ class Api {
       };
       let request_param = {};
       Object.keys(input_param).forEach(key => {
-        if (input_param[key] >= 0) {
+        if (input_param[key] !== null) {
           request_param[key] = input_param[key];
         }
       });
@@ -31,6 +34,7 @@ class Api {
       if (!success) {
         throw new Error(message.message);
       }
+      console.log("Request url returned count:"+total);
       return data;
     } catch (error) {
       throw error;
