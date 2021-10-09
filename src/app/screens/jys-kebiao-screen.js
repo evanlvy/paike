@@ -243,8 +243,8 @@ class JysKebiaoScreen extends Component {
     const { tableFieldNames, tableRowNames } = this;
     let resultList = [];
     //console.log("buildJysKebiaoTable: "+JSON.stringify(kebiaoByTeacherSched));
-    for (let teacherIndex=1; teacherIndex < teachersBySelectedJys.length; teacherIndex++) {
-      const teacherInfo = teachersBySelectedJys[teacherIndex];
+    for (let idx=0; idx < teachersBySelectedJys.length; idx++) {
+      const teacherInfo = teachersBySelectedJys[idx];
       const teacherSchedId = buildTeacherSchedId(teacherInfo.id, schoolYear, selectWeek);
       const kebiaoInfo = kebiaoByTeacherSched.get(teacherSchedId);
       //console.log(`Get TeacherSchedId: ${teacherSchedId}, data: ${JSON.stringify(kebiaoInfo)}`);

@@ -300,7 +300,9 @@ class MenuBarWrapped extends Component {
     const { grade_name, major_name, class_seq} = stuInfo;
     console.log("renderer, access level: "+accessLevel);
     return (
-      <Flex direction="column" justify="center" basis="100%" mt={5}>
+      <Flex direction="column" justify="center" basis="100%" my={2}>
+        <Box color="black" bg="gray.700" rounded="lg" boxShadow="lg" 
+          alignItems="center" flexWrap="no-wrap" justifyContent="space-between">
         <Flex direction="row" justify="center" flexWrap="wrap" mt={5}>
           {
             menus.map((item) => {
@@ -344,7 +346,7 @@ class MenuBarWrapped extends Component {
             })
           }
         </Flex>
-        <Box display="inline-flex" p="20px" color="white" mt="2" bg="gray.700" rounded="lg" boxShadow="lg" 
+        <Box width="100%" display="inline-flex" p="20px" color="white" mt="2" bg="gray.500" rounded="lg" boxShadow="lg" 
         alignItems="center" flexWrap="no-wrap" justifyContent="space-between">
             <Badge borderRadius="full" mx="5" px="4" colorScheme="blue" fontWeight="semibold"
               letterSpacing="wide"
@@ -362,7 +364,7 @@ class MenuBarWrapped extends Component {
               <Text width="5em" mx={2} whiteSpace="break-spaces">{t("editRawplanScreen.hint_stageselector")}</Text>
               {
                 (semesterPages && Object.keys(semesterPages).length > 0) &&
-                <Select color="gray.500" variant="filled" value={selectStage} onChange={onStageChanged}>
+                <Select color="gray.700" variant="filled" value={selectStage} onChange={onStageChanged}>
                 {
                   Object.keys(semesterPages).map((stage_id) => (
                     <option key={stage_id} value={stage_id} >{semesterPages[stage_id]}</option>
@@ -373,6 +375,7 @@ class MenuBarWrapped extends Component {
               </Flex>
             }
             <PromptDrawer t={t} promptText={t("editRawplanScreen.prompt_text")}></PromptDrawer>
+        </Box>
         </Box>
       </Flex>
     );

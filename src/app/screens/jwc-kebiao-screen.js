@@ -20,19 +20,22 @@ import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlans
 
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
-const JYS_KEBIAO_COLOR = "red";
+const DEFAULT_COLOR = "red";
 const TEACHER_ITEM_COLOR = "pink.400";
 const SEMESTER_FIRST_HALF_MAX_WEEK = 9;
 const SEMESTER_HALF_BIAS_WEEK = 6;
 class JwcKebiaoScreen extends Component {
   constructor(props) {
     super (props);
-    const { t, schoolWeek } = props;
+    const { t, schoolWeek, color } = props;
     let weekIdx = schoolWeek ? schoolWeek : 1;
     this.state = {
-      selectedSubjectIndex: 0,
-      selectWeek: SEMESTER_HALF_BIAS_WEEK + ((weekIdx<=SEMESTER_FIRST_HALF_MAX_WEEK)?0:SEMESTER_FIRST_HALF_MAX_WEEK),
+      selectedGroupIndex: 0,
+      selectedWeek: SEMESTER_HALF_BIAS_WEEK + ((weekIdx<=SEMESTER_FIRST_HALF_MAX_WEEK)?0:SEMESTER_FIRST_HALF_MAX_WEEK),
+      selectedGrade: 0,
+      selectedDegree: 0,
     };
+    this.color = color ? color : DEFAULT_COLOR;
     this.groupTitle = t("jwcKebiaoScreen.class_group");
     //this.tabTitles = [];
     this.semesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
@@ -70,13 +73,17 @@ class JwcKebiaoScreen extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, groupList, planRows, groupStageWeekId } = this.props;
-    const { selectedSubjectIndex } = this.state;
+    const { selectedGroupIndex, selectedGrade, selectedDegree } = this.state;
     if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.planRows !== planRows || nextProps.groupStageWeekId !== groupStageWeekId) {
       //console.log("shouldComponentUpdate, props diff");
       return true;
-    } else if (nextState.selectedSubjectIndex !== selectedSubjectIndex) {
+    } else if (nextState.selectedGrade !== selectedGrade || nextState.selectedDegree !== selectedDegree) {
       //console.log("shouldComponentUpdate, state diff");
       return true;
+    } else if (nextState.selectedGroupIndex !== selectedGroupIndex) {
+      // Group content changed, parse the list again to get proper grade and degree id.
+      this.setSubjectSelectedIndex(nextState.selectedGroupIndex);
+      return false;
     }
     return false;
   }
@@ -91,8 +98,7 @@ class JwcKebiaoScreen extends Component {
         this.loadGroups();
       } else {
         //console.log("LIFECYCLE: componentDidUpdate: loadKebiao");
-        this.setSubjectSelectedIndex(this.state.selectedSubjectIndex);
-        this.loadKebiao(this.state.selectWeek);
+        this.loadKebiao(this.state.selectedWeek);
       }
     }
   }
@@ -110,8 +116,8 @@ class JwcKebiaoScreen extends Component {
     // Decide if selections will be cleared when OFFICER change the stage selector.
     //const { schoolWeek } = this.props;
     //this.setState({
-      //selectedSubjectIndex: 0,
-      //selectWeek: schoolWeek ? schoolWeek : 1,  // Reset to 1st semi-semenster everytime stage changed.
+      //selectedGroupIndex: 0,
+      //selectedWeek: schoolWeek ? schoolWeek : 1,  // Reset to 1st semi-semenster everytime stage changed.
     //});
     //this.props.clearSelectedGroup();
   }
@@ -127,43 +133,44 @@ class JwcKebiaoScreen extends Component {
 
   onSubjectSelected = (index_array) => {
     let index = index_array[0];
-    this.setState({
-      selectedSubjectIndex: index,
-    });
     this.setSubjectSelectedIndex(index);
-    this.loadKebiao(this.state.selectWeek);
+    this.loadKebiao(this.state.selectedWeek);
   }
 
   setSubjectSelectedIndex = (index) => {
     const { groupList } = this.props;
+    let group_info = null;
     if (groupList && index < groupList.length) {
-      this.selectedSubject = groupList[index];
+      group_info = groupList[index];
     } else {
-      this.selectedSubject = null;
+      group_info = null;
     }
-  }
-
-  getCurrentSelectionId = (props, state) => {
-    const { groupList, schoolYear } = props;
-    const { selectedSubjectIndex, selectWeek } = state;
-    let group_info = groupList[selectedSubjectIndex];
     if (!group_info) {
       group_info = {degree: 0, grade: 0};
     }
-    let ret = buildGroupStageWeekId(schoolYear, selectWeek, group_info.degree, group_info.grade);
+    this.setState({
+      selectedGroupIndex: index,
+      selectedGrade: group_info.grade,
+      selectedDegree: group_info.degree,
+    });
+  }
+
+  getCurrentSelectionId = (props, state) => {
+    const { schoolYear } = props;
+    const { selectedGrade, selectedDegree, selectedWeek } = state;
+    let ret = buildGroupStageWeekId(schoolYear, selectedWeek, selectedDegree, selectedGrade);
     console.log("getCurrentSelectionId: "+ret);
     return ret;
   }
 
   loadKebiao = (weekIdx) => {
     const { schoolYear } = this.props;
-    let grade_id = this.selectedSubject.grade;
-    let degree_id = this.selectedSubject.degree;
-    console.log("loadKebiao, grade: "+grade_id+" degree: "+degree_id);
-    this.props.fetchRawplan(schoolYear, weekIdx, degree_id, grade_id);  //stage, weekIdx, degreeId, gradeId
-    this.setState({
-      hasFetchKebiao: true
-    });
+    const { selectedGrade, selectedDegree } = this.state;
+    console.log("loadKebiao, grade: "+selectedGrade+" degree: "+selectedDegree);
+    if (schoolYear < 1 || weekIdx < 0 || (selectedDegree === 0 && selectedGrade === 0)) {
+      return;
+    }
+    this.props.fetchRawplan(schoolYear, weekIdx, selectedDegree, selectedGrade);  //stage, weekIdx, degreeId, gradeId
   }
 
   onSemesterPageChanged = (index) => {
@@ -171,15 +178,15 @@ class JwcKebiaoScreen extends Component {
     console.log("onSemesterPageChanged: "+semesterPages[index].name);
     let shixunSelectWeek = index*(SEMESTER_FIRST_HALF_MAX_WEEK)+SEMESTER_HALF_BIAS_WEEK;
     this.setState({
-      selectWeek : shixunSelectWeek
+      selectedWeek : shixunSelectWeek
     });
     this.loadKebiao(shixunSelectWeek);
   }
 
   render() {
     const { t, groupList, planRows, groupStageWeekId, schoolWeek } = this.props;
-    const { selectedSubjectIndex } = this.state;
-    const { groupTitle, onSubjectSelected, onSemesterPageChanged, 
+    const { selectedGroupIndex } = this.state;
+    const { color, groupTitle, onSubjectSelected, onSemesterPageChanged, 
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
     //console.log("render: plans "+JSON.stringify(planRows));
@@ -191,10 +198,10 @@ class JwcKebiaoScreen extends Component {
           groupList && groupList.length > 0 &&
           <SubjectBoard
             my={4}
-            color={JYS_KEBIAO_COLOR}
+            color={color}
             title={groupTitle}
             subjects={groupList}
-            initSelectIndex={selectedSubjectIndex}
+            initSelectIndex={selectedGroupIndex}
             selectionChanged={onSubjectSelected}
             t = {t}
             enableSelect={true}
@@ -209,7 +216,7 @@ class JwcKebiaoScreen extends Component {
             colLineHeight={20}
             defaultColWidth={180}
             title={t("jwcKebiaoScreen.title")+" ["+groupStageWeekId+"]"}
-            color={JYS_KEBIAO_COLOR}
+            color={color}
             headers={tableHeaders}
             data={planRows}
             pageNames={semesterPages}

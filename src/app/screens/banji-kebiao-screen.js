@@ -22,11 +22,11 @@ import { actions as kebiaoActions, buildBanjiSchedId, getKeBiaoByAllBanjiSched }
 
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
-const BANJIKEBIAO_COLOR = "blue";
+const DEFAULT_COLOR = "blue";
 class BanJiKeBiaoScreen extends Component {
   constructor(props) {
     super(props);
-    const { t, schoolWeek } = props;
+    const { t, schoolWeek, color } = props;
     this.state = {
       selectedBanjiIndex: 0,
       selectedMajorId: 0,
@@ -35,7 +35,7 @@ class BanJiKeBiaoScreen extends Component {
       selectWeek: schoolWeek ? schoolWeek : 1,
       refreshFlag: false,
     };
-
+    this.color = color ? color : DEFAULT_COLOR;
     this.semesterPages = [];
     this.pageTables = [];
     this.tabTitles = [];
@@ -391,7 +391,7 @@ class BanJiKeBiaoScreen extends Component {
   generateTabTables = (props, state) => {
     const { t } = props;
     const { selectWeek } = state;
-    const { tableHeaders, tableDataList, semesterPages, onSemesterPageChanged } = this;
+    const { color, tableHeaders, tableDataList, semesterPages, onSemesterPageChanged } = this;
     console.log("render: selectWeek: "+selectWeek);
     const pageTables = [];
     for (let i=0; i < tableDataList.length; i++) {
@@ -402,7 +402,7 @@ class BanJiKeBiaoScreen extends Component {
           colLineHeight={20}
           defaultColWidth={180}
           title={t("menuBar.banjikebiao_title")}
-          color={BANJIKEBIAO_COLOR}
+          color={color}
           headers={tableHeaders}
           data={tableDataList[i]}
           pageNames={semesterPages}
@@ -422,8 +422,7 @@ class BanJiKeBiaoScreen extends Component {
     const { t, subjects, banjiBySubject } = this.props;
     const { edu, grd } = this.props.location.state;
     const { initMajorId } = this.state;
-    const { defaultClassIdx,
-      tabTitles, pageTables,
+    const { color, defaultClassIdx, tabTitles, pageTables,
       selectedIdsChanged, onTabChanged } = this;
     //console.log("render: pageTables: "+JSON.stringify(pageTables));
     let no_class = (!Array.isArray(banjiBySubject) || banjiBySubject.length < 1);
@@ -433,7 +432,7 @@ class BanJiKeBiaoScreen extends Component {
         <SubjectBoard
           t={t}
           my={4}
-          color={BANJIKEBIAO_COLOR}
+          color={color}
           title={t("banjiKebiaoScreen.subject_board_title")}
           subjects={subjects}
           initSelectId={initMajorId}
@@ -448,7 +447,7 @@ class BanJiKeBiaoScreen extends Component {
             width="100%"
             maxWidth={1444}
             tabHeight={50}
-            color={BANJIKEBIAO_COLOR}
+            color={color}
             titles={tabTitles}
             onTabChange={onTabChanged}
             pages={pageTables}
