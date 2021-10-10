@@ -120,8 +120,8 @@ class ResultTableWrapper extends Component {
       if (headers[i].children && headers[i].children.length > 0) {
         columnDefs[i]["children"] = this.buildColDefArray(headers[i].children, defaultColWidth/2, colLineHeight);
       }
-      if (headers[i].renderer && headers[i].renderer !== null) {
-        if (headers[i].renderer === "course_teacher_renderer") {
+      if (headers[i].dataType && headers[i].dataType !== null) {
+        if (headers[i].dataType === "course_teacher_combined") {
           columnDefs[i]["valueGetter"] = this.courseTeacherGetter;
           /*columnDefs[i]["cellRenderer"] = (params) => {
             // console.log("CourseTeacherRenderer: "+JSON.stringify(params, this.getCircularReplacer()));
@@ -140,10 +140,10 @@ class ResultTableWrapper extends Component {
             return output;
           };*/
         }
-        else if (headers[i].renderer === "class_name_renderer") {
+        else if (headers[i].dataType === "classes_id_name_obj") {
           columnDefs[i]["valueGetter"] = this.classNamesGetter;
         }
-        else if (headers[i].renderer === "slot_weekday_renderer") {
+        else if (headers[i].dataType === "slot_weekday_renderer") {
           //columnDefs[i]["valueGetter"] = this.slotWeekdayGetter;
           columnDefs[i]["cellRenderer"] = "conflictsRenderer";
           columnDefs[i]["cellRendererParams"] = {

@@ -13,6 +13,7 @@ import kebiao from './kebiao';
 import history from './history';
 import rawplan from './rawplan';
 import progressdoc from './progressdoc';
+import curriculums from './curriculums';
 
 const rootReducer = combineReducers({
   app,
@@ -28,6 +29,7 @@ const rootReducer = combineReducers({
   history,
   rawplan,
   progressdoc,
+  curriculums,
 });
 
 export default rootReducer;

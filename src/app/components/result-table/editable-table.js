@@ -133,6 +133,17 @@ class EditableTable extends Component {
     return short_names.join(', ');
   };
 
+  teacherListGetter = (params) => {
+    let value = params.data[params.colDef.field];
+    if (!value) {
+      return "";
+    }
+    let ret = value.map(function (teacher_info) {
+      return teacher_info.name;
+    });
+    return ret;
+  };
+
   buildColDef = (props) => {
     const { headers, defaultColWidth, colLineHeight, cellClassRules } = props;
     const columnDefs = [];
@@ -150,14 +161,17 @@ class EditableTable extends Component {
         cellRenderer: "commonRenderer",
         editable: headers[i].editable,
       };
-      if (headers[i].renderer && headers[i].renderer !== null) {
-        if (headers[i].renderer === "course_teacher_renderer") {
+      if (headers[i].dataType && headers[i].dataType !== null) {
+        if (headers[i].dataType === "course_teacher_combined") {
           columnDefs[i]["valueGetter"] = this.courseTeacherGetter;
           columnDefs[i]["valueSetter"] = this.courseTeacherSetter;
           delete columnDefs[i]["cellRenderer"];
         }
-        else if (headers[i].renderer === "class_name_renderer") {
+        else if (headers[i].dataType === "classes_id_name_obj") {
           columnDefs[i]["valueGetter"] = this.classNamesGetter;
+        }
+        else if (headers[i].dataType === "teacher_obj_array") {
+          columnDefs[i]["valueGetter"] = this.teacherListGetter;
         }
       }
       if (headers[i].width && headers[i].width>=200) {
@@ -288,7 +302,7 @@ class EditableTable extends Component {
             borderWidth={1} borderColor={color+".200"} roundedTop="md">
             <Text width="100%">{title}</Text>
             {
-              pageNames &&
+              Array.isArray(pageNames) && pageNames.length > 0 &&
               <Flex direction="row" alignItems="center">
                 {
                   pageInputCaption &&

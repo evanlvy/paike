@@ -286,6 +286,7 @@
     "form_label_comments": "备注"
   },
   "curriculumsScreen": {
+    "table_title": "教研室教学任务",
     "list_header_id": "记录号",
     "list_header_name": "课程名",
     "list_header_short": "简称",
@@ -295,7 +296,7 @@
     "list_header_hours_lab": "实训时数",
     "list_header_class_name": "班级",
     "list_header_department_id": "课程教研室",
-    "list_header_major_id": "班级专业号",
+    "list_header_major_id": "专业号",
     "list_header_doc_id": "教学进度表",
     "list_header_teachers": "教师",
     "list_header_priority": "优先级",

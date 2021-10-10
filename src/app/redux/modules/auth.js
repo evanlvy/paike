@@ -219,6 +219,10 @@ export const getStudentInfo = state => {
   return state.getIn(["auth", "stuInfo"]).toJS();
 };
 
+export const getDepartmentId = state => {
+  return state.getIn(["auth", "userInfo", "departmentId"]);
+};
+
 export const getAccessLevel = createSelector(
   getRoles, getStudentInfo,
   (roles, stuInfo) => {

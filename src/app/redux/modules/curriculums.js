@@ -197,7 +197,8 @@ export const countChangedRows = (state) => {
 
 export const getCurriculumList = createSelector(
   getList,
-  (docList) => {
+  getSelectedDataId,
+  (docList, selectedDataId) => {
     if (!docList) return [];
     return Object.values(docList);
   }

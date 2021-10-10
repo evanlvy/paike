@@ -55,7 +55,7 @@ class ProgressdocScreen extends Component {
       {name: t("progressdocScreen.list_header_textbook"), field: "textbook"},
       {name: t("progressdocScreen.list_header_exam"), field: "exam_type", width: 120},
       {name: t("progressdocScreen.list_header_comments"), field: "comments"},
-      {name: t("progressdocScreen.list_header_classes"), field: "classes", renderer: "class_name_renderer"},
+      {name: t("progressdocScreen.list_header_classes"), field: "classes", dataType: "classes_id_name_obj"},
       {name: t("progressdocScreen.list_header_created"), field: "created_at"},
       {name: t("progressdocScreen.list_header_updated"), field: "updated_at"},
       {name: t("progressdocScreen.list_header_id"), field: "id", width: 80},

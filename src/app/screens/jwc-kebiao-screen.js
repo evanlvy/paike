@@ -42,49 +42,54 @@ class JwcKebiaoScreen extends Component {
     this.tableHeaders = [
       {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class_name"},
       {name: t("jwcKebiaoScreen.classroom"), field: "classroom", width: 65},
-      {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.mon_78"), field: "mon_78", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.tue_12"), field: "tue_12", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.tue_34"), field: "tue_34", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.tue_56"), field: "tue_56", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.tue_78"), field: "tue_78", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.wed_12"), field: "wed_12", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.wed_34"), field: "wed_34", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.wed_56"), field: "wed_56", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.wed_78"), field: "wed_78", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.thu_12"), field: "thu_12", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.thu_34"), field: "thu_34", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.thu_56"), field: "thu_56", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.thu_78"), field: "thu_78", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.fri_12"), field: "fri_12", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.fri_34"), field: "fri_34", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.fri_56"), field: "fri_56", renderer: "course_teacher_renderer"},
-      {name: t("jwcKebiaoScreen.fri_78"), field: "fri_78", renderer: "course_teacher_renderer"},
+      {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.mon_78"), field: "mon_78", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.tue_12"), field: "tue_12", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.tue_34"), field: "tue_34", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.tue_56"), field: "tue_56", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.tue_78"), field: "tue_78", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.wed_12"), field: "wed_12", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.wed_34"), field: "wed_34", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.wed_56"), field: "wed_56", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.wed_78"), field: "wed_78", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.thu_12"), field: "thu_12", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.thu_34"), field: "thu_34", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.thu_56"), field: "thu_56", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.thu_78"), field: "thu_78", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.fri_12"), field: "fri_12", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.fri_34"), field: "fri_34", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.fri_56"), field: "fri_56", dataType: "course_teacher_combined"},
+      {name: t("jwcKebiaoScreen.fri_78"), field: "fri_78", dataType: "course_teacher_combined"},
     ];
     this.tableData = null;
     this.tabsListRef = React.createRef();
   }
 
   componentDidMount() {
-    this.loadData();
+    const { groupList } = this.props;
+    if (!groupList || groupList.length === 0) { // only get subjects when it's empty
+      this.loadGroups();
+    }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { schoolYear, groupList, planRows, selectedDataId } = this.props;
+    const { schoolYear, groupList, dataRows, selectedDataId } = this.props;
     const { selectedGroupIndex, selectedGrade, selectedDegree } = this.state;
-    if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.planRows !== planRows || nextProps.selectedDataId !== selectedDataId) {
-      //console.log("shouldComponentUpdate, props diff");
+    if (nextState.selectedGroupIndex !== selectedGroupIndex || nextProps.groupList !== groupList) {
+      // Group content changed, parse the list again to get proper grade and degree id.
+      this.setSubjectSelectedIndex(nextProps, nextState.selectedGroupIndex);
+      //console.log("LIFECYCLE: shouldComponentUpdate: setSubjectSelectedIndex");
+    }
+    if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.dataRows !== dataRows || nextProps.selectedDataId !== selectedDataId) {
+      //console.log("LIFECYCLE: shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.selectedGrade !== selectedGrade || nextState.selectedDegree !== selectedDegree) {
-      //console.log("shouldComponentUpdate, state diff");
+      //console.log("LIFECYCLE: shouldComponentUpdate, state diff");
       return true;
-    } else if (nextState.selectedGroupIndex !== selectedGroupIndex) {
-      // Group content changed, parse the list again to get proper grade and degree id.
-      this.setSubjectSelectedIndex(nextState.selectedGroupIndex);
-      return false;
     }
+    //console.log("LIFECYCLE: shouldComponentUpdate: return false");
     return false;
   }
 
@@ -103,22 +108,17 @@ class JwcKebiaoScreen extends Component {
     }
   }
 
-  loadData = () => {
-    const { groupList } = this.props;
-    if (!groupList || groupList.length === 0) { // only get subjects when it's empty
-      this.loadGroups();
-    }
-  }
-
   resetData = () => {
     console.log("reset raw plan data");
     this.tableData = null;
     // Decide if selections will be cleared when OFFICER change the stage selector.
     //const { schoolWeek } = this.props;
-    //this.setState({
+    this.setState({
       //selectedGroupIndex: 0,
       //selectedWeek: schoolWeek ? schoolWeek : 1,  // Reset to 1st semi-semenster everytime stage changed.
-    //});
+      selectedGrade: 0,
+      selectedDegree: 0,
+    });
     //this.props.clearSelectedGroup();
   }
 
@@ -127,18 +127,18 @@ class JwcKebiaoScreen extends Component {
     if (!schoolYear || !schoolWeek) {
       return;
     }
-    console.log("loadGroups of year: "+schoolYear);
+    //console.log("loadGroups of year: "+schoolYear);
     this.props.fetchGroups(schoolYear);
   }
 
   onSubjectSelected = (index_array) => {
     let index = index_array[0];
-    this.setSubjectSelectedIndex(index);
+    this.setSubjectSelectedIndex(this.props, index);
     this.loadKebiao(this.state.selectedWeek);
   }
 
-  setSubjectSelectedIndex = (index) => {
-    const { groupList } = this.props;
+  setSubjectSelectedIndex = (props, index) => {
+    const { groupList } = props;
     let group_info = null;
     if (groupList && index < groupList.length) {
       group_info = groupList[index];
@@ -168,6 +168,7 @@ class JwcKebiaoScreen extends Component {
     const { selectedGrade, selectedDegree } = this.state;
     console.log("loadKebiao, grade: "+selectedGrade+" degree: "+selectedDegree);
     if (schoolYear < 1 || weekIdx < 0 || (selectedDegree === 0 && selectedGrade === 0)) {
+      console.log("loadKebiao: Ignore!");
       return;
     }
     this.props.fetchRawplan(schoolYear, weekIdx, selectedDegree, selectedGrade);  //stage, weekIdx, degreeId, gradeId
@@ -184,12 +185,12 @@ class JwcKebiaoScreen extends Component {
   }
 
   render() {
-    const { t, groupList, planRows, selectedDataId, schoolWeek } = this.props;
+    const { t, groupList, dataRows, selectedDataId, schoolWeek } = this.props;
     const { selectedGroupIndex } = this.state;
     const { color, groupTitle, onSubjectSelected, onSemesterPageChanged, 
       tableTitle, tableHeaders, semesterPages } = this;
     //const pageTables = [];
-    //console.log("render: plans "+JSON.stringify(planRows));
+    //console.log("render: plans "+JSON.stringify(dataRows));
     console.log("render: group_id: "+selectedDataId);
 
     return (
@@ -208,17 +209,17 @@ class JwcKebiaoScreen extends Component {
             enableAutoTitle={true} />
         }
         {
-          planRows &&
+          dataRows &&
           <ResultTable
             flex={1}
-            minHeight={planRows.length>13?950:450}
+            minHeight={dataRows.length>13?950:450}
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}
             title={t("jwcKebiaoScreen.title")+" ["+selectedDataId+"]"}
             color={color}
             headers={tableHeaders}
-            data={planRows}
+            data={dataRows}
             pageNames={semesterPages}
             pagePrevCaption={t("common.previous")}
             pageNextCaption={t("common.next")}
@@ -239,7 +240,7 @@ const mapStateToProps = (state, props) => {
     schoolWeek: getSchoolWeek(state),
     groupList: getRawplanGroups(state),
     selectedDataId: getSelectedDataId(state),
-    planRows: getPlansByGroup(state, selectedDataId),
+    dataRows: getPlansByGroup(state, selectedDataId),
   }
 }
 
