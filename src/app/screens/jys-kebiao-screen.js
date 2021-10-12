@@ -38,7 +38,7 @@ class JysKebiaoScreen extends Component {
     this.tabTitles = [];
     this.semesterPages = [];
     this.tableHeaders = [
-      {name: t("kebiao.sched_title"), field: "sched_name"},
+      {name: t("kebiao.sched_title"), field: "sched_name", width: "120"},
       {name: t("kebiao.sched_monday"), field: "monday"},
       {name: t("kebiao.sched_tuesday"), field: "tuesday"},
       {name: t("kebiao.sched_wednesday"), field: "wednesday"},
@@ -400,7 +400,7 @@ class JysKebiaoScreen extends Component {
     console.log("renderer: selectedTeacherIds:"+JSON.stringify(selectedTeacherIds));
 
     return (
-      <Flex width="100%" minHeight={750} direction="column" align="center">
+      <Flex width="100%" direction="column" align="center">
         {
           teachersBySelectedJys && teachersBySelectedJys.length > 0 &&
           <SubjectBoard
@@ -421,6 +421,7 @@ class JysKebiaoScreen extends Component {
           tableData && 
           <ResultTable
             height={450}
+            autoShrinkDomHeight
             titleHeight={50}
             colLineHeight={15}
             defaultColWidth={180}

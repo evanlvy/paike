@@ -26,6 +26,7 @@ class EditableTable extends Component {
       flex: 1,
       minWidth: 80,
       resizable: !this.props.fixedColWidth,
+      wrapText: true,
     }
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
@@ -262,6 +263,7 @@ class EditableTable extends Component {
   onGridReady = (params) => {
     this.gridApi = params.api;
     this.gridColumnApi = params.columnApi;
+    this.gridApi.sizeColumnsToFit();
   };
 
   exportCsv = () => {
@@ -322,6 +324,7 @@ class EditableTable extends Component {
         <Box flex={1} width="100%" height="1500px" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
           <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
             <AgGridReact
+              stopEditingWhenCellsLoseFocus={true}
               deltaRowMode={true}
               getRowNodeId={data=>data.id}
               defaultColDef={defaultColDef}

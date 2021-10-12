@@ -42,6 +42,7 @@ class ResultTableWrapper extends Component {
       flex: 1,
       minWidth: 80,
       resizable: !this.props.fixedColWidth,
+      wrapText: true,
     };
 
     this.rowClassRules = {
@@ -51,6 +52,9 @@ class ResultTableWrapper extends Component {
     };
     this.onItemClicked = this.onItemClicked.bind(this);
     this.buildUI(props);
+    this.previousRowCount = 0;
+    this.underShrink = false;
+    this.gridSizeAdapted = false;
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -123,6 +127,10 @@ class ResultTableWrapper extends Component {
       if (headers[i].dataType && headers[i].dataType !== null) {
         if (headers[i].dataType === "course_teacher_combined") {
           columnDefs[i]["valueGetter"] = this.courseTeacherGetter;
+          columnDefs[i]["cellStyle"] = params => { 
+            let course_teacher_combined = params.data[params.colDef.field];
+            if (!course_teacher_combined) return;
+            return course_teacher_combined.cid < 0 ? { backgroundColor: '#F687B3' } : (course_teacher_combined.tid < 0? { backgroundColor: '#FC8181' }:{})};
           /*columnDefs[i]["cellRenderer"] = (params) => {
             // console.log("CourseTeacherRenderer: "+JSON.stringify(params, this.getCircularReplacer()));
             if (!params.value) {
@@ -224,11 +232,66 @@ class ResultTableWrapper extends Component {
     //console.log("buildData: "+JSON.stringify(data));
   }
 
+  onGridReady = (params) => {
+    // Following line to make the currently visible columns fit the screen  
+    params.api.sizeColumnsToFit();
+    // Following line dymanic set height to row on content
+    params.api.resetRowHeights();
+  }
+
   onGridSizeChanged = (event) => {
     console.log("onGridSizeChanged");
-    //setTimeout(()=>{event.api.resetRowHeights()}, 0);
-    event.api.resetRowHeights();
+    const { autoShrinkDomHeight, maxHeight } = this.props;
+    let max_height = maxHeight;
+    if (!max_height) {
+      // get the screen height as fail-safe max height
+      // So that the table grid will not exceed the valid screen height!
+      max_height = window.screen.availHeight - 80;
+    }
+    if (autoShrinkDomHeight) {
+      let newRowCount = event.api.getDisplayedRowCount();
+      if (this.gridSizeAdapted === true) {
+        if (this.previousRowCount !== newRowCount) {
+          if (this.previousRowCount < newRowCount && this.underShrink === false) {
+            this.gridSizeAdapted = false;
+            console.log("RESULTABLE: Need re-adapt!");
+          } else if (this.previousRowCount > newRowCount && this.underShrink === true) {
+            if (max_height > newRowCount*40) {
+              this.gridSizeAdapted = false;
+              console.log("RESULTABLE: Need re-adapt for RowCount!");
+            }
+          }
+          console.log("RESULTABLE: RowCount different:"+this.previousRowCount+" to "+newRowCount);
+        }
+      }
+      this.previousRowCount = newRowCount;
+    }
+    if (!this.gridSizeAdapted) {
+      let should_shrink = false;
+      if (event.clientHeight > max_height) {
+        // Perform shrink
+        should_shrink = true;
+      }
+      console.log("RESULTABLE: should_shrink:"+should_shrink+" grid Client h:"+event.clientHeight+
+      " maxH:"+maxHeight+" screenH:"+window.screen.availHeight+" RowCount:"+this.previousRowCount);
+      this.setAutoHeight(event, should_shrink, max_height);
+      this.gridSizeAdapted = true;
+    } else {
+      console.log("RESULTABLE: resetRowHeights");
+      event.api.resetRowHeights();
+    }
   }
+
+  // Checkout how-to here: https://www.ag-grid.com/javascript-data-grid/grid-size/
+  setAutoHeight = (gridOptions, shouldShrink, maxTableHeight) => {
+    gridOptions.api.setDomLayout(shouldShrink?'normal':'autoHeight');
+    // auto height will get the grid to fill the height of the contents,
+    // so the grid div should have no height set, the height is dynamic.
+    document.querySelector('#myGrid').style.height = shouldShrink?(maxTableHeight+'px'):'';
+    this.underShrink = shouldShrink;
+    console.log("RESULTABLE: setDomLayout: "+(shouldShrink?'normal':'autoHeight'));
+  }
+  
 
   onCellClicked = (event) => {
     const { onCellClicked: onCellClickedCallback } = this.props;
@@ -331,12 +394,12 @@ class ResultTableWrapper extends Component {
   }
 
   render() {
-    const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, 
+    const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, onGridReady,
       onCellClicked, onRowClicked, onRowSelected, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, titleHeight, autoHeight, colLineHeight, defaultColWidth, color, headers, data,
       pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption,
       onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onResultPageIndexChanged,
-      rowSelection, ...other_props } = this.props;
+      rowSelection, autoShrinkDomHeight, ...other_props } = this.props;
     const { curPageIndex } = this.state;
     //console.log("render: curPageIndex: "+curPageIndex);
     return (
@@ -362,8 +425,11 @@ class ResultTableWrapper extends Component {
           }
         </Box>
         <Box flex={1} width="100%" height="1500px" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
-          <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
+          <div id="myGrid" className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
             <AgGridReact
+              domLayout={autoShrinkDomHeight?'autoHeight':'normal'}
+              animateRows={true}
+              onGridReady={onGridReady}
               onGridSizeChanged={onGridSizeChanged}
               defaultColDef={defaultColDef}
               frameworkComponents={frameworkComponents}

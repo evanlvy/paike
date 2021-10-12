@@ -41,7 +41,7 @@ class JwcKebiaoScreen extends Component {
     this.semesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
     this.tableHeaders = [
       {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class_name"},
-      {name: t("jwcKebiaoScreen.classroom"), field: "classroom", width: 65},
+      {name: t("jwcKebiaoScreen.classroom"), field: "classroom", width: 80},
       {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", dataType: "course_teacher_combined"},
       {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", dataType: "course_teacher_combined"},
       {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", dataType: "course_teacher_combined"},
@@ -212,7 +212,8 @@ class JwcKebiaoScreen extends Component {
           dataRows &&
           <ResultTable
             flex={1}
-            minHeight={dataRows.length>13?950:450}
+            //maxHeight={950}
+            autoShrinkDomHeight
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}
