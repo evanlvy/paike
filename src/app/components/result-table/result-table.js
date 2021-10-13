@@ -23,11 +23,11 @@ import { slotsTranslation } from "../../redux/modules/rawplan";
 class ResultTableWrapper extends Component {
   constructor(props) {
     super(props);
+    const { t, onCellIndicatorClicked, initPageIndex, fixedRowHeight, fixedColWidth } = props;
     this.state = {
-      curPageIndex: props.initPageIndex ? props.initPageIndex : 0,
+      curPageIndex: initPageIndex ? initPageIndex : 0,
       editPageNum: ""
     };
-    const { onCellIndicatorClicked } = this.props;
     if (onCellIndicatorClicked != null) {
       this.onCellIndicatorClicked = onCellIndicatorClicked;
     }
@@ -38,23 +38,24 @@ class ResultTableWrapper extends Component {
     };
 
     this.defaultColDef = {
-      autoHeight: !this.props.fixedRowHeight,
+      autoHeight: !fixedRowHeight,
       flex: 1,
       minWidth: 80,
-      resizable: !this.props.fixedColWidth,
+      resizable: !fixedColWidth,
       wrapText: true,
     };
 
-    this.rowClassRules = {
+    /*this.rowClassRules = {
       'conflict-warning': (params) => {
           return params.data.is_conflict;
       },
-    };
+    };*/
     this.onItemClicked = this.onItemClicked.bind(this);
     this.buildUI(props);
     this.previousRowCount = 0;
     this.underShrink = false;
     this.gridSizeAdapted = false;
+    this.zixi = t("kebiao.zixi");
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -130,23 +131,8 @@ class ResultTableWrapper extends Component {
           columnDefs[i]["cellStyle"] = params => { 
             let course_teacher_combined = params.data[params.colDef.field];
             if (!course_teacher_combined) return;
-            return course_teacher_combined.cid < 0 ? { backgroundColor: '#F687B3' } : (course_teacher_combined.tid < 0? { backgroundColor: '#FC8181' }:{})};
-          /*columnDefs[i]["cellRenderer"] = (params) => {
-            // console.log("CourseTeacherRenderer: "+JSON.stringify(params, this.getCircularReplacer()));
-            if (!params.value) {
-              return `<font color="gray">${t("kebiao.zixi")}</font>`;
-            }
-            let cname = params.value.course;
-            if (params.value.cid <= 0){
-              cname = `<font color="white" style="background-color:#FF0000;">${cname}</font>`;
-            }
-            let tname = params.value.teacher;
-            if (params.value.tid <= 0){
-              tname = `<font color="white" style="background-color:#FF0000;">${tname}</font>`;
-            }
-            let output = `<b>${cname}</b><br>${tname}`
-            return output;
-          };*/
+            return course_teacher_combined.cid < 0 ? { backgroundColor: '#FEB2B2' } : (course_teacher_combined.tid < 0? { backgroundColor: '#FED7E2' }:{});
+          };
         }
         else if (headers[i].dataType === "classes_id_name_obj") {
           columnDefs[i]["valueGetter"] = this.classNamesGetter;
@@ -208,17 +194,17 @@ class ResultTableWrapper extends Component {
     let value = params.data[params.colDef.field];
     //console.log("courseTeacherGetter: value:"+JSON.stringify(value));
     if (!value) {
-      return "自习";
+      return this.zixi;
     }
     let cname = value.course;
-    if (value.cid <= 0){
+    /*if (value.cid <= 0){
       cname = (value.cid < 0?"\u274C":"\u2753")+cname;
-    }
+    }*/
     let tname = value.teacher;
-    if (value.tid <= 0){
+    /*if (value.tid <= 0){
       tname = (value.tid < 0?"\u274C":"\u2753")+tname;
-    }
-    let output = cname + " " + tname;
+    }*/
+    let output = "\u3010" + cname + "\u3011 " + tname;
     //console.log("courseTeacherGetter: "+output);
     return output;
   };
@@ -265,6 +251,8 @@ class ResultTableWrapper extends Component {
         }
       }
       this.previousRowCount = newRowCount;
+    } else {
+      this.gridSizeAdapted = true;
     }
     if (!this.gridSizeAdapted) {
       let should_shrink = false;
@@ -428,14 +416,14 @@ class ResultTableWrapper extends Component {
           <div id="myGrid" className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
             <AgGridReact
               domLayout={autoShrinkDomHeight?'autoHeight':'normal'}
-              animateRows={true}
+              animateRows={false}
               onGridReady={onGridReady}
               onGridSizeChanged={onGridSizeChanged}
               defaultColDef={defaultColDef}
               frameworkComponents={frameworkComponents}
               columnDefs={columnDefs}
               rowData={rowData}
-              rowClassRules={rowClassRules}
+              //rowClassRules={rowClassRules}
               onCellClicked={onCellClicked}
               onRowClicked={onRowClicked}
               rowSelection={rowSelection}

@@ -7,6 +7,7 @@ import {
   Button,
   Box,
 } from '@chakra-ui/core';
+import { withTranslation } from 'react-i18next';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
@@ -14,18 +15,19 @@ import './table.css';
 
 import { CommonRenderer } from "./common-renderer";
 
-class EditableTable extends Component {
+class EditableTableWrapper extends Component {
   constructor(props) {
     super(props);
+    const { t, initPageIndex, fixedRowHeight, fixedColWidth } = props;
     this.state = {
-      curPageIndex: props.initPageIndex ? props.initPageIndex : 0,
+      curPageIndex: initPageIndex ? initPageIndex : 0,
       editPageNum: ""
     };
     this.defaultColDef = {
-      autoHeight: !this.props.fixedRowHeight,
+      autoHeight: !fixedRowHeight,
       flex: 1,
       minWidth: 80,
-      resizable: !this.props.fixedColWidth,
+      resizable: !fixedColWidth,
       wrapText: true,
     }
     this.frameworkComponents = {
@@ -33,6 +35,7 @@ class EditableTable extends Component {
     }
     this.buildColDef(props);
     this.buildData(props);
+    this.zixi = t("kebiao.zixi");
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -73,17 +76,17 @@ class EditableTable extends Component {
     let value = params.data[params.colDef.field];
     //console.log("courseTeacherGetter: value:"+JSON.stringify(value));
     if (!value) {
-      return "自习";
+      return this.zixi;
     }
     let cname = value.course;
-    if (value.cid <= 0){
+    /*if (value.cid <= 0){
       cname = (value.cid < 0?"\u274C":"\u2753")+cname;
-    }
+    }*/
     let tname = value.teacher;
-    if (value.tid <= 0){
+    /*if (value.tid <= 0){
       tname = (value.tid < 0?"\u274C":"\u2753")+tname;
-    }
-    let output = cname + " " + tname;
+    }*/
+    let output = "\u3010" + cname + "\u3011 " + tname;
     //console.log("courseTeacherGetter: "+output);
     return output;
   };
@@ -96,9 +99,11 @@ class EditableTable extends Component {
     }
     let old_string = "";
     if (params.oldValue && params.oldValue.length > 0) {
-      old_string = params.oldValue.replace("\u274C", "").replace("\u2753", "").replace(/\s+/g, "");
+      //old_string = params.oldValue.replace("\u274C", "").replace("\u2753", "").replace(/\s+/g, "");
+      old_string = params.oldValue.replace("\u3010", "").replace("\u3011", "").replace(/\s+/g, "");
     }
-    let input_string = params.newValue.replace("\u274C", "").replace("\u2753", "");
+    //let input_string = params.newValue.replace("\u274C", "").replace("\u2753", "");
+    let input_string = params.newValue.replace("\u3010", "").replace("\u3011", "");
     if (old_string.length > 1) {
       // Compare string after trim
       let new_trimmed = input_string.replace(/\s+/g, "");
@@ -110,6 +115,10 @@ class EditableTable extends Component {
     let item_splited = input_string.split(' ');
     if (item_splited.length >= 1) {
       output.course = item_splited[0];
+      if (output.course === this.zixi) {
+        delete params.data[dest_col];
+        return true;
+      }
     }
     if (item_splited.length === 2) {
       output.teacher = item_splited[1];
@@ -166,7 +175,15 @@ class EditableTable extends Component {
         if (headers[i].dataType === "course_teacher_combined") {
           columnDefs[i]["valueGetter"] = this.courseTeacherGetter;
           columnDefs[i]["valueSetter"] = this.courseTeacherSetter;
-          delete columnDefs[i]["cellRenderer"];
+          columnDefs[i]["cellStyle"] = params => { 
+            let course_teacher_combined = params.data[params.colDef.field];
+            if (course_teacher_combined) {
+              if (course_teacher_combined.cid < 0) return { backgroundColor: '#FEB2B2' };
+              if (course_teacher_combined.tid < 0) return { backgroundColor: '#FED7E2' };
+              if (course_teacher_combined.cid == 0) return { backgroundColor: '#00B5D8' };
+            }
+            return;
+          };
         }
         else if (headers[i].dataType === "classes_id_name_obj") {
           columnDefs[i]["valueGetter"] = this.classNamesGetter;
@@ -342,5 +359,5 @@ class EditableTable extends Component {
     )
   }
 }
-
+const EditableTable = withTranslation("translation", {withRef: true})(EditableTableWrapper);
 export { EditableTable };

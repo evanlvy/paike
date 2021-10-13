@@ -51,7 +51,7 @@ class EditRawplanScreen extends Component {
     ];
     this.plansTableHeaders = [
       {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class_name"},
-      {name: t("jwcKebiaoScreen.classroom"), field: "classroom", width: 60, editable: true},
+      {name: t("jwcKebiaoScreen.classroom"), field: "classroom", width: 80, editable: true},
       {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", dataType: "course_teacher_combined", editable: true},
       {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", dataType: "course_teacher_combined", editable: true},
       {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", dataType: "course_teacher_combined", editable: true},
@@ -241,6 +241,7 @@ class EditRawplanScreen extends Component {
           statistics &&
           <ResultTable
             margin="5"
+            //fixedRowHeight
             maxWidth={1000}
             minHeight={statistics.length>3?350:180}
             titleHeight={50}
@@ -260,7 +261,7 @@ class EditRawplanScreen extends Component {
             flex={1}
             minHeight={950}
             titleHeight={50}
-            colLineHeight={15}
+            colLineHeight={20}
             defaultColWidth={180}
             title={t("editRawplanScreen.title_jwcplan")}
             color={color}
