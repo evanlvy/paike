@@ -51,11 +51,15 @@ class ResultTableWrapper extends Component {
       },
     };*/
     this.onItemClicked = this.onItemClicked.bind(this);
+    this.buildColDef(props);
     this.buildUI(props);
     this.previousRowCount = 0;
     this.underShrink = false;
     this.gridSizeAdapted = false;
     this.zixi = t("kebiao.zixi");
+    this.gridApi = null;
+    this.prevWidth = 0;
+    this.prevHeight = 0;
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -97,7 +101,7 @@ class ResultTableWrapper extends Component {
 
   buildUI = (props) => {
     console.log("resultTable buildUI");
-    this.buildColDef(props);
+    //this.buildColDef(props);
     this.buildData(props);
   }
 
@@ -219,6 +223,7 @@ class ResultTableWrapper extends Component {
   }
 
   onGridReady = (params) => {
+    this.gridApi = params.api;
     // Following line to make the currently visible columns fit the screen  
     params.api.sizeColumnsToFit();
     // Following line dymanic set height to row on content
@@ -265,8 +270,19 @@ class ResultTableWrapper extends Component {
       this.setAutoHeight(event, should_shrink, max_height);
       this.gridSizeAdapted = true;
     } else {
-      console.log("RESULTABLE: resetRowHeights");
-      event.api.resetRowHeights();
+      console.log("RESULTABLE: resetRowHeights:"+event.type);
+      //event.api.resetRowHeights();
+      if (event.clientWidth !== this.prevWidth) {
+        // Following line to make the currently visible columns fit the screen  
+        event.api.sizeColumnsToFit();
+      }
+      /*if (event.clientHeight !== this.prevHeight) {
+        //setTimeout(()=>{this.gridApi.resetRowHeights()}, 0);
+        // Following line dymanic set height to row on content
+        event.api.resetRowHeights();
+      }*/
+      this.prevWidth = event.clientWidth;
+      this.prevHeight = event.clientHeight;
     }
   }
 
@@ -307,7 +323,7 @@ class ResultTableWrapper extends Component {
     if (!onRowSelectedCallback || !event.node.selected) {// This is for unselected! not selected.
         return;
     }
-        if (event.data.hasOwnProperty("id")) {
+    if (event.data.hasOwnProperty("id")) {
       onRowSelectedCallback(event.rowIndex, event.data["id"]);
     }
     else {
@@ -415,7 +431,7 @@ class ResultTableWrapper extends Component {
         <Box flex={1} width="100%" height="1500px" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
           <div id="myGrid" className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
             <AgGridReact
-              domLayout={autoShrinkDomHeight?'autoHeight':'normal'}
+              //domLayout={autoShrinkDomHeight?'autoHeight':'normal'}
               animateRows={false}
               onGridReady={onGridReady}
               onGridSizeChanged={onGridSizeChanged}

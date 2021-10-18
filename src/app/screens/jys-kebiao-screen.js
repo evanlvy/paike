@@ -38,7 +38,7 @@ class JysKebiaoScreen extends Component {
     this.tabTitles = [];
     this.semesterPages = [];
     this.tableHeaders = [
-      {name: t("kebiao.sched_title"), field: "sched_name", width: "120"},
+      {name: t("kebiao.sched_title"), field: "sched_name", width: "100"},
       {name: t("kebiao.sched_monday"), field: "monday"},
       {name: t("kebiao.sched_tuesday"), field: "tuesday"},
       {name: t("kebiao.sched_wednesday"), field: "wednesday"},
@@ -91,7 +91,8 @@ class JysKebiaoScreen extends Component {
     const { selectWeek, selectedJysId, selectedTeacherIds, updateTableFlag } = this.state;
     console.log("LIFECYCLE: shouldComponentUpdate");
     if (nextState.selectedJysId !== selectedJysId) {      
-      console.log("shouldComponentUpdate, location state diff");
+      console.log("shouldComponentUpdate, selectedJysId diff");
+      this.loadTeachers(-1, nextState.selectedJysId);
       return true;
     } else if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek || nextProps.teachersBySelectedJys !== teachersBySelectedJys
     || nextProps.kebiaoByTeacherSched !== kebiaoByTeacherSched || nextProps.kebiaoByIds !== kebiaoByIds) {
@@ -111,28 +112,24 @@ class JysKebiaoScreen extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     console.log("LIFECYCLE: componentDidUpdate");
-    if (prevState.selectedJysId !== this.state.selectedJysId
-      || prevProps.schoolYear !== this.props.schoolYear) {
-     this.resetData();
-   }
-    if (prevState.selectedJysId !== this.state.selectedJysId
-       || prevState.selectWeek !== this.state.selectWeek 
-       || prevProps.schoolYear !== this.props.schoolYear) {
-        const teacherSchedId = buildTeacherSchedId(this.state.selectedTeacherIds[0], this.props.schoolYear, this.state.selectWeek);
-        console.log("Get kebiao of "+teacherSchedId);
-        const kebiaoInfo = this.props.kebiaoByTeacherSched.get(teacherSchedId);
-        if (!kebiaoInfo || kebiaoInfo.length < 1) {
-          this.loadTeachers();
-        }
-        else {
-          this.buildKebiao(this.state.selectedTeacherIds);
-        }
+    if (prevProps.schoolYear !== this.props.schoolYear) {
+      this.resetData();
     }
-    if (prevProps.kebiaoByTeacherSched !== this.props.kebiaoByTeacherSched
+    if (prevProps.schoolYear !== this.props.schoolYear || prevState.selectWeek !== this.state.selectWeek 
+       || prevProps.kebiaoByTeacherSched !== this.props.kebiaoByTeacherSched
        || prevProps.teachersBySelectedJys !== this.props.teachersBySelectedJys
        || prevState.selectedTeacherIds !== this.state.selectedTeacherIds) {
       // BuildKebiao required once week changed-->get teacher job for new week-->kebiaoByTeacherSched
-      this.buildKebiao(this.state.selectedTeacherIds);
+      //this.buildKebiao(this.state.selectedTeacherIds);
+      const teacherSchedId = buildTeacherSchedId(this.state.selectedTeacherIds[0], this.props.schoolYear, this.state.selectWeek);
+      console.log("Get kebiao of "+teacherSchedId);
+      const kebiaoInfo = this.props.kebiaoByTeacherSched.get(teacherSchedId);
+      if (!kebiaoInfo || kebiaoInfo.length < 1) {
+        this.loadTeachers();
+      }
+      else {
+        this.buildKebiao(this.state.selectedTeacherIds);
+      }
     }
   }
 
@@ -144,8 +141,10 @@ class JysKebiaoScreen extends Component {
     this.tableData = null;
     this.setState({
       //selectedTeacherIndex: 0,
+      //selectedTeacherIds: [],
       defaultTeacherId: -1,
       selectWeek: schoolWeek ? schoolWeek : 1,
+      updateTableFlag: 0,
     });
   }
 
@@ -420,11 +419,12 @@ class JysKebiaoScreen extends Component {
         {
           tableData && 
           <ResultTable
-            height={450}
+            minHeight={330}
             autoShrinkDomHeight
+            fixedColWidth
             titleHeight={50}
-            colLineHeight={15}
-            defaultColWidth={180}
+            colLineHeight={20}
+            defaultColWidth={80}
             title={tableTitle}
             color={JYS_KEBIAO_COLOR}
             headers={tableHeaders}

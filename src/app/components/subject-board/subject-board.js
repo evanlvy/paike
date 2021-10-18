@@ -83,18 +83,21 @@ class SubjectBoard extends Component {
       prevProps.initSelectedIndexList !== this.props.initSelectedIndexList ||
       prevProps.initSelectIndex !== this.props.initSelectIndex) {
         console.log("LIFECYCLE: componentDidUpdate: initial SelectedIds");
+        let new_ids = SubjectBoard.getInitialSelectedIdsFromProps(this.props, this.selectAllChecked);
         this.setState({
-          selectedIndexList: SubjectBoard.getInitialSelectedIdsFromProps(this.props)
+          selectedIndexList: new_ids
         });
+        // Tell parent the new ids when subject items changed
+        this.selectorCallbackInvoker(new_ids, this.selectAllChecked);
     }
   }
 
-  static getInitialSelectedIdsFromProps(props) {
+  static getInitialSelectedIdsFromProps(props, selectAll=false) {
     console.log("getInitialSelectedIdsFromProps");
     // Build selection index array (not id array)
     if (props.enableSelect && Array.isArray(props.subjects) && props.subjects.length > 0 ) {
       let selections = [];
-      if (props.initSelectAll) {
+      if (props.initSelectAll || selectAll) {
         selections = [...Array(props.subjects.length).keys()];
       } else {
         if (props.enableMultiSelect && Array.isArray(props.initSelectedIndexList)) {
