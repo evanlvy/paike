@@ -389,7 +389,7 @@ class JysKebiaoScreen extends Component {
   }
 
   render() {
-    const { t, teachersBySelectedJys } = this.props;
+    const { t, teachersBySelectedJys, schoolYear } = this.props;
     const { defaultTeacherId, selectedTeacherIds, selectWeek } = this.state;
     const { tabTitles, tableHeaders, tableTitle, tableData, semesterPages, selectedIdsChanged,
       onSemesterPageChanged } = this;
@@ -397,7 +397,7 @@ class JysKebiaoScreen extends Component {
     console.log("renderer: tableData:"+JSON.stringify(tableData));
     console.log("renderer: teacherData:"+JSON.stringify(teachersBySelectedJys));
     console.log("renderer: selectedTeacherIds:"+JSON.stringify(selectedTeacherIds));
-
+    const teacherSchedId = buildTeacherSchedId(selectedTeacherIds[0], schoolYear, selectWeek);
     return (
       <Flex width="100%" direction="column" align="center">
         {
@@ -425,7 +425,7 @@ class JysKebiaoScreen extends Component {
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={80}
-            title={tableTitle}
+            title={tableTitle+" ["+teacherSchedId+"]"}
             color={JYS_KEBIAO_COLOR}
             headers={tableHeaders}
             data={tableData}

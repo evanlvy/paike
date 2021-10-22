@@ -35,7 +35,7 @@ export const actions = {
 }
 
 export const buildTeacherSchedId = (teacherId, year, week) => {
-  return teacherId+"_"+year+(week < 10 ? "0"+week : ""+week);
+  return teacherId+"_"+year+"_"+(week < 10 ? "0"+week : ""+week);
 }
 
 const shouldFetchTeacherSchedInfo = (teacherIds, year, week, state) => {
