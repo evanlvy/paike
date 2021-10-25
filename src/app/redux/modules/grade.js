@@ -6,6 +6,7 @@ import { actions as appActions } from './app';
 import { api as gradeApi } from '../../services/grade';
 import { format } from 'date-fns';
 
+const STATE_PREFIX = "grade";
 // action types
 export const types = {
   FETCH_DEGREE_GRADE: "GRADE/FETCH_DEGREE_GRADE",
@@ -13,6 +14,8 @@ export const types = {
   FETCH_STAGE_LIST: "GRADE/FETCH_STAGE_LIST",
   SET_CURRENT_STAGE: "GRADE/SET_CURRENT_STAGE",
   RECOVER_STAGE: "GRADE/RECOVER_STAGE",
+  FETCH_GRADEDEGREE_GROUPS: "GRADE/FETCH_GROUPS",
+  SET_STAGE_OF_GROUP: "GRADE/SET_STAGE_OF_GROUP",
 };
 // action creators
 export const actions = {
@@ -62,6 +65,23 @@ export const actions = {
       }
     }
   },
+  fetchGroups: (stage) => {
+    console.log(`fetchGroups: ids: year: ${stage}`);
+    return async (dispatch, getState) => {
+      try {
+        if (shouldFetchGroups(stage, getState())) {
+          dispatch(appActions.startRequest());
+          const data = await gradeApi.queryGroups(stage);
+          dispatch(appActions.finishRequest());
+          let groups = convertGroupsToPlain(stage, data);
+          dispatch(fetchGroupsSuccess(stage, groups));
+        }
+        dispatch(setSelectedGroupStage(stage))
+      } catch (error) {
+        dispatch(appActions.setError(error));
+      }
+    }
+  },
   setStage: (stageId) => ({
     type: types.SET_CURRENT_STAGE,
     stageId: Number(stageId),
@@ -82,6 +102,34 @@ const shouldFetchStageList = (state) => {
   return !stages || stages.size === 0;
 }
 
+const shouldFetchGroups = (stage, state) => {
+  const groupList = state.getIn([STATE_PREFIX, "groupList", stage]);
+  return !groupList || groupList.length === 0;
+}
+
+const convertGroupsToPlain = (stage, groupsInfo) => {
+  let groupsByIds = {};
+  console.log("Got GradeDegree Groups: "+JSON.stringify(groupsInfo));
+  groupsInfo.forEach(groupInfo => {
+      groupsByIds[groupInfo.id] = {id: groupInfo.id, title: groupInfo.name, grade: groupInfo.grade_id, degree: groupInfo.degree_id};
+  });
+  return groupsByIds;
+}
+
+const fetchGroupsSuccess = (stage, groups) => {
+  return ({
+    type: types.FETCH_GRADEDEGREE_GROUPS,
+    stage,
+    groups
+  })
+}
+
+const setSelectedGroupStage = (stage) => {
+  return ({
+    type: types.SET_STAGE_OF_GROUP,
+    stage
+  })
+}
 
 const fetchAllGradeInfoSuccess = (degreeByIds, allDegrees, gradeByIds, gradeByDegree) => {
   return ({
@@ -201,6 +249,17 @@ const stages = (state = Immutable.fromJS({}), action) => {
   }
 }
 
+const groupList = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.FETCH_GRADEDEGREE_GROUPS:
+      return state.merge({[action.stage]: action.groups});
+    case types.SET_STAGE_OF_GROUP:
+      return state.merge({selected: action.stage});
+    default:
+      return state;
+  }
+}
+
 const reducer = combineReducers({
   degreeByIds,
   degreeIds,
@@ -208,24 +267,29 @@ const reducer = combineReducers({
   gradeByDegree,
   schoolYearWeek,
   stages,
+  groupList,
 });
 
 export default reducer;
 
 // selectors
-export const getSchoolYear = state => state.getIn(["grade", "schoolYearWeek", "year"]);
-export const getSchoolWeek = state => state.getIn(["grade", "schoolYearWeek", "week"]);
+export const getSchoolYear = state => state.getIn([STATE_PREFIX, "schoolYearWeek", "year"]);
+export const getSchoolWeek = state => state.getIn([STATE_PREFIX, "schoolYearWeek", "week"]);
 
-export const getDegrees = state => state.getIn(["grade", "degreeByIds"]);
+export const getDegrees = state => state.getIn([STATE_PREFIX, "degreeByIds"]);
 
-export const getDegreeIds = state => state.getIn(["grade", "degreeIds"]);
+export const getDegreeIds = state => state.getIn([STATE_PREFIX, "degreeIds"]);
 
-export const getGrades = state => state.getIn(["grade", "gradeByIds"]);
+export const getGrades = state => state.getIn([STATE_PREFIX, "gradeByIds"]);
 
-export const getGradeByAllDegree = state => state.getIn(["grade", "gradeByDegree"]);
+export const getGradeByAllDegree = state => state.getIn([STATE_PREFIX, "gradeByDegree"]);
 
-const getImmutableStageList = state => state.getIn(["grade", "stages"]);
-export const getStageList = state => state.getIn(["grade", "stages"]).toJS();
+const getImmutableStageList = state => state.getIn([STATE_PREFIX, "stages"]);
+export const getStageList = state => state.getIn([STATE_PREFIX, "stages"]).toJS();
+
+export const getSelectedGroupStage = (state) => state.getIn([STATE_PREFIX, "groupList", "selected"]);
+
+export const getGroups = state => state.getIn([STATE_PREFIX, "groupList", ""+getSelectedGroupStage(state)]);
 
 export const getGradesOfAllDegrees = createSelector(
   [getDegreeIds, getDegrees, getGradeByAllDegree, getGrades],
@@ -244,5 +308,15 @@ export const getGradesOfAllDegrees = createSelector(
       gradeInfo.push(degree);
     });
     return gradeInfo;
+  }
+);
+
+export const getGradeDegreeGroups = createSelector(
+  getSelectedGroupStage,
+  getGroups,
+  (stage, groups) => {
+    //console.log("Selector: getGradeDegreeGroups triggered");
+    if (!groups) return [];
+    return Object.values(groups);
   }
 );

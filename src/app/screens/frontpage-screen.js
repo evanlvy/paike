@@ -16,7 +16,7 @@ import {
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
 import { getStudentInfo, isStudent } from '../redux/modules/auth';
-import { actions as rawplanActions, getRawplanGroups, getSelectedGroup, getPlansByGroup} from '../redux/modules/rawplan';
+import { actions as gradeActions } from '../redux/modules/grade';
 
 import JwcKebiaoScreen from './jwc-kebiao-screen';
 
@@ -46,7 +46,7 @@ const mapStateToProps = (state, props) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    ...bindActionCreators(rawplanActions, dispatch),
+    ...bindActionCreators(gradeActions, dispatch),
   }
 }
 

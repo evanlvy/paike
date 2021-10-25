@@ -15,8 +15,8 @@ import {
   ResultTable,
 } from '../components';
 
-import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
-import { actions as rawplanActions, getRawplanGroups, getSelectedDataId, getPlansByGroup, buildDataIdentifier} from '../redux/modules/rawplan';
+import { actions as gradeActions, getGradeDegreeGroups, getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
+import { actions as rawplanActions, getSelectedDataId, getPlansByGroup, buildDataIdentifier} from '../redux/modules/rawplan';
 
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
@@ -239,7 +239,7 @@ const mapStateToProps = (state, props) => {
   return {
     schoolYear: getSchoolYear(state),
     schoolWeek: getSchoolWeek(state),
-    groupList: getRawplanGroups(state),
+    groupList: getGradeDegreeGroups(state),
     selectedDataId: getSelectedDataId(state),
     dataRows: getPlansByGroup(state, selectedDataId),
   }
@@ -248,6 +248,7 @@ const mapStateToProps = (state, props) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     ...bindActionCreators(rawplanActions, dispatch),
+    ...bindActionCreators(gradeActions, dispatch),
   }
 }
 
