@@ -41,7 +41,7 @@ class EditableTableWrapper extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     const { props, state } = this;
     // console.log("shouldComponentUpdate, orig props "+JSON.stringify(props));
-    if (nextProps.headers !== props.headers || nextProps.defaultColWidth !== props.defaultColWidth
+    if (nextProps.title !== props.title || nextProps.headers !== props.headers || nextProps.defaultColWidth !== props.defaultColWidth
     || nextProps.colLineHeight !== props.colLineHeight) {
       this.buildColDef(nextProps);
       return true;
