@@ -15,7 +15,7 @@ import {
 
 import { getSchoolYear } from '../redux/modules/grade';
 import { getDepartmentId } from '../redux/modules/auth';
-import { actions as rawplanActions, getRawplanGroups } from '../redux/modules/rawplan';
+import { actions as gradeActions, getGradeDegreeGroups } from '../redux/modules/grade';
 import { actions as curriculumsActions, buildDataIdentifier, getSelectedDataId, getCurriculumList } from '../redux/modules/curriculums';
 
 const DEFAULT_COLOR = "red";
@@ -68,13 +68,22 @@ class CurriculumsScreen extends Component {
       // Group content changed, parse the list again to get proper grade and degree id.
       this.setSubjectSelectedIndex(nextProps, nextState.selectedGroupIndex);
       console.log("LIFECYCLE: shouldComponentUpdate: setSubjectSelectedIndex");
+      return true;
     }
-    if (nextProps.schoolYear !== schoolYear || nextProps.groupList !== groupList || nextProps.dataRows !== dataRows || nextProps.selectedDataId !== selectedDataId) {
+    if (nextProps.groupList !== groupList || nextProps.dataRows !== dataRows || nextProps.selectedDataId !== selectedDataId) {
       console.log("LIFECYCLE: shouldComponentUpdate, props diff");
       return true;
-    } else if (nextState.selectedGrade !== selectedGrade || nextState.selectedDegree !== selectedDegree) {
-      console.log("LIFECYCLE: shouldComponentUpdate, state diff");
-      return true;
+    }
+    if (selectedDataId !== this.getCurrentSelectionId(nextProps, nextState)) {
+      // Whatever stage, degree, grade, department differs with STATE, it goes here.
+      if (nextProps.schoolYear !== schoolYear) {
+        console.log("LIFECYCLE: componentDidUpdate: LoadGroups");
+        this.resetData();
+        this.loadGroups(nextProps.schoolYear);
+      } else {
+        console.log("LIFECYCLE: componentDidUpdate: loadKebiao");
+        this.loadKebiao(nextProps, nextState);
+      }
     }
     console.log("LIFECYCLE: shouldComponentUpdate: return false");
     return false;
@@ -82,6 +91,7 @@ class CurriculumsScreen extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     console.log("LIFECYCLE: componentDidUpdate");
+    /*
     if (this.props.selectedDataId !== this.getCurrentSelectionId(this.props, this.state)) {
       // Whatever stage, degree, grade, department differs with STATE, it goes here.
       if (prevProps.schoolYear !== this.props.schoolYear) {
@@ -92,7 +102,7 @@ class CurriculumsScreen extends Component {
         console.log("LIFECYCLE: componentDidUpdate: loadKebiao");
         this.loadKebiao();
       }
-    }
+    }*/
   }
 
   resetData = () => {
@@ -107,13 +117,15 @@ class CurriculumsScreen extends Component {
     //this.props.clearSelectedGroup();
   }
 
-  loadGroups = () => {
-    const { schoolYear } = this.props;
-    if (!schoolYear) {
-      return;
+  loadGroups = (stage=0) => {
+    if (stage <= 0) {
+      stage = this.props.schoolYear;
+      if (!stage) {
+        return;
+      }
     }
-    console.log("loadGroups of year: "+schoolYear);
-    this.props.fetchGroups(schoolYear);
+    console.log("loadGroups of year: "+stage);
+    this.props.fetchGroups(stage);
   }
 
   onSubjectSelected = (index_array) => {
@@ -148,9 +160,9 @@ class CurriculumsScreen extends Component {
     return ret;
   }
 
-  loadKebiao = () => {
-    const { schoolYear } = this.props;
-    const { selectedGrade, selectedDegree, selectedDepartment } = this.state;
+  loadKebiao = (props=this.props, state=this.state) => {
+    const { schoolYear } = props;
+    const { selectedGrade, selectedDegree, selectedDepartment } = state;
     console.log("loadKebiao, grade: "+selectedGrade+" degree: "+selectedDegree);
     if (schoolYear < 1 || selectedDepartment < 1 || (selectedDegree === 0 && selectedGrade === 0)) {
       console.log("loadKebiao: Ignore!");
@@ -215,7 +227,7 @@ class CurriculumsScreen extends Component {
 const mapStateToProps = (state) => {
   return {
     schoolYear: getSchoolYear(state),
-    groupList: getRawplanGroups(state),
+    groupList: getGradeDegreeGroups(state),
     selectedDataId: getSelectedDataId(state),
     dataRows: getCurriculumList(state),
     userDepartmentId: getDepartmentId(state),
@@ -224,7 +236,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    ...bindActionCreators(rawplanActions, dispatch),
+    ...bindActionCreators(gradeActions, dispatch),
     ...bindActionCreators(curriculumsActions, dispatch),
   }
 }

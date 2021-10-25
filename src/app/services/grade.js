@@ -70,6 +70,24 @@ class Api {
       throw error;
     }
   }
+
+  queryGroups = async (stage) => {
+    try {
+      const url = this.baseUrl+"/get_rawplangroup";
+      console.log("Request url "+url+" with stage: "+stage);
+      let request_param = {
+        stage_id: stage,
+      };
+      let response = await axios.post(url, request_param);
+      const { success, data, message } = response.data;
+      if (!success) {
+        throw new Error(message.message);
+      }
+      return data.groups;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export const api = new Api();
