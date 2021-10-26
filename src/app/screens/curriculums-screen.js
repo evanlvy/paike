@@ -70,7 +70,7 @@ class CurriculumsScreen extends Component {
       console.log("LIFECYCLE: shouldComponentUpdate: setSubjectSelectedIndex");
       return true;
     }
-    if (nextProps.groupList !== groupList || nextProps.dataRows !== dataRows || nextProps.selectedDataId !== selectedDataId) {
+    if (nextProps.dataRows !== dataRows || nextProps.selectedDataId !== selectedDataId) {
       console.log("LIFECYCLE: shouldComponentUpdate, props diff");
       return true;
     }
@@ -131,7 +131,7 @@ class CurriculumsScreen extends Component {
   onSubjectSelected = (index_array) => {
     let index = index_array[0];
     this.setSubjectSelectedIndex(this.props, index);
-    this.loadKebiao();
+    //this.loadKebiao();
   }
 
   setSubjectSelectedIndex = (props, index) => {

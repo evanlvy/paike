@@ -41,6 +41,9 @@ class EditableTableWrapper extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     const { props, state } = this;
     // console.log("shouldComponentUpdate, orig props "+JSON.stringify(props));
+    if (nextProps.data !== props.data) {
+      this.buildData(nextProps);
+    }
     if (nextProps.title !== props.title || nextProps.headers !== props.headers || nextProps.defaultColWidth !== props.defaultColWidth
     || nextProps.colLineHeight !== props.colLineHeight) {
       this.buildColDef(nextProps);
@@ -49,10 +52,6 @@ class EditableTableWrapper extends Component {
     if (nextState.curPageIndex !== state.curPageIndex) {
       console.log("shouldComponentUpdate:true");
       return true;
-    }
-    if (nextProps.data !== props.data) {
-      this.buildData(nextProps);
-      return false;
     }
     return false;
   }
