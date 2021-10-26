@@ -34,6 +34,21 @@ export const actions = {
       }
     }
   },
+  getJysListByFaculty: (fac_id=-1) => {
+    // Use thunk to call selector with State ref. In order to peek state value only.
+    return (getState) => {
+      const state = getState();
+      let jys = getJiaoyanshi(state);
+      let jys_out = jys;
+      if (fac_id > 0) {
+        jys_out = jys.filter(o => (o["faculty_id"] === fac_id));
+      }
+      return jys_out.map(jys_obj => {
+        // Just return id and name
+        return {[jys_obj["id"]]: jys_obj["name"]};
+      });
+    }
+  },
 }
 
 const shouldFetchJiaoyanshi = (state) => {
