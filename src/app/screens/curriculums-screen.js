@@ -53,8 +53,6 @@ class CurriculumsScreen extends Component {
     ];
     this.tableData = null;
     this.tabsListRef = React.createRef();
-    this.jysList = jysActions.getJysListByFaculty();
-    console.log(this.jysList);
   }
 
   componentDidMount() {
@@ -62,6 +60,8 @@ class CurriculumsScreen extends Component {
     if (!groupList || groupList.length === 0) { // only get subjects when it's empty
       this.loadGroups();
     }
+    this.jysList = this.props.getJysListByFaculty();
+    console.log(JSON.stringify(this.jysList));
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -241,6 +241,7 @@ const mapDispatchToProps = (dispatch) => {
   return {
     ...bindActionCreators(gradeActions, dispatch),
     ...bindActionCreators(curriculumsActions, dispatch),
+    ...bindActionCreators(jysActions, dispatch),
   }
 }
 
