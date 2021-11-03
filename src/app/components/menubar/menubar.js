@@ -358,20 +358,17 @@ class MenuBarWrapped extends Component {
               :t("menuBar.teacher_profile_template",{teacherName: name})}
             </Text>
             {
-              accessLevel <= "OFFICER" &&
+              accessLevel <= "OFFICER" && (semesterPages && Object.keys(semesterPages).length > 0) &&
               <Flex width="25em" alignItems="center">
               <Icon as={MdTune} color={color+".200"} size={8} />
               <Text width="5em" mx={2} whiteSpace="break-spaces">{t("editRawplanScreen.hint_stageselector")}</Text>
+              <Select color="gray.700" variant="filled" value={selectStage} onChange={onStageChanged}>
               {
-                (semesterPages && Object.keys(semesterPages).length > 0) &&
-                <Select color="gray.700" variant="filled" value={selectStage} onChange={onStageChanged}>
-                {
-                  Object.keys(semesterPages).map((stage_id) => (
-                    <option key={stage_id} value={stage_id} >{semesterPages[stage_id]}</option>
-                  ))
-                }
-                </Select>
+                Object.keys(semesterPages).map((stage_id) => (
+                  <option key={stage_id} value={stage_id} >{semesterPages[stage_id]}</option>
+                ))
               }
+              </Select>
               </Flex>
             }
             <PromptDrawer t={t} promptText={t("editRawplanScreen.prompt_text")}></PromptDrawer>

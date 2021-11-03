@@ -17,6 +17,7 @@ import { getSchoolYear } from '../redux/modules/grade';
 import { getDepartmentId } from '../redux/modules/auth';
 import { actions as gradeActions, getGradeDegreeGroups } from '../redux/modules/grade';
 import { actions as curriculumsActions, buildDataIdentifier, getSelectedDataId, getCurriculumList } from '../redux/modules/curriculums';
+import { actions as jysActions } from '../redux/modules/jiaoyanshi';
 
 const DEFAULT_COLOR = "red";
 class CurriculumsScreen extends Component {
@@ -52,6 +53,8 @@ class CurriculumsScreen extends Component {
     ];
     this.tableData = null;
     this.tabsListRef = React.createRef();
+    this.jysList = jysActions.getJysListByFaculty();
+    console.log(this.jysList);
   }
 
   componentDidMount() {

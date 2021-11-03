@@ -122,8 +122,11 @@ class ResultTableWrapper extends Component {
         //autoHeight: false,
         sortable: headers[i].sortable ? headers[i].sortable: false,
         filter: headers[i].filter ? headers[i].filter: false,
-        lineHeight: colLineHeight,
+        //lineHeight: colLineHeight,
         cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
+        cellRendererParams: {
+          lineHeight : colLineHeight // pass the field value here
+        },
         //resizable: headers[i].resizable,
       };
       if (headers[i].children && headers[i].children.length > 0) {

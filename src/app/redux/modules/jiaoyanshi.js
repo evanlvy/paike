@@ -45,7 +45,7 @@ export const actions = {
       }
       return jys_out.map(jys_obj => {
         // Just return id and name
-        return {[jys_obj["id"]]: jys_obj["name"]};
+        return {id: jys_obj["id"], title: jys_obj["title"]};
       });
     }
   },

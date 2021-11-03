@@ -165,9 +165,12 @@ class EditableTableWrapper extends Component {
         headerName: headers[i].name,
         field: headers[i].field,
         minWidth: headers[i].width ? headers[i].width : defaultColWidth,
-        lineHeight: colLineHeight,
+        //lineHeight: colLineHeight,
         cellClassRules: cellClassRules,
         cellRenderer: "commonRenderer",
+        cellRendererParams: {
+          lineHeight : colLineHeight // pass the field value here
+        },
         editable: headers[i].editable,
       };
       if (headers[i].dataType && headers[i].dataType !== null) {

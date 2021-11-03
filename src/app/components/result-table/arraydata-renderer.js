@@ -20,8 +20,8 @@ import { CommonRenderer } from './common-renderer';
 
 class ArrayDataRenderer extends Component {
   render() {
-    const { value, colDef } = this.props;
-    const { headerName, lineHeight } = colDef;
+    const { value, colDef, lineHeight } = this.props;
+    const { headerName } = colDef;
     if (value == null) {
       console.error(`The value of header: ${headerName} is undefined`);
       return (
