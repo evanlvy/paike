@@ -147,10 +147,12 @@ class EditableTableWrapper extends Component {
     if (!value) {
       return "";
     }
-    let ret = value.map(function (teacher_info) {
-      return teacher_info.name;
-    });
-    return ret;
+    if (Array.isArray(value)) {
+      return value.map(function (teacher_info) {
+        return teacher_info.name;
+      });
+    }
+    return value.name;
   };
 
   buildColDef = (props) => {
@@ -192,6 +194,14 @@ class EditableTableWrapper extends Component {
         }
         else if (headers[i].dataType === "teacher_obj_array") {
           columnDefs[i]["valueGetter"] = this.teacherListGetter;
+          columnDefs[i]["valueSetter"] = params => {
+            let newValue = params.newValue;
+            if (typeof newValue != 'string') return false;
+            newValue = newValue.replace('，',' ').replace(',', ' ');
+            let teachers = newValue.split(" ");
+            params.data[params.column.colId] = teachers.map(teacher_name => ({id: -1, name: teacher_name}));
+            return true;
+          }
         }
         else if (headers[i].dataType === "departments_selector") {
           columnDefs[i]["cellEditor"] = "agSelectCellEditor";
@@ -199,14 +209,23 @@ class EditableTableWrapper extends Component {
             cellHeight: 30,
             values: Object.values(this.props.departments),
           }
-          columnDefs[i]["valueFormatter"] = params => {
+          columnDefs[i]["valueGetter"] = params => {
+            let data_item = params.data[params.column.colId];
+            if (typeof data_item === 'number') {
+              let dep_name = this.props.departments[data_item+""];
+              return dep_name;
+            } else {
+              return data_item;
+            }
+          }
+          /*columnDefs[i]["valueFormatter"] = params => {  // valueFormatter will not init selector value right
             if (typeof params.value === 'number') {
               let dep_name = this.props.departments[params.value+""];
               return dep_name;
             } else {
               return params.value;
             }
-          }
+          }*/
         }
       }
       if (headers[i].width && headers[i].width>=200) {
