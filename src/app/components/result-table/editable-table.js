@@ -193,6 +193,21 @@ class EditableTableWrapper extends Component {
         else if (headers[i].dataType === "teacher_obj_array") {
           columnDefs[i]["valueGetter"] = this.teacherListGetter;
         }
+        else if (headers[i].dataType === "departments_selector") {
+          columnDefs[i]["cellEditor"] = "agSelectCellEditor";
+          columnDefs[i]["cellEditorParams"] = {
+            cellHeight: 30,
+            values: Object.values(this.props.departments),
+          }
+          columnDefs[i]["valueFormatter"] = params => {
+            if (typeof params.value === 'number') {
+              let dep_name = this.props.departments[params.value+""];
+              return dep_name;
+            } else {
+              return params.value;
+            }
+          }
+        }
       }
       if (headers[i].width && headers[i].width>=200) {
         // Use Large text editor for super long text!

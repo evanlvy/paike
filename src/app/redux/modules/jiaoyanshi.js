@@ -34,11 +34,11 @@ export const actions = {
       }
     }
   },
-  getJysListByFaculty: (fac_id=-1) => {
+  getJysDictByFaculty: (fac_id=-1) => {
     // Use thunk to call selector with State ref. In order to peek state value only.
     return (dispatch, getState) => {
       const state = getState();
-      return getJysListByFac(state, fac_id);
+      return getJysDictByFac(state, fac_id);
     }
   },
 }
@@ -163,17 +163,23 @@ export const getCenter = state => state.getIn(["jiaoyanshi", "centerByIds"]);
 
 export const getCenterIds = state => state.getIn(["jiaoyanshi", "centerIds"]);
 
-export const getJysListByFac = (state, fac_id=-1) => {
+export const getJysDictByFac = (state, fac_id=-1) => {
   // Use thunk to call selector with State ref. In order to peek state value only.
   let jys = getJiaoyanshi(state);
-  let jys_out = jys;
+  let jys_list = jys;
   if (fac_id > 0) {
-    jys_out = jys.filter(o => (o["faculty_id"] === fac_id));
+    jys_list = jys.filter(o => (o["faculty_id"] === fac_id));
   }
-  return jys_out.map(jys_obj => {
-    // Just return id and name
-    return {id: jys_obj["id"], title: jys_obj["title"]};
+  let jys_out = {};
+  jys_list.forEach(jys_obj => {
+    jys_out[jys_obj["id"]+""] = jys_obj["title"];
   });
+  return jys_out;  // {"1": "Computer Dep.", "2": "Chemistry"...}
+  //return jys_out.map(jys_obj => {
+    // Just return id and name
+    //return {id: jys_obj["id"], title: jys_obj["title"]};
+    //return {[jys_obj["id"]]: jys_obj["title"]};
+  //});
 }
 
 export const getAllJiaoyanshi = createSelector(

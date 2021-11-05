@@ -5,14 +5,14 @@ import "./table.css"
 
 class CommonRenderer extends Component {
   render() {
-    const { value, colDef, lineHeight } = this.props;
+    const { value, colDef, lineHeight, valueFormatted } = this.props;
     const { editable } = colDef;
     let line_height = lineHeight?lineHeight:20;
     let value_array = [];
     if (value) {
       let value_obj = value;
-      if (value.valueFormatted) {
-        value_array = [value.valueFormatted];
+      if (valueFormatted) {
+        value_array = [valueFormatted];
       }
       else if (typeof value_obj === 'string' || typeof value_obj === 'number') {
         value_array = [value_obj];
@@ -30,10 +30,14 @@ class CommonRenderer extends Component {
         value_array = value_obj.titles;
       }
     }
+    if (editable && value_array.length <= 0) {
+      // Empty editable will show special icon
+      value_array = ['\u26A1']
+    }
     //console.log("CommonRenderer render: value: "+JSON.stringify(value_array));
+    //{ editable && '\u26A1'}
     return (
-      <div className="common-cell" style={{lineHeight: line_height+"px"}}>
-        { editable && '\u26A1'}
+      <div className="common-cell" style={{lineHeight:line_height+"px",color:editable?"#015bf1":"black"}}>        
         {
           value_array.map((item_obj, index) => {
             let title = "";

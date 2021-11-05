@@ -34,19 +34,21 @@ class CurriculumsScreen extends Component {
     this.groupTitle = t("jwcKebiaoScreen.class_group");
     //this.tabTitles = [];
     this.semesterPages = [];
+    this.jysDict = this.props.getJysDictByFaculty();
+    console.log(JSON.stringify(this.jysDict));
     this.tableHeaders = [
       {name: t("curriculumsScreen.list_header_id"), field: "id", width: 80},
       {name: t("curriculumsScreen.list_header_class_name"), field: "class_name", width: 180},
       {name: t("curriculumsScreen.list_header_name"), field: "name", editable: true},
       {name: t("curriculumsScreen.list_header_short"), field: "short_name", editable: true},
-      {name: t("curriculumsScreen.list_header_department_id"), field: "department_id", editable: true},
+      {name: t("curriculumsScreen.list_header_department_id"), field: "department_id", dataType:"departments_selector", editable: true},
       {name: t("curriculumsScreen.list_header_doc_id"), field: "doc_id", width: 80},
       {name: t("curriculumsScreen.list_header_teachers"), field: "teachers", dataType: "teacher_obj_array", editable: true},
       {name: t("curriculumsScreen.list_header_hours_total"), field: "total_times_of_term", editable: true, width: 80},
       {name: t("curriculumsScreen.list_header_hours_theory"), field: "theory_times_of_term", editable: true, width: 80},
       {name: t("curriculumsScreen.list_header_hours_lab"), field: "test_times_of_term", editable: true, width: 80},
       {name: t("curriculumsScreen.list_header_description"), field: "description", editable: true},
-      {name: t("curriculumsScreen.list_header_major_id"), field: "major_id", width: 80},      
+      {name: t("curriculumsScreen.list_header_major_id"), field: "major_id", width: 80},
       {name: t("curriculumsScreen.list_header_priority"), field: "priority", width: 80},
       {name: t("curriculumsScreen.list_header_created"), field: "created_at"},
       {name: t("curriculumsScreen.list_header_updated"), field: "updated_at"},
@@ -60,8 +62,6 @@ class CurriculumsScreen extends Component {
     if (!groupList || groupList.length === 0) { // only get subjects when it's empty
       this.loadGroups();
     }
-    this.jysList = this.props.getJysListByFaculty();
-    console.log(JSON.stringify(this.jysList));
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -182,7 +182,7 @@ class CurriculumsScreen extends Component {
     const { t, groupList, dataRows, selectedDataId } = this.props;
     const { selectedGroupIndex } = this.state;
     const { color, groupTitle, onSubjectSelected, onSemesterPageChanged, 
-      tableTitle, tableHeaders, semesterPages } = this;
+      tableTitle, tableHeaders, semesterPages, jysDict } = this;
     //const pageTables = [];
     console.log("render: plans "+JSON.stringify(dataRows));
     console.log("render: group_id: "+selectedDataId);
@@ -218,6 +218,7 @@ class CurriculumsScreen extends Component {
             pagePrevCaption={t("common.previous")}
             pageNextCaption={t("common.next")}
             onResultPageIndexChanged={onSemesterPageChanged}
+            departments={jysDict}
             //initPageIndex={schoolWeek<=SEMESTER_FIRST_HALF_MAX_WEEK?0:1}
             //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
             />
