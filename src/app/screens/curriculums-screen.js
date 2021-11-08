@@ -188,7 +188,7 @@ class CurriculumsScreen extends Component {
     console.log("render: group_id: "+selectedDataId);
 
     return (
-      <Flex width="100%" direction="column" align="center" flex={1} mb={5}>
+      <Flex width="100%" direction="column" align="center" mb={5}>
         {
           groupList && groupList.length > 0 &&
           <SubjectBoard
@@ -205,8 +205,9 @@ class CurriculumsScreen extends Component {
         {
           dataRows &&
           <EditableTable
-            flex={1}
-            minHeight={dataRows.length>13?950:450}
+            minHeight={330}
+            autoShrinkDomHeight
+            //minHeight={dataRows.length>13?950:450}
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}

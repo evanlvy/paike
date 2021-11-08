@@ -14,6 +14,7 @@ import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 import './table.css';
 
 import { CommonRenderer } from "./common-renderer";
+import { SelectorCelleditor } from "./selector-celleditor";
 
 class EditableTableWrapper extends Component {
   constructor(props) {
@@ -32,6 +33,7 @@ class EditableTableWrapper extends Component {
     }
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
+      selectorCelleditor: SelectorCelleditor,
     }
     this.buildColDef(props);
     this.buildData(props);
@@ -204,7 +206,7 @@ class EditableTableWrapper extends Component {
           }
         }
         else if (headers[i].dataType === "departments_selector") {
-          columnDefs[i]["cellEditor"] = "agSelectCellEditor";
+          columnDefs[i]["cellEditor"] = "selectorCelleditor";
           columnDefs[i]["cellEditorParams"] = {
             cellHeight: 30,
             values: Object.values(this.props.departments),
@@ -316,8 +318,77 @@ class EditableTableWrapper extends Component {
   onGridReady = (params) => {
     this.gridApi = params.api;
     this.gridColumnApi = params.columnApi;
-    this.gridApi.sizeColumnsToFit();
-  };
+    // Following line to make the currently visible columns fit the screen  
+    params.api.sizeColumnsToFit();
+    // Following line dymanic set height to row on content
+    params.api.resetRowHeights();
+  }
+
+  onGridSizeChanged = (event) => {
+    console.log("onGridSizeChanged");
+    const { autoShrinkDomHeight, maxHeight } = this.props;
+    let max_height = maxHeight;
+    if (!max_height) {
+      // get the screen height as fail-safe max height
+      // So that the table grid will not exceed the valid screen height!
+      max_height = window.screen.availHeight - 80;
+    }
+    if (autoShrinkDomHeight) {
+      let newRowCount = event.api.getDisplayedRowCount();
+      if (this.gridSizeAdapted === true) {
+        if (this.previousRowCount !== newRowCount) {
+          if (this.previousRowCount < newRowCount && this.underShrink === false) {
+            this.gridSizeAdapted = false;
+            console.log("RESULTABLE: Need re-adapt!");
+          } else if (this.previousRowCount > newRowCount && this.underShrink === true) {
+            if (max_height > newRowCount*40) {
+              this.gridSizeAdapted = false;
+              console.log("RESULTABLE: Need re-adapt for RowCount!");
+            }
+          }
+          console.log("RESULTABLE: RowCount different:"+this.previousRowCount+" to "+newRowCount);
+        }
+      }
+      this.previousRowCount = newRowCount;
+    } else {
+      this.gridSizeAdapted = true;
+    }
+    if (!this.gridSizeAdapted) {
+      let should_shrink = false;
+      if (event.clientHeight > max_height) {
+        // Perform shrink
+        should_shrink = true;
+      }
+      console.log("RESULTABLE: should_shrink:"+should_shrink+" grid Client h:"+event.clientHeight+
+      " maxH:"+maxHeight+" screenH:"+window.screen.availHeight+" RowCount:"+this.previousRowCount);
+      this.setAutoHeight(event, should_shrink, max_height);
+      this.gridSizeAdapted = true;
+    } else {
+      console.log("RESULTABLE: resetRowHeights:"+event.type);
+      //event.api.resetRowHeights();
+      if (event.clientWidth !== this.prevWidth) {
+        // Following line to make the currently visible columns fit the screen  
+        event.api.sizeColumnsToFit();
+      }
+      /*if (event.clientHeight !== this.prevHeight) {
+        //setTimeout(()=>{this.gridApi.resetRowHeights()}, 0);
+        // Following line dymanic set height to row on content
+        event.api.resetRowHeights();
+      }*/
+      this.prevWidth = event.clientWidth;
+      this.prevHeight = event.clientHeight;
+    }
+  }
+
+  // Checkout how-to here: https://www.ag-grid.com/javascript-data-grid/grid-size/
+  setAutoHeight = (gridOptions, shouldShrink, maxTableHeight) => {
+    gridOptions.api.setDomLayout(shouldShrink?'normal':'autoHeight');
+    // auto height will get the grid to fill the height of the contents,
+    // so the grid div should have no height set, the height is dynamic.
+    document.querySelector('#editableGrid').style.height = shouldShrink?(maxTableHeight+'px'):'';
+    this.underShrink = shouldShrink;
+    console.log("RESULTABLE: setDomLayout: "+(shouldShrink?'normal':'autoHeight'));
+  }
 
   exportCsv = () => {
     if (this.gridApi) {
@@ -342,7 +413,7 @@ class EditableTableWrapper extends Component {
   };
 
   render() {
-    const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onCellClicked, 
+    const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onGridSizeChanged, onCellClicked, 
       onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, defaultColWidth, cellClassRules, headers, data,
       title, color, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, onResultPageIndexChanged,
@@ -375,7 +446,7 @@ class EditableTableWrapper extends Component {
           </Box>
         }
         <Box flex={1} width="100%" height="1500px" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
-          <div className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
+          <div id="editableGrid" className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
             <AgGridReact
               stopEditingWhenCellsLoseFocus={true}
               deltaRowMode={true}
@@ -385,6 +456,7 @@ class EditableTableWrapper extends Component {
               columnDefs={columnDefs}
               rowData={rowData}
               onGridReady={onGridReady}
+              onGridSizeChanged={onGridSizeChanged}
               onCellValueChanged={onCellValueChanged}
               onCellClicked={onCellClicked}
               rowSelection={rowSelection} >
