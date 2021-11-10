@@ -208,7 +208,6 @@ class EditableTableWrapper extends Component {
         else if (headers[i].dataType === "departments_selector") {
           columnDefs[i]["cellEditor"] = "selectorCelleditor";
           columnDefs[i]["cellEditorParams"] = {
-            cellHeight: 30,
             values: Object.values(this.props.departments),
           }
           columnDefs[i]["valueGetter"] = params => {

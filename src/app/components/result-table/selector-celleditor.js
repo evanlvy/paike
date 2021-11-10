@@ -7,10 +7,7 @@ import {
 class SelectorCelleditor extends Component {
   constructor(props) {
     super(props);
-    let initialState =
-      false //props.keyPress === KEY_BACKSPACE || props.keyPress === KEY_DELETE
-        ? ""
-        : props.value;
+    let initialState = props.value;
     this.state = { value: initialState };
   }
 
@@ -27,15 +24,16 @@ class SelectorCelleditor extends Component {
   };
 
   render() {
-    const { values } = this.props;
+    const { values, column } = this.props;
+    const { actualWidth } = column;
     return (
-    <Select color="gray.700" value={this.state.value} onChange={this.handleChange}>
-    {
-    values.map((val, index)=> (
-        <option key={index}>{val}</option>
-    ))
-    }
-    </Select>
+      <Select w={actualWidth} color="gray.700" value={this.state.value} onChange={this.handleChange}>
+      {
+        values.map((val, index)=> (
+            <option key={index}>{val}</option>
+        ))
+      }
+      </Select>
     );
   }
 }

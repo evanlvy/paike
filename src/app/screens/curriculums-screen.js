@@ -18,6 +18,7 @@ import { getDepartmentId } from '../redux/modules/auth';
 import { actions as gradeActions, getGradeDegreeGroups } from '../redux/modules/grade';
 import { actions as curriculumsActions, buildDataIdentifier, getSelectedDataId, getCurriculumList } from '../redux/modules/curriculums';
 import { actions as jysActions } from '../redux/modules/jiaoyanshi';
+import { actions as teacherActions, getTeachersBySelectedJys } from '../redux/modules/teacher';
 
 const DEFAULT_COLOR = "red";
 class CurriculumsScreen extends Component {
@@ -59,6 +60,7 @@ class CurriculumsScreen extends Component {
 
   componentDidMount() {
     const { groupList } = this.props;
+    
     if (!groupList || groupList.length === 0) { // only get subjects when it's empty
       this.loadGroups();
     }
@@ -129,6 +131,23 @@ class CurriculumsScreen extends Component {
     }
     console.log("loadGroups of year: "+stage);
     this.props.fetchGroups(stage);
+  }
+
+  loadTeachers = (weekIdx=0, jysId=0) => {
+    let dest_week = weekIdx, dest_jys = jysId;
+    const { schoolYear } = this.props;
+    const { selectedDepartment, selectWeek } = this.state;
+    if (!schoolYear) {
+      return;
+    }
+    if (dest_week <= 0) {
+      dest_week = selectWeek;
+    }
+    if (dest_jys <= 0) {
+      dest_jys = selectedDepartment;
+    }
+    console.log("WEBAPI: loadTeachers, jys: "+dest_jys+" year: "+schoolYear+" week: "+dest_week);
+    this.props.fetchTeachersByJys(dest_jys, schoolYear, dest_week);
   }
 
   onSubjectSelected = (index_array) => {
@@ -236,6 +255,7 @@ const mapStateToProps = (state) => {
     selectedDataId: getSelectedDataId(state),
     dataRows: getCurriculumList(state),
     userDepartmentId: getDepartmentId(state),
+    teachersBySelectedJys: getTeachersBySelectedJys(state),
   }
 }
 
@@ -244,6 +264,7 @@ const mapDispatchToProps = (dispatch) => {
     ...bindActionCreators(gradeActions, dispatch),
     ...bindActionCreators(curriculumsActions, dispatch),
     ...bindActionCreators(jysActions, dispatch),
+    ...bindActionCreators(teacherActions, dispatch),
   }
 }
 
