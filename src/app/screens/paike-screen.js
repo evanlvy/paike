@@ -349,7 +349,7 @@ class PaikeScreen extends Component {
       return;
     }
     const { selectTeacherDepartment } = this;
-    this.props.fetchTeachersByJys(selectTeacherDepartment.id, schoolYear, selectWeek);
+    this.props.fetchTeachersOccupiedByJys(selectTeacherDepartment.id, schoolYear, selectWeek);
   }
 
   buildTeacherInfo = () => {

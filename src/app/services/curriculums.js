@@ -25,7 +25,7 @@ class Api {
       };
       let request_param = {};
       Object.keys(input_param).forEach(key => {
-        if (input_param[key] !== null) {
+        if (input_param[key]) {
           request_param[key] = input_param[key];
         }
       });

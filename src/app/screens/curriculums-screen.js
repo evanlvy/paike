@@ -147,7 +147,7 @@ class CurriculumsScreen extends Component {
       dest_jys = selectedDepartment;
     }
     console.log("WEBAPI: loadTeachers, jys: "+dest_jys+" year: "+schoolYear+" week: "+dest_week);
-    this.props.fetchTeachersByJys(dest_jys, schoolYear, dest_week);
+    this.props.fetchTeachersOccupiedByJys(dest_jys, schoolYear, dest_week);
   }
 
   onSubjectSelected = (index_array) => {

@@ -16,15 +16,30 @@ export const types = {
 
 // actions
 export const actions = {
-  fetchTeachersByJys: (jiaoyanshiId, year, week) => {
+  fetchTeachersOccupiedByJys: (jiaoyanshiId, year, week) => {
     return async (dispatch, getState) => {
       try {
-        if (shouldFetchTeachers(jiaoyanshiId, year, week, getState())) {
+        if (shouldFetchTeachersOccupied(jiaoyanshiId, year, week, getState())) {
           dispatch(appActions.startRequest());
-          const data = await teacherApi.queryTeachers(jiaoyanshiId, year, week);
+          const data = await teacherApi.queryTeachersOccupied(jiaoyanshiId, year, week);
           dispatch(appActions.finishRequest());
           const { teacherByIds, teacherIds, kebiaoByTeacherSched, kebiaoByIds } = convertTeachersToPlain(data, year, week);
-          dispatch(fetchTeachersSuccess(jiaoyanshiId, teacherIds, teacherByIds, kebiaoByTeacherSched, kebiaoByIds));
+          dispatch(fetchTeachersOccupiedSuccess(jiaoyanshiId, teacherIds, teacherByIds, kebiaoByTeacherSched, kebiaoByIds));
+        }
+        dispatch(setSelectedJys(jiaoyanshiId));
+      } catch (error) {
+        dispatch(appActions.setError(error));
+      }
+    }
+  },
+  fetchTeachers: (jiaoyanshiId=null, labDivisionId=null, userId=null, name=null, email=null, username=null) => {
+    return async (dispatch, getState) => {
+      try {
+        if (shouldFetchTeachers(jiaoyanshiId, labDivisionId, userId, name, email, username, getState())) {
+          dispatch(appActions.startRequest());
+          const data = await teacherApi.queryTeachers(jiaoyanshiId, labDivisionId, userId, name, email, username);
+          dispatch(appActions.finishRequest());
+          dispatch(fetchTeachersSuccess(data, jiaoyanshiId, labDivisionId));
         }
         dispatch(setSelectedJys(jiaoyanshiId));
       } catch (error) {
@@ -43,24 +58,42 @@ const shouldFetchTeacherSchedInfo = (teacherIds, year, week, state) => {
     const teacherId = teacherIds[i];
     const kebiaoWeekInfo = state.getIn(["teacher", "kebiaoByTeacherSched", buildTeacherSchedId(teacherId, year, week)]);
     if (!kebiaoWeekInfo || Date.now()-kebiaoWeekInfo.update > DATA_EXPIRATION_TIME) {
-      console.log(`shouldFetchTeachers, id: ${buildTeacherSchedId(teacherId, year, week)}`);
+      console.log(`shouldFetchTeachersOccupied, id: ${buildTeacherSchedId(teacherId, year, week)}`);
       return true;
     }
   };
   return false;
 }
 
-const shouldFetchTeachers = (jiaoyanshiId, year, week, state) => {
+const shouldFetchTeachersOccupied = (jiaoyanshiId, year, week, state) => {
   const teacherIds = state.getIn(["teacher", "byJiaoyanshi", ""+jiaoyanshiId]);
   if (!teacherIds) {
-    console.log("shouldFetchTeachers, no teachers exists");
+    console.log("shouldFetchTeachersOccupied, no teachers exists");
     return true;
   }
   if (shouldFetchTeacherSchedInfo(teacherIds, year, week, state)) {
-    console.log("shouldFetchTeachers, need more teacherSchedInfo");
+    console.log("shouldFetchTeachersOccupied, need more teacherSchedInfo");
     return true;
   }
-  console.log("shouldFetchTeachers: no need fetch data");
+  console.log("shouldFetchTeachersOccupied: no need fetch data");
+  return false;
+}
+
+const shouldFetchTeachers = (jiaoyanshiId, labDivisionId, userId, name, email, username, state) => {
+  let obj_trace = [];
+  if (jiaoyanshiId || labDivisionId) {
+    obj_trace = ["teacher", "byJiaoyanshi", jiaoyanshiId?""+jiaoyanshiId:"lab"+labDivisionId];
+  }
+  else if (userId || name || email || username) {
+    const teacher_info = getSingleTeacher(state, userId, name, email, username);
+    return !teacher_info;
+  }
+  const teacherIds = state.getIn(["teacher", "indexes", ""+jiaoyanshiId]);
+  if (!teacherIds) {
+    console.log("shouldFetchTeachersOccupied, no teachers exists");
+    return true;
+  }
+  console.log("shouldFetchTeachersOccupied: no need fetch data");
   return false;
 }
 
@@ -104,7 +137,7 @@ const convertTeachersToPlain = (teachers, year, week) => {
   };
 }
 
-const fetchTeachersSuccess = (jiaoyanshiId, teacherIds, teacherByIds, kebiaoByTeacherSchedList, kebiaoByIds) => {
+const fetchTeachersOccupiedSuccess = (jiaoyanshiId, teacherIds, teacherByIds, kebiaoByTeacherSchedList, kebiaoByIds) => {
   return ({
     type: types.FETCH_TEACHERS,
     jiaoyanshiId,
@@ -112,6 +145,15 @@ const fetchTeachersSuccess = (jiaoyanshiId, teacherIds, teacherByIds, kebiaoByTe
     teacherByIds,
     kebiaoByTeacherSchedList,
     kebiaoByIds,
+  })
+}
+
+const fetchTeachersSuccess = (data, jiaoyanshiId, labDivisionId) => {
+  return ({
+    type: types.FETCH_TEACHERS,
+    data,
+    jiaoyanshiId,
+    labDivisionId,
   })
 }
 
@@ -167,11 +209,33 @@ export const getTeachers = state => state.getIn(["teacher", "byIds"]);
 
 export const getTeachersByJys = state => state.getIn(["teacher", "byJiaoyanshi"]);
 
-export const getSelectedJys = (state) => state.getIn(["teacher", "byJiaoyanshi", "selected"]);
+export const getSelectedJys = state => state.getIn(["teacher", "byJiaoyanshi", "selected"]);
 
 export const getTeacherIdsBySelectedJys = state => state.getIn(["teacher", "byJiaoyanshi", getSelectedJys(state)+""]);
 
 export const getKebiaoByTeacherSched = state => state.getIn(["teacher", "kebiaoByTeacherSched"]);
+
+export const getSingleTeacher = (state, userId=null, name=null, email=null, username=null) => {
+  const all_teachers = state.getIn(["teacher", "byIds"]);
+  if (userId) return all_teachers[""+userId];
+  let dest_prop;
+  if (name) {
+    dest_prop = {key: "name", value: name};
+  } else if (email) {
+    dest_prop = {key: "email", value: email};
+  } else if (username) {
+    dest_prop = {key: "username", value: username};
+  } else {
+    return null;
+  }
+  for (let teacherId in all_teachers) {
+    let teacher_info = all_teachers[teacherId];
+    if (teacher_info.hasOwnProperty(dest_prop.key) && (teacher_info[dest_prop.key] === dest_prop.value)) {
+      return teacher_info;
+    }
+  }
+  return null;
+}
 
 export const getTeachersBySelectedJys = createSelector(
   [getTeacherIdsBySelectedJys, getTeachers],

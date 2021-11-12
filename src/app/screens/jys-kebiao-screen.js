@@ -162,7 +162,7 @@ class JysKebiaoScreen extends Component {
       dest_jys = selectedJysId;
     }
     console.log("WEBAPI: loadTeachers, jys: "+dest_jys+" year: "+schoolYear+" week: "+dest_week);
-    this.props.fetchTeachersByJys(dest_jys, schoolYear, dest_week);
+    this.props.fetchTeachersOccupiedByJys(dest_jys, schoolYear, dest_week);
   }
 
   //buildData = () => {
