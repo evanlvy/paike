@@ -214,17 +214,10 @@ class ProgressdocScreen extends Component {
     
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center" mb={5}>
-        <SubjectBoard t={t} my={4} color={color}
-          title={jysTitle}
-          subjects={jysData}
-          initSelectedIndexList={this.defaultselectedJysIdList}
-          selectedIdsChanged={onJysIdsChanged}
-          enableAutoTitle={true}
-          enableSelect />
-        <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" minW={833} mb={4}>
+        <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" minW={588} >
           <Flex direction="row" alignItems="center" px={5} py={2}>
             <Icon as={MdTune} color={color+".200"} size={12} />
-            <Text mx={5} whiteSpace="break-spaces" flexWrap="true">{t("editRawplanScreen.hint_stageselector")}</Text>
+            <Text mx={5} whiteSpace="break-spaces" flexWrap="true" minW={60}>{t("editRawplanScreen.hint_stageselector")}</Text>
             {
               (semesterPages && Object.keys(semesterPages).length > 0) &&
               <Select width="100%" variant="filled" value={selectStage} onChange={onStageChanged}>
@@ -238,6 +231,13 @@ class ProgressdocScreen extends Component {
             <PromptDrawer t={t} promptText={t("editRawplanScreen.prompt_text")}/>
           </Flex>
         </Box>
+        <SubjectBoard t={t} my={4} color={color}
+          title={jysTitle}
+          subjects={jysData}
+          initSelectedIndexList={this.defaultselectedJysIdList}
+          selectedIdsChanged={onJysIdsChanged}
+          enableAutoTitle={true}
+          enableSelect />
         {
           docList && 
           <ResultTable
