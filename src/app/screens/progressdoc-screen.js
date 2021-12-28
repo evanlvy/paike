@@ -21,7 +21,7 @@ import {
 } from '../components';
 
 import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
-import { actions as jysActions, getAllJiaoyanshiMap } from '../redux/modules/jiaoyanshi';
+import { actions as jysActions, getColoredJysList } from '../redux/modules/jiaoyanshi';
 import { actions as progressdocActions, getDocList, getSearchedDocList } from '../redux/modules/progressdoc';
 import PromptDrawer from '../components/overlays/prompt-drawer';
 import ProgressdocDialog from '../components/overlays/progressdoc-dialog';
@@ -36,12 +36,12 @@ class ProgressdocScreen extends Component {
     const { t, color, schoolYear } = props;
     this.state = {
       selectStage: schoolYear,
-      selectedJysIdList: [],
+      selectedJysIdList: [],  // Keep the latest selected Id, NOT index!
       selectedDocId: 0,
     };
     this.color = color ? color : DEFAULT_COLOR;
 
-    this.defaultselectedJysIdList = [0];
+    this.defaultselectedJysIdxList = [0];  //Keep default selected index!
     this.semesterPages = [];
 
     this.docListHeaders = [
@@ -72,8 +72,9 @@ class ProgressdocScreen extends Component {
     this.tableData = null;
     this.tabsListRef = React.createRef();
     this.jysTitle = t("kebiao.jys");
-
-    this.buildData();
+    this.titleSelected = "";
+    this.buildSemester();
+    //this.buildData();
   }
 
   componentDidMount() {
@@ -81,9 +82,9 @@ class ProgressdocScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { schoolYear, jysMap, stageList, docList, docDetails } = this.props;
+    const { schoolYear, jysList, stageList, docList } = this.props;
     const { selectedJysIdList, selectedDocId } = this.state;
-    if (nextProps.schoolYear !== schoolYear || nextProps.jysMap !== jysMap || nextProps.docList !== docList) {
+    if (nextProps.schoolYear !== schoolYear || nextProps.jysList !== jysList || nextProps.docList !== docList) {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextProps.stageList !== stageList ) {
@@ -112,10 +113,10 @@ class ProgressdocScreen extends Component {
     }
   }
 
-  buildData = () => {
-    this.buildSemester();
-    this.buildjysData();
-  }
+  //buildData = () => {
+    //this.buildSemester();
+    //this.buildjysData();
+  //}
 
   
   buildSemester = () => {
@@ -130,27 +131,17 @@ class ProgressdocScreen extends Component {
     this.props.fetchJiaoyanshi();
   }
 
-  buildjysData = () => {
-    if (this.jysData == null || this.jysData.length === 0) {
-      const { jysMap } = this.props;
-      this.jysData = !jysMap ? [] : [...jysMap.values()]; // Must copy from prop otherwize references of this.jysData below will be empty object {}
-      // console.log("JYS Data: "+JSON.stringify(this.jysData));
-      if (this.jysData.length > 0) {
-        // Change default index list to jysId list
-        let idList = [];
-        this.defaultselectedJysIdList.forEach(index => {
-          if (index < this.jysData.length) {
-            idList.push(this.jysData[index].id);
-          }
-        });
-        // setState will trigger react renderer. So change the value directly.
-        this.state.selectedJysIdList = idList;
-      }
+  /*buildjysData = () => {
+    const { jysList } = this.props;
+    console.log("JYS List: "+JSON.stringify(jysList));
+    if (jysList && jysList.length > 0) {
+      // Change default index list to jysId list
+      // setState will trigger react renderer. So change the value directly.
+      this.state.selectedJysIdList = jysList.map(jys => jys.id);
     }
-    this.updateTitles();
-  }
+  }*/
 
-  updateTitles = () => {
+  /*updateTitles = () => {
     const { t, jysMap } = this.props;
     const { selectedJysIdList } = this.state;
     let jysName = t("subjectBoard.title_no_jys_template");
@@ -158,7 +149,7 @@ class ProgressdocScreen extends Component {
       jysName =  jysMap.get(""+selectedJysIdList[0]).name;
     }
     this.tableTitle = t("progressdocScreen.doclist_table_title_template", {jys_name: jysName});    
-  }
+  }*/
   
   loadDocList = (jysIdList, stage_id=0) => {
     if (!jysIdList || jysIdList.length < 1) {
@@ -174,8 +165,9 @@ class ProgressdocScreen extends Component {
     this.hasFetchKebiao = true;
   }
 
-  onJysIdsChanged = (jysIdList) => {
+  onJysIdsChanged = (jysIdList, namesSelected="") => {
     console.log(`onJysIdsChanged ${jysIdList}`);
+    this.titleSelected = namesSelected;
     this.setState({
       selectedJysIdList: jysIdList
     });
@@ -208,10 +200,16 @@ class ProgressdocScreen extends Component {
   }
 
   render() {
-    const { t, docList } = this.props;
+    const { t, jysList, docList } = this.props;
     const { selectStage, selectedDocId } = this.state;
-    const { color, jysData, jysTitle, tableTitle, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, loadDocDetails} = this;
-    
+    const { color, jysTitle, titleSelected, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, loadDocDetails} = this;
+    let tableTitle = "";
+    if (titleSelected && titleSelected.length > 0) {
+      tableTitle =  t("progressdocScreen.doclist_table_title_template", {jys_name: titleSelected});
+    } else {
+      tableTitle = t("subjectBoard.title_no_jys_template");
+    }
+
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center" mb={5}>
         <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" minW={588} >
@@ -233,8 +231,8 @@ class ProgressdocScreen extends Component {
         </Box>
         <SubjectBoard t={t} my={4} color={color}
           title={jysTitle}
-          subjects={jysData}
-          initSelectedIndexList={this.defaultselectedJysIdList}
+          subjects={jysList}
+          initSelectedIndexList={this.defaultselectedJysIdxList}
           selectedIdsChanged={onJysIdsChanged}
           enableAutoTitle={true}
           enableSelect />
@@ -242,6 +240,7 @@ class ProgressdocScreen extends Component {
           docList && 
           <ResultTable
             minHeight={docList.length>3?800:180}
+            autoShrinkDomHeight
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}
@@ -268,7 +267,7 @@ const mapStateToProps = (state) => {
   return {
     schoolYear: getSchoolYear(state),
     stageList: getStageList(state),
-    jysMap: getAllJiaoyanshiMap(state),
+    jysList: getColoredJysList(state),
     docList: getDocList(state),
   }
 }

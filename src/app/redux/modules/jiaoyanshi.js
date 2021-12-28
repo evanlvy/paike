@@ -207,13 +207,16 @@ export const getAllJiaoyanshi = createSelector(
   }
 )*/
 
-export const getAllJiaoyanshiMap = createSelector(
-  [getJiaoyanshiIds, getJiaoyanshi],
-  (jysIds, jys) => {
-    if (!jysIds || !jys) {
+export const getColoredJysList = createSelector(
+  // Without Social Science!
+  getJiaoyanshi,
+  (jyses) => {
+    if (!jyses) {
       return [];
     }
-    return jys.filter(o => (jysIds.indexOf(""+o["id"]) >= 0));
+    return jyses.reduce((accumulator, jys) => {
+      return (!jys.center_id || jys.center_id <= 0)?accumulator:accumulator.concat({id: jys.id, name: jys.name, color: jys.color});
+    }, []);
   }
 )
 

@@ -88,7 +88,7 @@ class SubjectBoard extends Component {
           selectedIndexList: new_ids
         });
         // Tell parent the new ids when subject items changed
-        this.selectorCallbackInvoker(new_ids, this.selectAllChecked);
+        this.selectorCallbackInvoker(new_ids);
     }
   }
 
@@ -163,10 +163,10 @@ class SubjectBoard extends Component {
     } else {
       return;
     }
+    this.autoTitle = this.buildAutoTitle(newIndexList);
     this.setState({
       selectedIndexList: newIndexList
     });
-    this.autoTitle = this.buildAutoTitle(newIndexList);
     //this.selectorCallbackInvoker(newIndexList);
   }
 
@@ -181,11 +181,11 @@ class SubjectBoard extends Component {
       newIndexList = [...Array(this.props.subjects.length).keys()];
     }
     console.log(`onSelectAll newlist: ${newIndexList}`);
+    this.selectAllChecked = isSelectAll;
+    this.autoTitle = this.buildAutoTitle(newIndexList);
     this.setState({
       selectedIndexList: newIndexList
     });
-    this.selectAllChecked = isSelectAll;
-    this.autoTitle = this.buildAutoTitle(newIndexList);
     //this.selectorCallbackInvoker(newIndexList);
   }
 
@@ -195,16 +195,12 @@ class SubjectBoard extends Component {
     indexList.sort(function(a, b) {
       return a - b;
     });
+    // Get subject name string for title
     if (onSelectionChangedCallback != null) {
-      onSelectionChangedCallback(indexList);
+      onSelectionChangedCallback(indexList, this.autoTitle.selected);
     }
     if (onSelectedIdsChangedCallback != null && subjects) {
-      let idArray = [];
-      indexList.forEach(idx => {
-        idArray.push(subjects[idx].id);
-      });
-      console.log(`onSelectedIds: ${idArray}`);
-      onSelectedIdsChangedCallback(idArray);
+      onSelectedIdsChangedCallback(indexList.map(idx=>subjects[idx].id), this.autoTitle.selected);
     }
   }
 
@@ -230,9 +226,10 @@ class SubjectBoard extends Component {
     }
     else {
       subjects.every((item, index) => {
-        if (!item.title) return false;
         if (dest_selected.includes(index)) {
-          title.selected += item.title + " ";
+          let item_title = item.title?item.title:item.name;
+          if (!item_title) return false;
+          title.selected += item_title + " ";
         }
         if (title.selected.length > 30){
           title.selected += "...";

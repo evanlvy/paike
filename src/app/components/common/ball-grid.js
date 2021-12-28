@@ -23,7 +23,7 @@ function BallGrid(props) {
           <Flex justify="center" m={2} key={index}>
             <Box cursor="pointer" display="flex" position="relative" width={ballSize} height={ballSize} borderRadius="50%" justifyContent="center" alignItems="center" backgroundColor={ball.color?ball.color:default_ballcolor} onClick={()=>{onBallClicked(index)}}>
               {selectedBallIndexList != null && selectedBallIndexList.indexOf(index) >= 0 &&  <Icon name="check" color={checkIconColor} position="absolute" bottom="0px" right="0px" size="2em"/>}
-              <Text width="80%" color="white" textAlign="center">{ball.title}</Text>
+              <Text width="80%" color="white" textAlign="center">{ball.title?ball.title:ball.name}</Text>
             </Box>
           </Flex>
         ))

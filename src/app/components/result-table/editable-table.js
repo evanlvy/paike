@@ -414,13 +414,15 @@ class EditableTableWrapper extends Component {
   render() {
     const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onGridSizeChanged, onCellClicked, 
       onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
-    const { t, width, defaultColWidth, cellClassRules, headers, data,
-      title, color, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, onResultPageIndexChanged,
-      rowSelection, onCellClicked: onCellClickedCallback,onCellValueChanged, ...other_props } = this.props;
+    const { t, width,
+      title, color, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
+      rowSelection, onCellClicked: onCellClickedCallback, onCellValueChanged, 
+      defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged, 
+      ...other_props } = this.props; 
     const { curPageIndex } = this.state;
     //console.log("RowData: "+JSON.stringify(rowData));
     return (
-      <Flex direction="column" width={width ? width : "100%"} {...other_props} >
+      <Flex direction="column" width={width ? width : "100%"} {...other_props}>
         {
           (title || pageNames) &&
           <Box display="flex" flexDirection="row" bg={color+".400"} height={titleHeight} px={4} alignItems="center"

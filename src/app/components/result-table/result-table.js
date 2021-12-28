@@ -403,14 +403,15 @@ class ResultTableWrapper extends Component {
   render() {
     const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, onGridReady,
       onCellClicked, onRowClicked, onRowSelected, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
-    const { t, width, title, titleHeight, autoHeight, colLineHeight, defaultColWidth, color, headers, data,
-      pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption,
-      onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onResultPageIndexChanged,
-      rowSelection, autoShrinkDomHeight, ...other_props } = this.props;
+    const { t, width, title, titleHeight, color,
+      pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption, rowSelection, 
+      onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback,
+      headers, data, autoHeight, colLineHeight, autoShrinkDomHeight, onResultPageIndexChanged, onRowSelected: onRowSelectedCallback,
+      ...other_props } = this.props;
     const { curPageIndex } = this.state;
     //console.log("render: curPageIndex: "+curPageIndex);
     return (
-      <Flex flex={1} direction="column" width={width ? width : "100%"} {...other_props} >
+      <Flex flex={1} direction="column" width={width ? width : "100%"} {...other_props}>
         <Box display="flex" flexDirection="row" bg={color+".400"} height={titleHeight} px={4} alignItems="center"
           borderWidth={1} borderColor={color+".200"} roundedTop="md">
           <Text width="100%">{title}</Text>

@@ -49,6 +49,19 @@ class ProgressdocDialog extends Component {
       {name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
     ];
     this.btnRef = React.createRef()
+    this.forms = [
+      {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, isRequired: true},
+      {id: "short_name", label: t("progressdocScreen.form_label_shortname"), minW: 280, isRequired: true},
+      {id: "description", label: t("progressdocScreen.form_label_description"), minW: 280, isRequired: false},
+      {id: "department_id", label: t("progressdocScreen.form_label_departmentid"), maxW: 100, isRequired: true},
+      {id: "total_hours", label: t("progressdocScreen.form_label_totalhours"), maxW: 100, isRequired: true},
+      {id: "theory_hours", label: t("progressdocScreen.form_label_theoryhours"), maxW: 100, isRequired: true},
+      {id: "lab_hours", label: t("progressdocScreen.form_label_labhours"), maxW: 100, isRequired: true},
+      {id: "flex_hours", label: t("progressdocScreen.form_label_flexhours"), maxW: 100, isRequired: true},
+      {id: "textbook", label: t("progressdocScreen.form_label_textbook"), minW: 280, isRequired: true},
+      {id: "exam_type", label: t("progressdocScreen.form_label_examtype"), minW: 280, isRequired: true},
+      {id: "comments", label: t("progressdocScreen.form_label_comments"), minW: 280, isRequired: false},
+    ];
   }
   loadData = (doc_from_prop) => {
     let doc_object = doc_from_prop;
@@ -172,50 +185,14 @@ class ProgressdocDialog extends Component {
             {
               formObject &&
               <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
-              <FormControl id="course_name" isRequired minW={280} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_coursename")}</b></FormLabel>
-                <Input type="course_name" value={formObject["course_name"]}/>
-              </FormControl>
-              <FormControl id="short_name" isRequired minW={280} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_shortname")}</b></FormLabel>
-                <Input type="short_name" value={formObject["short_name"]}/>
-              </FormControl>
-              <FormControl id="description" minW={280} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_description")}</b></FormLabel>
-                <Input type="description" value={formObject["description"]}/>
-              </FormControl>
-              <FormControl id="department_id" isRequired maxW={100} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
-                <Input type="department_id" value={formObject["department_id"]}/>
-              </FormControl>
-              <FormControl id="total_hours" isRequired maxW={100} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_totalhours")}</b></FormLabel>
-                <Input type="total_hours" value={formObject["total_hours"]}/>
-              </FormControl>
-              <FormControl id="theory_hours" isRequired maxW={100} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_theoryhours")}</b></FormLabel>
-                <Input type="theory_hours" value={formObject["theory_hours"]}/>
-              </FormControl>
-              <FormControl id="lab_hours" isRequired maxW={100} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_labhours")}</b></FormLabel>
-                <Input type="lab_hours" value={formObject["lab_hours"]}/>
-              </FormControl>
-              <FormControl id="flex_hours" maxW={100} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_flexhours")}</b></FormLabel>
-                <Input type="flex_hours" value={formObject["flex_hours"]}/>
-              </FormControl>
-              <FormControl id="textbook" isRequired minW={280} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_textbook")}</b></FormLabel>
-                <Input type="textbook" value={formObject["textbook"]}/>
-              </FormControl>
-              <FormControl id="exam_type" isRequired minW={280} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_examtype")}</b></FormLabel>
-                <Input type="exam_type" value={formObject["exam_type"]}/>
-              </FormControl>
-              <FormControl id="comments" minW={280} m={2}>
-                <FormLabel><b>{t("progressdocScreen.form_label_comments")}</b></FormLabel>
-                <Input type="comments" value={formObject["comments"]}/>
-              </FormControl>
+                {
+                  this.forms.map((form, index) => (
+                    <FormControl id={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
+                      <FormLabel><b>{form.label}</b></FormLabel>
+                      <Input type={form.id} defaultValue={formObject[form.id]}/>
+                    </FormControl>
+                  ))
+                }
               </Flex>
             }
             {

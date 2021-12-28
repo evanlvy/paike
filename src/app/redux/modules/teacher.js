@@ -82,7 +82,7 @@ const shouldFetchTeachersOccupied = (jiaoyanshiId, year, week, state) => {
 const shouldFetchTeachers = (jiaoyanshiId, labDivisionId, userId, name, email, username, state) => {
   let obj_trace = [];
   if (jiaoyanshiId || labDivisionId) {
-    obj_trace = ["teacher", "byJiaoyanshi", jiaoyanshiId?""+jiaoyanshiId:"lab"+labDivisionId];
+    obj_trace = ["teacher", "byJiaoyanshi", jiaoyanshiId?"dep"+jiaoyanshiId:"lab"+labDivisionId];
   }
   else if (userId || name || email || username) {
     const teacher_info = getSingleTeacher(state, userId, name, email, username);
