@@ -23,6 +23,11 @@ import { actions as kebiaoActions, buildBanjiSchedId, getLiLunByAllBanjiSched } 
 import { SEMESTER_WEEK_COUNT } from './common/info';
 
 const LILUNKEBIAO_COLOR = "orange";
+const header_id = [["monday_12","monday_34","monday_67","monday_89"],
+  ["tuesday_12","tuesday_34","tuesday_67","tuesday_89"],
+  ["wednesday_12","wednesday_34","wednesday_67","wednesday_89"],
+  ["thursday_12","thursday_34","thursday_67","thursday_89"],
+  ["friday_12","friday_34","friday_67","friday_89"]];
 class LiLunKeBiaoScreenWrapped extends Component {
   constructor(props) {
     super(props);
@@ -36,27 +41,27 @@ class LiLunKeBiaoScreenWrapped extends Component {
     this.semesterPages = [];
     this.tabTitles = [];
     this.tableHeaders = [
-      {name: t("kebiao.banji_sched_title"), field: "class_name"},
-      {name: t("kebiao.sched_monday")+" "+t("kebiao.sched_12"), field: "monday_12"},
-      {name: t("kebiao.sched_34"), field: "monday_34"},
-      {name: t("kebiao.sched_67"), field: "monday_67"},
-      {name: t("kebiao.sched_89"), field: "monday_89"},
-      {name: t("kebiao.sched_tuesday")+" "+t("kebiao.sched_12"), field: "tuesday_12"},
-      {name: t("kebiao.sched_34"), field: "tuesday_34"},
-      {name: t("kebiao.sched_67"), field: "tuesday_67"},
-      {name: t("kebiao.sched_89"), field: "tuesday_89"},
-      {name: t("kebiao.sched_wednesday")+" "+t("kebiao.sched_12"), field: "wednesday_12"},
-      {name: t("kebiao.sched_34"), field: "wednesday_34"},
-      {name: t("kebiao.sched_67"), field: "wednesday_67"},
-      {name: t("kebiao.sched_89"), field: "wednesday_89"},
-      {name: t("kebiao.sched_thursday")+" "+t("kebiao.sched_12"), field: "thursday_12"},
-      {name: t("kebiao.sched_34"), field: "thursday_34"},
-      {name: t("kebiao.sched_67"), field: "thursday_67"},
-      {name: t("kebiao.sched_89"), field: "thursday_89"},
-      {name: t("kebiao.sched_friday")+" "+t("kebiao.sched_12"), field: "friday_12"},
-      {name: t("kebiao.sched_34"), field: "friday_34"},
-      {name: t("kebiao.sched_67"), field: "friday_67"},
-      {name: t("kebiao.sched_89"), field: "friday_89"},
+      {name: t("kebiao.banji_sched_title"), field: "class_name", minW: 120},
+      {name: t("kebiao.sched_monday")+" "+t("kebiao.sched_12"), field: "monday_12", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_34"), field: "monday_34", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_67"), field: "monday_67", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_89"), field: "monday_89", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_tuesday")+" "+t("kebiao.sched_12"), field: "tuesday_12", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_34"), field: "tuesday_34", dataType: "course_teacher_combined", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_67"), field: "tuesday_67", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_89"), field: "tuesday_89", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_wednesday")+" "+t("kebiao.sched_12"), dataType: "course_teacher_combined", field: "wednesday_12", minW: 120},
+      {name: t("kebiao.sched_34"), field: "wednesday_34", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_67"), field: "wednesday_67", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_89"), field: "wednesday_89", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_thursday")+" "+t("kebiao.sched_12"), field: "thursday_12", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_34"), field: "thursday_34", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_67"), field: "thursday_67", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_89"), field: "thursday_89", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_friday")+" "+t("kebiao.sched_12"), field: "friday_12", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_34"), field: "friday_34", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_67"), field: "friday_67", dataType: "course_teacher_combined", minW: 120},
+      {name: t("kebiao.sched_89"), field: "friday_89", dataType: "course_teacher_combined", minW: 120},
     ];
 
     this.tableDataList = [];
@@ -240,31 +245,37 @@ class LiLunKeBiaoScreenWrapped extends Component {
 
   buildKebiaoTableSched = (kebiaoInfo) => {
     const { t } = this.props;
-    let kebiaoNames = [];
-    kebiaoInfo.forEach(kebiaoDay => {
+    let kebiaoNames = {};
+    for (let day=0; day < kebiaoInfo.length; day++) {
+      let kebiaoDay = kebiaoInfo[day];
+    //kebiaoInfo.forEach(kebiaoDay => {
       for (let i=0; i < 4; i++) {
         const kebiaoHour = kebiaoDay[i];
-        let name = t("kebiao.zixi");
+        //let name = t("kebiao.zixi");
         if (kebiaoHour && kebiaoHour.curriculum) {
-          name = kebiaoHour.curriculum;
+          let slot_val = {};
+          slot_val["course"] = kebiaoHour.curriculum;
+          let teachers = "";
           if (kebiaoHour.theory_teachers && kebiaoHour.theory_teachers.length > 0) {
             kebiaoHour.theory_teachers.forEach(teacher => {
-              name += " "+teacher.name;
+              teachers += " "+teacher.name;
             });
           }
+          slot_val["teacher"] = teachers;
+          kebiaoNames[header_id[day][i]] = slot_val;
         }
-        kebiaoNames.push(name);
       }
-    })
-
-    return {
+    }
+    //kebiaoNames["data"] = kebiaoInfo;
+    return kebiaoNames;
+    /*return {
       monday_12: kebiaoNames[0], monday_34: kebiaoNames[1], monday_67: kebiaoNames[2], monday_89: kebiaoNames[3],
       tuesday_12: kebiaoNames[4], tuesday_34: kebiaoNames[5], tuesday_67: kebiaoNames[6], tuesday_89: kebiaoNames[7],
       wednesday_12: kebiaoNames[8], wednesday_34: kebiaoNames[9], wednesday_67: kebiaoNames[10], wednesday_89: kebiaoNames[11],
       thursday_12: kebiaoNames[12], thursday_34: kebiaoNames[13], thursday_67: kebiaoNames[14], thursday_89: kebiaoNames[15],
       friday_12: kebiaoNames[16], friday_34: kebiaoNames[17], friday_67: kebiaoNames[18], friday_89: kebiaoNames[19],
       data: kebiaoInfo
-    };
+    };*/
   }
 
   loadKebiao = (selectWeek) => {
@@ -313,7 +324,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
           height={400}
           titleHeight={50}
           colLineHeight={20}
-          defaultColWidth={100}
+          defaultColWidth={120}
           title={t("lilunKebiaoScreen.title")}
           color={LILUNKEBIAO_COLOR}
           headers={tableHeaders}

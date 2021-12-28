@@ -164,11 +164,19 @@ class EditableTableWrapper extends Component {
       return;
     }
     for (let i=0; i < headers.length; i++) {
+      if (headers[i].width) {
+        headers[i].minW = undefined;
+        headers[i].maxW = undefined;
+      } else if (!headers[i].minW && !headers[i].maxW) {
+        headers[i].width = defaultColWidth;
+      }
       columnDefs[i] = {
         //colId: i,  // Do not set colId because field will not be used in startEditingCell or getColumn.
         headerName: headers[i].name,
         field: headers[i].field,
-        minWidth: headers[i].width ? headers[i].width : defaultColWidth,
+        width: headers[i].width,
+        minWidth: headers[i].minW,
+        maxWidth: headers[i].maxW,
         //lineHeight: colLineHeight,
         cellClassRules: cellClassRules,
         cellRenderer: "commonRenderer",

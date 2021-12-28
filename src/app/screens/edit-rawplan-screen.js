@@ -44,34 +44,34 @@ class EditRawplanScreen extends Component {
     this.semesterPages = {};
     this.semiSemesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
     this.statisticsTableHeaders = [
-      {name: t("editRawplanScreen.header_teacher"), field: "name", width: 120, sortable: true, filter: true},
+      {name: t("editRawplanScreen.header_teacher"), field: "name", maxW: 120, sortable: true, filter: true},
       {name: t("editRawplanScreen.header_weektotal"), field: "total", width: 80, sortable: true},
-      {name: t("editRawplanScreen.header_conflict"), field: "conflicted", width: 420, dataType: "slot_weekday_renderer", sortable: true, resizable: true},
-      {name: t("editRawplanScreen.header_overtime"), field: "overtime", width: 400, dataType: "slot_weekday_renderer", sortable: true, resizable: true},
+      {name: t("editRawplanScreen.header_conflict"), field: "conflicted", minW: 420, dataType: "slot_weekday_renderer", sortable: true, resizable: true},
+      {name: t("editRawplanScreen.header_overtime"), field: "overtime", minW: 400, dataType: "slot_weekday_renderer", sortable: true, resizable: true},
     ];
     this.plansTableHeaders = [
-      {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class_name"},
-      {name: t("jwcKebiaoScreen.classroom"), field: "classroom", width: 80, editable: true},
-      {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.mon_78"), field: "mon_78", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.tue_12"), field: "tue_12", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.tue_34"), field: "tue_34", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.tue_56"), field: "tue_56", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.tue_78"), field: "tue_78", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.wed_12"), field: "wed_12", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.wed_34"), field: "wed_34", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.wed_56"), field: "wed_56", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.wed_78"), field: "wed_78", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.thu_12"), field: "thu_12", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.thu_34"), field: "thu_34", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.thu_56"), field: "thu_56", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.thu_78"), field: "thu_78", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.fri_12"), field: "fri_12", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.fri_34"), field: "fri_34", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.fri_56"), field: "fri_56", dataType: "course_teacher_combined", editable: true},
-      {name: t("jwcKebiaoScreen.fri_78"), field: "fri_78", dataType: "course_teacher_combined", editable: true},
+      {name: t("jwcKebiaoScreen.banji_sched_title"), field: "class_name", minW: 180},
+      {name: t("jwcKebiaoScreen.classroom"), field: "classroom", minW: 80, editable: true},
+      {name: t("jwcKebiaoScreen.mon_12"), field: "mon_12", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.mon_34"), field: "mon_34", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.mon_56"), field: "mon_56", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.mon_78"), field: "mon_78", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.tue_12"), field: "tue_12", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.tue_34"), field: "tue_34", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.tue_56"), field: "tue_56", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.tue_78"), field: "tue_78", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.wed_12"), field: "wed_12", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.wed_34"), field: "wed_34", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.wed_56"), field: "wed_56", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.wed_78"), field: "wed_78", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.thu_12"), field: "thu_12", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.thu_34"), field: "thu_34", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.thu_56"), field: "thu_56", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.thu_78"), field: "thu_78", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.fri_12"), field: "fri_12", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.fri_34"), field: "fri_34", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.fri_56"), field: "fri_56", dataType: "course_teacher_combined", editable: true, minW: 180},
+      {name: t("jwcKebiaoScreen.fri_78"), field: "fri_78", dataType: "course_teacher_combined", editable: true, minW: 180},
     ];
     this.planTableRef = React.createRef();
     let selectedSubject = {grade: 0, degree: 0}; // All grades, All degrees
@@ -242,7 +242,7 @@ class EditRawplanScreen extends Component {
           <ResultTable
             margin="5"
             //fixedRowHeight
-            maxWidth={1000}
+            //maxWidth={1000}
             minHeight={statistics.length>3?350:180}
             titleHeight={50}
             colLineHeight={20}
@@ -259,7 +259,8 @@ class EditRawplanScreen extends Component {
           <EditableTable
             ref={planTableRef}
             flex={1}
-            minHeight={950}
+            minHeight={270}
+            autoShrinkDomHeight
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}

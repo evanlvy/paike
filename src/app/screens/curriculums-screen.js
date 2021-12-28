@@ -224,7 +224,7 @@ class CurriculumsScreen extends Component {
         {
           dataRows &&
           <EditableTable
-            minHeight={330}
+            minHeight={270}
             autoShrinkDomHeight
             //minHeight={dataRows.length>13?950:450}
             titleHeight={50}
