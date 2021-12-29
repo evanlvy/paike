@@ -66,7 +66,6 @@ class LiLunKeBiaoScreenWrapped extends Component {
 
     this.tableDataList = [];
     this.subjectSelectWeek = schoolWeek ? schoolWeek : 1;
-
     this.tabsListRef = React.createRef();
   }
 
@@ -83,7 +82,11 @@ class LiLunKeBiaoScreenWrapped extends Component {
       this.resetData();
       console.log("shouldComponentUpdate, location state diff");
       return true;
-    } else if (nextProps.schoolYear !== schoolYear || nextProps.schoolWeek !== schoolWeek
+    } else if (nextProps.schoolYear !== schoolYear) {
+      console.log("shouldComponentUpdate, STAGE prop diff");
+      this.resetData();
+      return true;
+    } else if (nextProps.schoolWeek !== schoolWeek
     || nextProps.subjects !== subjects || nextProps.banjiBySubject !== banjiBySubject || nextProps.kebiaoByBanjiSched !== kebiaoByBanjiSched) {
       console.log("shouldComponentUpdate, props diff");
       return true;
@@ -157,10 +160,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
       this.subjectsData = !subjects ? [] : subjects;
       this.setSubjectSelectedIndex(this.state.selectedSubjectIndex);
     }
-    this.updateSubjectTitle();
+    //this.updateSubjectTitle();
   }
 
-  updateSubjectTitle = () => {
+  /*updateSubjectTitle = () => {
     const { t } = this.props;
     const { selectedSubject, gradeInfo } = this;
     if (selectedSubject) {
@@ -168,7 +171,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
     } else {
       this.subjectTitle = t("subjectBoard.title_no_subject_template", {grade_info: gradeInfo})
     }
-  }
+  }*/
 
   setSubjectSelectedIndex = (index) => {
     if (this.subjectsData && index < this.subjectsData.length) {
@@ -176,10 +179,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
     } else {
       this.selectedSubject = null;
     }
-    this.updateTabTitles();
+    //this.updateTabTitles();
   }
 
-  updateTabTitles = () => {
+  /*updateTabTitles = () => {
     this.tabTitles = [];
     if (!this.subjectsData) {
       return;
@@ -188,7 +191,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
     if (selectedSubject) {
       this.tabTitles = [selectedSubject.title];
     }
-  }
+  }*/
 
   loadSubjects = () => {
     console.log("loadSubjects");
@@ -293,7 +296,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
     this.hasFetchKebiao = true;
   }
 
-  onSubjectClicked = (index) => {
+  onMajorIdxChanged = (idxList, namesSelected="") => {
+    let index = idxList[0];
+    console.log(`onMajorIdxChanged ${index+namesSelected}`);
+    this.tabTitles = [this.gradeInfo+namesSelected];
     this.setState({
       selectedSubjectIndex: index
     });
@@ -313,11 +319,10 @@ class LiLunKeBiaoScreenWrapped extends Component {
 
   render() {
     const { t } = this.props;
-    const { selectedSubjectIndex } = this.state;
     this.buildData();
-    const { subjectsData, subjectTitle, subjectSelectWeek,
+    const { subjectsData, subjectSelectWeek,
       tabTitles, tableHeaders, tableData, semesterPages,
-      onSubjectClicked, onSemesterPageChanged } = this;
+      onMajorIdxChanged, onSemesterPageChanged } = this;
     const pageTables = [];
     if (tableData) {
         pageTables[0] = (<ResultTable
@@ -342,12 +347,14 @@ class LiLunKeBiaoScreenWrapped extends Component {
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center">
         <SubjectBoard
+          t={t}
           my={4}
           color={LILUNKEBIAO_COLOR}
-          title={subjectTitle}
+          title={t("subjectBoard.selector_stu_major")}
           subjects={subjectsData}
-          initSelectIndex={selectedSubjectIndex}
-          onSubjectClicked={onSubjectClicked}
+          initSelectIndex={0}
+          selectionChanged={onMajorIdxChanged}
+          enableAutoTitle
           enableSelect />
         {
           tabTitles && tabTitles.length > 0 &&

@@ -433,7 +433,7 @@ class BanJiKeBiaoScreen extends Component {
           t={t}
           my={4}
           color={color}
-          title={t("banjiKebiaoScreen.subject_board_title")}
+          title={t("subjectBoard.selector_stu_major")}
           subjects={subjects}
           initSelectId={initMajorId}
           selectedIdsChanged={selectedIdsChanged}

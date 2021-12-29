@@ -76,7 +76,11 @@
     "title_lab_template": "实验室{{lab_name}} [{{center_info}}]",
     "title_no_center_template": "请选择实训分中心",
     "title_no_teacher_template": "请选择教师 [{{jys_name}}教研室]",
-    "title_teacher_template": "{{teacher_name}} [{{jys_name}}教研室]"
+    "title_teacher_template": "{{teacher_name}} [{{jys_name}}教研室]",
+    "selector_stu_major": "就读专业",
+    "selector_major": "专业",
+    "selector_jys": "教研室",
+    "selector_jys_weekly": "教师周课表"
   },
   "kebiao": {
     "zixi": "自习",
@@ -128,13 +132,13 @@
     "year_template": "{{year}}年度"
   },
   "banjiKebiaoScreen": {
-    "subject_board_title": "查询专业",
     "warning_major_without_class": "该专业没有对应班！",
     "warning_class_without_schedule": "该班级没有排课！",
     "prev_semester_page": "上一学习周期",
     "next_semester_page": "下一学习周期"
   },
   "shixunKebiaoScreen": {
+    "tab_title_prefix": "教研室",
     "table_title_template": "实训中心实验汇总 [已选{{jys_count}}个教研室]"
   },
   "centerLabScreen": {

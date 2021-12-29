@@ -11,7 +11,7 @@ import {
 
 import {
   SubjectBoard,
-  ResultTabList,
+  //ResultTabList,
   ResultTable,
 } from '../components';
 
@@ -406,7 +406,7 @@ class JysKebiaoScreen extends Component {
             my={4}
             t={t}
             color={JYS_KEBIAO_COLOR}
-            title={t("menuBar.jiaoyanshi_kebiao_title")}
+            title={t("subjectBoard.selector_jys_weekly")}
             subjects={teachersBySelectedJys}
             //onSubjectClicked={onTeacherClicked}
             selectedIdsChanged={selectedIdsChanged}

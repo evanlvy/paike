@@ -12,8 +12,8 @@ class Api {
       const url = this.baseUrl+"/actual_major_from_classes";
       console.log("Request url "+url+" with degree: "+degreeId+", grade: "+gradeId);
       let request_param = {
-        degree: degreeId,
-        grade: gradeId,
+        degree_id: degreeId,
+        grade_id: gradeId,
       };
       let response = await axios.post(url, request_param);
       const { success, data, message } = response.data;

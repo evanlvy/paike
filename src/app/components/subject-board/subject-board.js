@@ -12,34 +12,22 @@ import { BallGrid } from '../common/ball-grid';
 class SubjectBoard extends Component {
   constructor(props) {
     super (props);
-    let selected = SubjectBoard.getInitialSelectedIdsFromProps(this.props);
     this.state = {
-      selectedIndexList: selected
+      selectedIndexList: SubjectBoard.getInitialSelectedIdsFromProps(props)
     }
-    this.autoTitle = {prefix: "", selected: ""};
     this.selectAllChecked = false;
-    this.autoTitle = this.buildAutoTitle();
+    this.autoTitle = {prefix: "", selected: ""};
+    //this.autoTitle = this.buildAutoTitle(this.state.selectedIndexList);
   }
-
-  /*buildInitSelectedIndexList = () => {
-    const { initSelectedIndexList, initSelectIndex } = this.props;
-    let selectedIndexList = [];
-    if (initSelectedIndexList !== undefined) {
-      selectedIndexList = [...initSelectedIndexList];
-    } else if (initSelectIndex !== undefined) {
-      selectedIndexList = [initSelectIndex];
-    }
-    console.log(`buildSelectedIndexList: ${selectedIndexList}`);
-    return selectedIndexList;
-  }*/
 
   shouldComponentUpdate(nextProps, nextState) {
     const { subjects } = this.props;
     const { selectedIndexList } = this.state;
     console.log("LIFECYCLE: shouldComponentUpdate");
-    if (nextState.selectedIndexList !== selectedIndexList) {      
+    let shouldUpdate = false;
+    if (nextState.selectedIndexList !== selectedIndexList) {
       console.log("LIFECYCLE: shouldComponentUpdate, selectedIndexList diff");
-      return true;
+      shouldUpdate = true;
     } else if (nextProps.subjects !== subjects) {
       console.log("LIFECYCLE: shouldComponentUpdate, subjects diff");
       let subjects_unchanged = true;
@@ -49,9 +37,12 @@ class SubjectBoard extends Component {
         subjects_unchanged = (JSON.stringify(nextProps.subjects) === JSON.stringify(subjects));
         console.log("LIFECYCLE: shouldComponentUpdate: subjects_unchanged="+subjects_unchanged);
       }
-      return !subjects_unchanged;
+      shouldUpdate = !subjects_unchanged;
     }
-    return false;
+    if (shouldUpdate) {
+      this.autoTitle = this.buildAutoTitle(nextProps, nextState.selectedIndexList);
+    }
+    return shouldUpdate;
   }
 
   componentDidMount() {
@@ -82,8 +73,8 @@ class SubjectBoard extends Component {
       prevProps.initSelectId !== this.props.initSelectId ||
       prevProps.initSelectedIndexList !== this.props.initSelectedIndexList ||
       prevProps.initSelectIndex !== this.props.initSelectIndex) {
-        console.log("LIFECYCLE: componentDidUpdate: initial SelectedIds");
         let new_ids = SubjectBoard.getInitialSelectedIdsFromProps(this.props, this.selectAllChecked);
+        console.log("LIFECYCLE: componentDidUpdate: initial SelectedIds:"+JSON.stringify(new_ids));
         this.setState({
           selectedIndexList: new_ids
         });
@@ -93,7 +84,6 @@ class SubjectBoard extends Component {
   }
 
   static getInitialSelectedIdsFromProps(props, selectAll=false) {
-    console.log("getInitialSelectedIdsFromProps");
     // Build selection index array (not id array)
     if (props.enableSelect && Array.isArray(props.subjects) && props.subjects.length > 0 ) {
       let selections = [];
@@ -163,7 +153,7 @@ class SubjectBoard extends Component {
     } else {
       return;
     }
-    this.autoTitle = this.buildAutoTitle(newIndexList);
+    //this.autoTitle = this.buildAutoTitle(newIndexList);
     this.setState({
       selectedIndexList: newIndexList
     });
@@ -182,7 +172,7 @@ class SubjectBoard extends Component {
     }
     console.log(`onSelectAll newlist: ${newIndexList}`);
     this.selectAllChecked = isSelectAll;
-    this.autoTitle = this.buildAutoTitle(newIndexList);
+    //this.autoTitle = this.buildAutoTitle(newIndexList);
     this.setState({
       selectedIndexList: newIndexList
     });
@@ -190,6 +180,7 @@ class SubjectBoard extends Component {
   }
 
   selectorCallbackInvoker = (indexList) => {
+    //console.log("selectorCallbackInvoker:"+JSON.stringify(indexList));
     const { selectionChanged: onSelectionChangedCallback, selectedIdsChanged: onSelectedIdsChangedCallback, subjects } = this.props;
     // Construct index array returned to parent component
     indexList.sort(function(a, b) {
@@ -204,8 +195,8 @@ class SubjectBoard extends Component {
     }
   }
 
-  buildAutoTitle = (selectedIdx=null) => {
-    const { t, enableSelectAll, enableAutoTitle, subjects } = this.props;
+  buildAutoTitle = (props, selectedIdx=null) => {
+    const { t, enableSelectAll, enableAutoTitle, subjects } = props;
     let dest_selected = selectedIdx
     if (!Array.isArray(selectedIdx)) {
       dest_selected = this.state.selectedIndexList;
