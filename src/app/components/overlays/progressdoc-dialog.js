@@ -18,6 +18,7 @@ import {
     Flex,
     Input,
     Box,
+    Select,
   } from "@chakra-ui/core"
 import { MdEdit } from "react-icons/md"
 
@@ -33,6 +34,7 @@ class ProgressdocDialog extends Component {
     const { t, color, schoolYear } = props;
     this.state = {
       isOpen: false,
+      depSelected: -1,
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.tableHeaders = [
@@ -53,7 +55,7 @@ class ProgressdocDialog extends Component {
       {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, isRequired: true},
       {id: "short_name", label: t("progressdocScreen.form_label_shortname"), minW: 280, isRequired: true},
       {id: "description", label: t("progressdocScreen.form_label_description"), minW: 280, isRequired: false},
-      {id: "department_id", label: t("progressdocScreen.form_label_departmentid"), maxW: 100, isRequired: true},
+      //{id: "department_id", label: t("progressdocScreen.form_label_departmentid"), maxW: 100, isRequired: true},
       {id: "total_hours", label: t("progressdocScreen.form_label_totalhours"), maxW: 100, isRequired: true},
       {id: "theory_hours", label: t("progressdocScreen.form_label_theoryhours"), maxW: 100, isRequired: true},
       {id: "lab_hours", label: t("progressdocScreen.form_label_labhours"), maxW: 100, isRequired: true},
@@ -63,31 +65,23 @@ class ProgressdocDialog extends Component {
       {id: "comments", label: t("progressdocScreen.form_label_comments"), minW: 280, isRequired: false},
     ];
   }
+
+  static getDerivedStateFromProps(props, state) {
+    if (!props.docDetails) return null;
+    // initialize the state with props by the same name id!
+    if (props.docDetails.props.id !== state.id) {
+      return props.docDetails["props"];
+    }
+    return null;
+  }
+
   loadData = (doc_from_prop) => {
     let doc_object = doc_from_prop;
     if (!doc_object) {
       const { docDetails } = this.props;
       doc_object = docDetails;
     }
-    let form_object = null;
-    if (doc_object) {
-      form_object = doc_object["props"];
-    }
-    if (!form_object || form_object === null) {
-      form_object = {
-        "id": "",
-        "course_name": "",
-        "short_name": "",
-        "description": "",
-        "department_id": "",
-        "total_hours": "",
-        "theory_hours": "",
-        "lab_hours": "",
-        "flex_hours": "",
-        "textbook": "",
-        "exam_type": "",
-      };
-    }
+
     let progress_items = null;
     let progress_items_array = null;
     if (doc_object) {
@@ -117,7 +111,6 @@ class ProgressdocDialog extends Component {
     }
     this.setState({ 
       isOpen: true,
-      formObject: form_object,
       progressItems: progress_items_array,
     });
   }
@@ -133,35 +126,56 @@ class ProgressdocDialog extends Component {
     }
     this.props.fetchDoc(docId);
     if (this.props.prevDocId === docId) {
-      this.setState({ 
+      this.setState({
         isOpen: true,
-      });  
+      });
     }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
     const { docId, docDetails } = this.props;
-    const { isOpen, progressItems, formObject } = this.state;
+    const { isOpen, progressItems, department_id } = this.state;
     if (nextProps.docDetails !== docDetails){
       console.log("shouldComponentUpdate, docDetails diff: isdefined? next="+!nextProps.docDetails+" cur="+!docDetails);
       this.loadData(nextProps.docDetails);
       return false;
     }
+    for (let index = 0; index < this.forms.length; index++) {
+      let form = this.forms[index];
+      if (this.state[form.id] !== nextState[form.id]) {
+        console.log("shouldComponentUpdate, FORMs diff:"+form.id);
+        return true;
+      }
+    }
     if (nextProps.docId !== docId) {
       console.log("shouldComponentUpdate, props diff: "+nextProps.docId+" "+docId);
       return true;
-    } else if (nextState.isOpen !== isOpen || nextState.progressItems !== progressItems || nextState.formObject !== formObject) {
+    } else if (nextState.isOpen !== isOpen || nextState.progressItems !== progressItems || nextState.department_id !== department_id) {
       console.log("shouldComponentUpdate, nextState diff");
       return true;
     }
     return false;
   }
   
+  onFormChanged = (event) => {
+    let newVal = event.target.value;
+    if (typeof newVal === "string") {
+      newVal = newVal.trim();
+    }
+    else if (typeof newVal === "number"){
+      newVal = Math.abs(newVal);
+    }
+    // Must keep the state id same with the form input id
+    this.setState({
+      [event.target.id] : newVal,
+    });
+  }
+
   render() {
-    const { isOpen, progressItems, formObject } = this.state;
-    const { t, title, color, btnText, isSaveable, tableTitle, docId,
+    const { isOpen, progressItems, id, department_id } = this.state;
+    const { t, title, color, btnText, isSaveable, tableTitle, docId, departments,
       tablePages, onPageChanged, onCellClicked, onCellValueChanged } = this.props;
-    const { tableHeaders, btnRef, loadDocDetails, onClose } = this;
+    const { tableHeaders, btnRef, loadDocDetails, onClose, onFormChanged } = this;
     return (
       <>
         <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={btnRef} onClick={(e) => {
@@ -183,15 +197,31 @@ class ProgressdocDialog extends Component {
             <ModalCloseButton />
             <ModalBody>
             {
-              formObject &&
+              id &&
               <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
                 {
                   this.forms.map((form, index) => (
-                    <FormControl id={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
+                    <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
                       <FormLabel><b>{form.label}</b></FormLabel>
-                      <Input type={form.id} defaultValue={formObject[form.id]}/>
+                      <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={onFormChanged}
+                        borderColor={this.state[form.id]!==this.props.docDetails.props[form.id]?"blue.500":"gray.200"}/>
                     </FormControl>
                   ))
+                }
+                {
+                departments &&
+                <FormControl key="department_id" isRequired minW={280} m={2}>
+                  <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
+                  <Select id="department_id" variant="outline" value={department_id} onChange={onFormChanged}
+                    borderColor={department_id!==this.props.docDetails.props.department_id?"blue.500":"gray.200"}>
+                  {
+                    departments.map((dep) => (
+                      <option key={dep.id} value={dep.id} >{dep.name}</option>
+                    ))
+                  }
+                  </Select>
+                  <FormHelperText>{t("progressdocScreen.form_helper_departmentid")}</FormHelperText>
+                </FormControl>
                 }
               </Flex>
             }

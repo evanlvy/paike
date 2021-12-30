@@ -264,7 +264,7 @@ class BanJiKeBiaoScreen extends Component {
       kebiaoHour.theory_teachers.forEach(teacher => {
         curName += teacher.name+" ";
       });
-      curName.trim();
+      curName = curName.trim();
       curName +=")"
     }
     return curName;

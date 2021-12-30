@@ -257,7 +257,14 @@ class ProgressdocScreen extends Component {
             //initPageIndex={initSemesterPageIdx}
           />
         }
-        <ProgressdocDialog docId={selectedDocId} title={t("progressdocScreen.doc_detail_title")} btnText={t("common.open")} t={t} color={color} isSaveable/>
+        <ProgressdocDialog
+          t={t}
+          color={color}
+          docId={selectedDocId}
+          departments={jysList}
+          title={t("progressdocScreen.doc_detail_title")}
+          btnText={t("common.open")}
+          isSaveable />
       </Flex>
     );
   }
