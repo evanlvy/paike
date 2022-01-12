@@ -45,7 +45,7 @@ class ProgressdocDialog extends Component {
       {name: t("progressdocScreen.items_header_theoryhours"), field: "theory_item_hours", editable: true, width: 80},
       {name: t("progressdocScreen.items_header_labitem"), field: "labitem_content", editable: true, width: 380},
       {name: t("progressdocScreen.items_header_labhours"), field: "labitem_hours", editable: true, width: 80},
-      {name: t("progressdocScreen.items_header_labitem_id"), field: "labitem_id", width: 80},
+      {name: t("progressdocScreen.items_header_labs"), field: "lab_alloc", width: 80, dataType: "lab_list"},
       {name: t("progressdocScreen.items_header_teaching_mode"), field: "teaching_mode", editable: true},
       {name: t("progressdocScreen.items_header_comment"), field: "comment", editable: true},
       {name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
@@ -159,11 +159,14 @@ class ProgressdocDialog extends Component {
   
   onFormChanged = (event) => {
     let newVal = event.target.value;
-    if (typeof newVal === "string") {
+    if (event.target.id.endsWith("_hours")){
+      // Keep numberic value, remove 0 from header
+      newVal = newVal.replace(/[^0-9]/ig, "").replace(/\b(0+)/gi,"");
+      if (newVal.length < 1) {
+        newVal = "0";
+      }
+    } else {
       newVal = newVal.trim();
-    }
-    else if (typeof newVal === "number"){
-      newVal = Math.abs(newVal);
     }
     // Must keep the state id same with the form input id
     this.setState({
@@ -229,6 +232,7 @@ class ProgressdocDialog extends Component {
               progressItems &&
               <EditableTable 
                 flex={1}
+                autoShrinkDomHeight
                 minHeight={950}
                 titleHeight={50}
                 colLineHeight={15}

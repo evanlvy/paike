@@ -27,7 +27,10 @@ const header_id = [["monday_12","monday_34","monday_67","monday_89"],
   ["tuesday_12","tuesday_34","tuesday_67","tuesday_89"],
   ["wednesday_12","wednesday_34","wednesday_67","wednesday_89"],
   ["thursday_12","thursday_34","thursday_67","thursday_89"],
-  ["friday_12","friday_34","friday_67","friday_89"]];
+  ["friday_12","friday_34","friday_67","friday_89"],
+  ["saturday_12","saturday_34","saturday_67","saturday_89"],
+  ["sunday_12","sunday_34","sunday_67","sunday_89"]
+];
 class LiLunKeBiaoScreenWrapped extends Component {
   constructor(props) {
     super(props);

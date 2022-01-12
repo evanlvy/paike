@@ -273,6 +273,7 @@
     "items_header_theoryhours": "理论时数",
     "items_header_labitem": "实训",
     "items_header_labitem_id": "实训Id",
+    "items_header_labs": "实验室",
     "items_header_labhours": "实训时数",
     "items_header_teaching_mode": "教学方式",
     "items_header_comment": "备注",

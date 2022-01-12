@@ -144,6 +144,17 @@ class EditableTableWrapper extends Component {
     return short_names.join(', ');
   };
 
+  labListGetter = (params) => {
+    let value = params.data[params.colDef.field];
+    if (!value) {
+      return "";
+    }
+    let short_names = value.items.map(function (lab_info) {
+      return lab_info.location;
+    });
+    return short_names.join(', ');
+  };
+
   teacherListGetter = (params) => {
     let value = params.data[params.colDef.field];
     if (!value) {
@@ -201,6 +212,9 @@ class EditableTableWrapper extends Component {
         }
         else if (headers[i].dataType === "classes_id_name_obj") {
           columnDefs[i]["valueGetter"] = this.classNamesGetter;
+        }
+        else if (headers[i].dataType === "lab_list") {
+          columnDefs[i]["valueGetter"] = this.labListGetter;
         }
         else if (headers[i].dataType === "teacher_obj_array") {
           columnDefs[i]["valueGetter"] = this.teacherListGetter;
