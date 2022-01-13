@@ -308,5 +308,21 @@
     "list_header_priority": "优先级",
     "list_header_created": "创建时间",
     "list_header_updated": "更新时间"
+  },
+  "labitemScreen": {
+    "form_title": "实验类型",
+    "form_helper_dbid": "数据库项ID：",
+    "form_helper_headcount": "不填则默认小组人数30人",
+    "form_label_keyword": "课程名",
+    "form_label_name": "实验类型",
+    "form_label_labs": "关联实验室",
+    "form_label_department": "教研室",
+    "form_label_max_team_headcount": "分组人数",
+    "form_label_teacher_count": "带教老师人数",
+    "form_label_labdivision_id": "实训分中心",
+    "form_btn_select": "选择已有类型",
+    "form_btn_create": "新建实验/实验室关联",
+    "form_btn_edit": "更正关联",
+    "form_btn_delete": "删除实验类型"
   }
 }

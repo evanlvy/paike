@@ -28,7 +28,7 @@ import { actions as progressdocActions, getDocContents, getSelectedDocId } from 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
 
-class ProgressdocDialog extends Component {
+class LabitemDialog extends Component {
   constructor(props) {
     super(props);
     const { t, color } = props;
@@ -37,81 +37,49 @@ class ProgressdocDialog extends Component {
       depSelected: -1,
     };
     this.color = color ? color : DEFAULT_COLOR;
-    this.tableHeaders = [
-      {name: t("progressdocScreen.items_header_id"), field: "id", width: 80},
-      {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", editable: true, width: 80},
-      {name: t("progressdocScreen.items_header_chapter_name"), field: "chapter_name", editable: true},
-      {name: t("progressdocScreen.items_header_theory"), field: "theory_item_content", editable: true, width: 380},
-      {name: t("progressdocScreen.items_header_theoryhours"), field: "theory_item_hours", editable: true, width: 80},
-      {name: t("progressdocScreen.items_header_labitem"), field: "labitem_content", editable: true, width: 380},
-      {name: t("progressdocScreen.items_header_labhours"), field: "labitem_hours", editable: true, width: 80},
-      {name: t("progressdocScreen.items_header_labs"), field: "lab_alloc", width: 100, dataType: "lab_list"},
-      {name: t("progressdocScreen.items_header_teaching_mode"), field: "teaching_mode", editable: true},
-      {name: t("progressdocScreen.items_header_comment"), field: "comment", editable: true},
-      {name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
-    ];
+
     this.btnRef = React.createRef()
     this.forms = [
-      {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, isRequired: true},
-      {id: "short_name", label: t("progressdocScreen.form_label_shortname"), minW: 280, isRequired: true},
-      {id: "description", label: t("progressdocScreen.form_label_description"), minW: 280, isRequired: false},
-      //{id: "department_id", label: t("progressdocScreen.form_label_departmentid"), maxW: 100, isRequired: true},
-      {id: "total_hours", label: t("progressdocScreen.form_label_totalhours"), maxW: 100, isRequired: true},
-      {id: "theory_hours", label: t("progressdocScreen.form_label_theoryhours"), maxW: 100, isRequired: true},
-      {id: "lab_hours", label: t("progressdocScreen.form_label_labhours"), maxW: 100, isRequired: true},
-      {id: "flex_hours", label: t("progressdocScreen.form_label_flexhours"), maxW: 100, isRequired: true},
-      {id: "textbook", label: t("progressdocScreen.form_label_textbook"), minW: 280, isRequired: true},
-      {id: "exam_type", label: t("progressdocScreen.form_label_examtype"), minW: 280, isRequired: true},
-      {id: "comments", label: t("progressdocScreen.form_label_comments"), minW: 280, isRequired: false},
+      {id: "description", label: t("labitemScreen.form_label_keyword"), minW: 280, isRequired: true},
+      {id: "name", label: t("labitemScreen.form_label_name"), minW: 280, isRequired: true},
+      {id: "department_id", label: t("labitemScreen.form_label_department"), minW: 280, isRequired: false},
+      {id: "max_team_headcount", label: t("labitemScreen.form_label_max_team_headcount"), maxW: 100, isRequired: true},
+      {id: "teacher_count", label: t("labitemScreen.form_label_teacher_count"), maxW: 100, isRequired: true},
+      {id: "labdivision_id", label: t("labitemScreen.form_label_labdivision_id"), maxW: 100, isRequired: true},
     ];
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (!props.docDetails) return null;
+    let result = {isOpen: props.isOpen};
+    
+    if (!props.lab_alloc) return result;
     // initialize the state with props by the same name id!
-    if (props.docDetails.props.id !== state.id) {
-      return props.docDetails["props"];
+    if (props.lab_alloc.id !== state.id) {
+      result = {...result, ...props.lab_alloc};
     }
     return null;
   }
 
-  loadData = (doc_from_prop) => {
-    let doc_object = doc_from_prop;
-    if (!doc_object) {
-      const { docDetails } = this.props;
-      doc_object = docDetails;
+  loadData = (labitem_from_prop) => {
+    let labitem_object = labitem_from_prop;
+    if (!labitem_object) {
+      const { labitem : labitem_prop } = this.props;
+      labitem_object = labitem_prop;
+    }
+    if (!labitem_object) {
+      labitem_object = {
+        "id": "-1",
+        "description": "",
+        "name": "",
+        "department_id": -1,
+        "max_team_headcount": 0,
+        "teacher_count": 1,
+        "labdivision_id": -1,
+      };
     }
 
-    let progress_items = null;
-    let progress_items_array = null;
-    if (doc_object) {
-      progress_items = doc_object["items"];
-    }
-    if (!progress_items || progress_items === null) {
-      progress_items_array = [{
-        "id": "-1",
-        "week_idx": 1,
-        "chapter_name": "",
-        "theory_item_content": "",
-        "theory_item_hours": 0,
-        "labitem_content": "",
-        "labitem_hours": 0,
-        "teaching_mode": "",
-        "stage_bias": 0,
-        "comment": "",
-        "labitem_id": -1,
-        "doc_id": -1,
-      }];
-    }
-    else {
-      progress_items_array = Object.keys(progress_items).map((key) => {
-        let item_obj = progress_items[key]
-        return Object.defineProperty(item_obj, 'id', {value: key})
-      });
-    }
     this.setState({ 
       isOpen: true,
-      progressItems: progress_items_array,
     });
   }
 

@@ -434,13 +434,12 @@ class EditableTableWrapper extends Component {
   };
 
   render() {
-    const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onGridSizeChanged, onCellClicked, 
-      onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
-    const { t, width,
-      title, color, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
-      rowSelection, onCellClicked: onCellClickedCallback, onCellValueChanged, 
-      defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged, 
-      ...other_props } = this.props; 
+    const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onGridSizeChanged,
+      onCellClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
+    const { t, width, title, color, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
+      rowSelection, onCellClicked: onCellClickedCallback, onCellDoubleClicked,
+      onCellValueChanged, defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged, 
+      ...other_props } = this.props;
     const { curPageIndex } = this.state;
     //console.log("RowData: "+JSON.stringify(rowData));
     return (
@@ -482,6 +481,7 @@ class EditableTableWrapper extends Component {
               onGridSizeChanged={onGridSizeChanged}
               onCellValueChanged={onCellValueChanged}
               onCellClicked={onCellClicked}
+              onCellDoubleClicked={onCellDoubleClicked}
               rowSelection={rowSelection} >
             </AgGridReact>
           </div>
