@@ -23,6 +23,7 @@ import {
 import { MdEdit } from "react-icons/md"
 
 import { EditableTable } from '../result-table/editable-table';
+import LabitemDialog from './labitem-dialog';
 import { actions as progressdocActions, getDocContents, getSelectedDocId } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
@@ -33,6 +34,7 @@ class ProgressdocDialog extends Component {
     super(props);
     const { t, color } = props;
     this.state = {
+      isLabItemOpen: false,
       isOpen: false,
       depSelected: -1,
     };
@@ -134,7 +136,7 @@ class ProgressdocDialog extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { docId, docDetails } = this.props;
-    const { isOpen, progressItems, department_id } = this.state;
+    const { isOpen, progressItems, department_id, isLabItemOpen } = this.state;
     if (nextProps.docDetails !== docDetails){
       console.log("shouldComponentUpdate, docDetails diff: isdefined? next="+!nextProps.docDetails+" cur="+!docDetails);
       this.loadData(nextProps.docDetails);
@@ -150,7 +152,8 @@ class ProgressdocDialog extends Component {
     if (nextProps.docId !== docId) {
       console.log("shouldComponentUpdate, props diff: "+nextProps.docId+" "+docId);
       return true;
-    } else if (nextState.isOpen !== isOpen || nextState.progressItems !== progressItems || nextState.department_id !== department_id) {
+    } else if (nextState.isOpen !== isOpen || nextState.progressItems !== progressItems 
+      || nextState.department_id !== department_id || nextState.isLabItemOpen !== isLabItemOpen) {
       console.log("shouldComponentUpdate, nextState diff");
       return true;
     }
@@ -176,16 +179,24 @@ class ProgressdocDialog extends Component {
 
   onCellDoubleClicked = (event) => {
     if (event) {
-      let value = event.value;
-
+      this.setState({
+        labItem: event.data.lab_alloc,
+        isLabItemOpen: true
+      });
     }
   }
 
+  onLabItemClosed = (event) => {
+    this.setState({
+      isLabItemOpen: false
+    });
+  }
+
   render() {
-    const { isOpen, progressItems, id, department_id } = this.state;
+    const { isOpen, progressItems, id, department_id, labItem, isLabItemOpen } = this.state;
     const { t, title, color, btnText, isSaveable, tableTitle, docId, departments,
       tablePages, onPageChanged, onCellValueChanged } = this.props;
-    const { tableHeaders, btnRef, loadDocDetails, onClose, onFormChanged, onCellDoubleClicked } = this;
+    const { tableHeaders, btnRef, loadDocDetails, onClose, onFormChanged, onCellDoubleClicked, onLabItemClosed } = this;
     return (
       <>
         <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={btnRef} onClick={(e) => {
@@ -197,9 +208,10 @@ class ProgressdocDialog extends Component {
           onClose={onClose}
           finalFocusRef={btnRef}
           isOpen={isOpen}
-          scrollBehavior="outside"
+          scrollBehavior="inside"
           closeOnOverlayClick={false}
           closeOnEsc={false}
+          size="full"
         >
           <ModalOverlay />
           <ModalContent maxW="100rem">
@@ -259,6 +271,15 @@ class ProgressdocDialog extends Component {
                 //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
                 />
             }
+              <LabitemDialog
+                  t={t}
+                  color={color}
+                  data={labItem}
+                  isOpen={isLabItemOpen}
+                  onClose={onLabItemClosed}
+                  departments={departments}
+                  title={t("labitemScreen.form_title")}
+                  isSaveable />
             </ModalBody>
             <ModalFooter>
               { isSaveable && 

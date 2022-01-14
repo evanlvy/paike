@@ -36,3 +36,7 @@ blockquote:before {
 blockquote p {
   display: inline;
 }
+html{
+  overflow-y: scroll;
+  overflow-x: hidden;
+}

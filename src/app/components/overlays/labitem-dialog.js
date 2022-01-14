@@ -42,7 +42,7 @@ class LabitemDialog extends Component {
     this.forms = [
       {id: "description", label: t("labitemScreen.form_label_keyword"), minW: 280, isRequired: true},
       {id: "name", label: t("labitemScreen.form_label_name"), minW: 280, isRequired: true},
-      {id: "department_id", label: t("labitemScreen.form_label_department"), minW: 280, isRequired: false},
+      //{id: "department_id", label: t("labitemScreen.form_label_department"), minW: 280, isRequired: false},
       {id: "max_team_headcount", label: t("labitemScreen.form_label_max_team_headcount"), maxW: 100, isRequired: true},
       {id: "teacher_count", label: t("labitemScreen.form_label_teacher_count"), maxW: 100, isRequired: true},
       {id: "labdivision_id", label: t("labitemScreen.form_label_labdivision_id"), maxW: 100, isRequired: true},
@@ -50,8 +50,8 @@ class LabitemDialog extends Component {
   }
 
   static getDerivedStateFromProps(props, state) {
+    console.log("getDerivedStateFromProps");
     let result = {isOpen: props.isOpen};
-    
     if (!props.lab_alloc) return result;
     // initialize the state with props by the same name id!
     if (props.lab_alloc.id !== state.id) {
@@ -85,29 +85,16 @@ class LabitemDialog extends Component {
 
   onClose = () => {
     this.setState({ isOpen: false });
-  }
-
-  loadDocDetails = (docId) => {
-    console.log("loadDocDetails: "+docId);
-    if (!docId || docId < 1) {
-      return;
-    }
-    this.props.fetchDoc(docId);
-    if (this.props.prevDocId === docId) {
-      this.setState({
-        isOpen: true,
-      });
+    const { onClose:onCloseCallback } = this.props;
+    if (onCloseCallback != null) {
+      onCloseCallback();
     }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { docId, docDetails } = this.props;
-    const { isOpen, progressItems, department_id } = this.state;
-    if (nextProps.docDetails !== docDetails){
-      console.log("shouldComponentUpdate, docDetails diff: isdefined? next="+!nextProps.docDetails+" cur="+!docDetails);
-      this.loadData(nextProps.docDetails);
-      return false;
-    }
+    const { data } = this.props;
+    const { isOpen, department_id, items } = this.state;
+    
     for (let index = 0; index < this.forms.length; index++) {
       let form = this.forms[index];
       if (this.state[form.id] !== nextState[form.id]) {
@@ -115,10 +102,7 @@ class LabitemDialog extends Component {
         return true;
       }
     }
-    if (nextProps.docId !== docId) {
-      console.log("shouldComponentUpdate, props diff: "+nextProps.docId+" "+docId);
-      return true;
-    } else if (nextState.isOpen !== isOpen || nextState.progressItems !== progressItems || nextState.department_id !== department_id) {
+    if (nextState.isOpen !== isOpen || nextState.items !== items || nextState.department_id !== department_id) {
       console.log("shouldComponentUpdate, nextState diff");
       return true;
     }
@@ -142,35 +126,25 @@ class LabitemDialog extends Component {
     });
   }
 
-  onCellDoubleClicked = (event) => {
-    if (event) {
-      let value = event.value;
-
-    }
-  }
 
   render() {
-    const { isOpen, progressItems, id, department_id } = this.state;
-    const { t, title, color, btnText, isSaveable, tableTitle, docId, departments,
-      tablePages, onPageChanged, onCellValueChanged } = this.props;
-    const { tableHeaders, btnRef, loadDocDetails, onClose, onFormChanged, onCellDoubleClicked } = this;
+    const { isOpen, items, id, department_id } = this.state;
+    const { t, title, color, btnText, isSaveable, departments } = this.props;
+    const { btnRef, onClose, onFormChanged } = this;
     return (
       <>
-        <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={btnRef} onClick={(e) => {
-          loadDocDetails(docId);
-        }}>
-          {btnText}
-        </Button>
         <Modal
+          isCentered
           onClose={onClose}
           finalFocusRef={btnRef}
           isOpen={isOpen}
           scrollBehavior="outside"
+          motionPreset='slideInBottom'
           closeOnOverlayClick={false}
           closeOnEsc={false}
         >
           <ModalOverlay />
-          <ModalContent maxW="100rem">
+          <ModalContent maxW="50rem">
             <ModalHeader>{title}</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
@@ -203,30 +177,6 @@ class LabitemDialog extends Component {
                 }
               </Flex>
             }
-            {
-              progressItems &&
-              <EditableTable 
-                flex={1}
-                autoShrinkDomHeight
-                minHeight={950}
-                titleHeight={50}
-                colLineHeight={15}
-                defaultColWidth={180}
-                title={tableTitle}
-                color={color}
-                headers={tableHeaders}
-                data={progressItems}
-                pageNames={tablePages}
-                pagePrevCaption={t("common.previous")}
-                pageNextCaption={t("common.next")}
-                onResultPageIndexChanged={onPageChanged}
-                initPageIndex={0}
-                onCellValueChanged={onCellValueChanged}
-                onCellDoubleClicked={onCellDoubleClicked}
-                rowSelection="single"
-                //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
-                />
-            }
             </ModalBody>
             <ModalFooter>
               { isSaveable && 
@@ -254,4 +204,4 @@ const mapDispatchToProps = (dispatch) => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(ProgressdocDialog));
+export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(LabitemDialog));
