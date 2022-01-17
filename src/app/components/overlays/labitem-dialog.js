@@ -52,12 +52,12 @@ class LabitemDialog extends Component {
   static getDerivedStateFromProps(props, state) {
     console.log("getDerivedStateFromProps");
     let result = {isOpen: props.isOpen};
-    if (!props.lab_alloc) return result;
+    if (!props.data) return result;
     // initialize the state with props by the same name id!
-    if (props.lab_alloc.id !== state.id) {
-      result = {...result, ...props.lab_alloc};
+    if (props.data.id !== state.id) {
+      result = {...result, ...props.data};
     }
-    return null;
+    return result;
   }
 
   loadData = (labitem_from_prop) => {
@@ -95,16 +95,21 @@ class LabitemDialog extends Component {
     const { data } = this.props;
     const { isOpen, department_id, items } = this.state;
     
+    if (nextProps.data !== data) {
+      console.log("shouldComponentUpdate, nextProp data diff");
+      return true;
+    }
+    if (nextState.isOpen !== isOpen /*|| nextState.items !== items || nextState.department_id !== department_id*/) {
+      console.log("shouldComponentUpdate, nextState diff");
+      return true;
+    }
+
     for (let index = 0; index < this.forms.length; index++) {
       let form = this.forms[index];
       if (this.state[form.id] !== nextState[form.id]) {
         console.log("shouldComponentUpdate, FORMs diff:"+form.id);
         return true;
       }
-    }
-    if (nextState.isOpen !== isOpen || nextState.items !== items || nextState.department_id !== department_id) {
-      console.log("shouldComponentUpdate, nextState diff");
-      return true;
     }
     return false;
   }
@@ -144,7 +149,7 @@ class LabitemDialog extends Component {
           closeOnEsc={false}
         >
           <ModalOverlay />
-          <ModalContent maxW="50rem">
+          <ModalContent maxW="50rem" borderRadius="md">
             <ModalHeader>{title}</ModalHeader>
             <ModalCloseButton />
             <ModalBody>

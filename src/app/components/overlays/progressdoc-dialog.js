@@ -214,7 +214,7 @@ class ProgressdocDialog extends Component {
           size="full"
         >
           <ModalOverlay />
-          <ModalContent maxW="100rem">
+          <ModalContent borderRadius="md">
             <ModalHeader>{title}</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
