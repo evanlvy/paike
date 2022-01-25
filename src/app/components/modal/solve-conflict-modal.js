@@ -46,12 +46,12 @@ class SolveConflictModalWrapped extends Component {
     }
 
     this.tableHeaders = [
-      {name: t("kebiao.date"), field: "date", editable: true},
-      {name: t("kebiao.time"), field: "time", editable: true},
+      {name: t("kebiao.date"), field: "date", editable: true, width: 100},
+      {name: t("kebiao.time"), field: "time", editable: true, width: 100},
       {name: t("kebiao.jys"), field: "jys"},
       {name: t("kebiao.banji"), field: "banji"},
       //{name: t("kebiao.student_count"), field: "student_count"},
-      {name: t("kebiao.shixun_content"), field: "shixun_name", width: 150},
+      {name: t("kebiao.shixun_content"), field: "shixun_name", width: 200},
       {name: t("kebiao.teacher"), field: "teacher"},
       {name: t("kebiao.shixun_teacher"), field: "shixun_teacher", editable: true},
       {name: t("kebiao.lab"), field: "lab", editable: true},
@@ -605,10 +605,17 @@ class SolveConflictModalWrapped extends Component {
     const tableData = [selectItem];
     //console.log("Conflict Select Item: "+JSON.stringify(selectItem));
     return (
-      <Flex width="100%" height="100%" align="center" justify="center">
-        <Modal isOpen={isOpen} onClose={this.onClose} {...other_props}>
+      <>
+        <Modal 
+          isOpen={isOpen} 
+          onClose={this.onClose} 
+          scrollBehavior="inside" 
+          closeOnOverlayClick={false}
+          closeOnEsc={false}
+          {...other_props}
+        >
           <ModalOverlay />
-          <ModalContent minWidth={tableHeaders.length*100+103} >
+          <ModalContent minWidth={tableHeaders.length*100+103} height="auto">
             <ModalHeader display="flex" flexDirection="row" alignItems="center" backgroundColor="orange.300">
               <Icon name="warning-2" color="red.500" marginRight="2" />
               <Text width="100%"><Trans>solveConflictModal.title</Trans></Text>
@@ -620,20 +627,20 @@ class SolveConflictModalWrapped extends Component {
             </ModalHeader>
             <ModalCloseButton />
             <ModalBody padding={0}>
-              <Flex width="100%" direction="column">
-                <EditableTable
-                  width="100%"
-                  height={150}
-                  colLineHeight={20}
-                  defaultColWidth={110}
-                  headers={tableHeaders}
-                  data={tableData}
-                  onCellClicked={onCellClicked}/>
-                <Flex m="2" alignItems="center">
-                  <Flex flex="1" />
-                  <Button onClick={this.onCancelBtnClicked} mr="5" variantColor="gray" width="100px" height="44px"><Trans>common.cancel</Trans></Button>
-                  <Button onClick={this.onOKBtnClicked} variantColor="green" width="100px" height="44px"><Trans>common.ok</Trans></Button>
-                </Flex>
+              <EditableTable
+                flex={1}
+                minHeight={200}
+                autoShrinkDomHeight
+                titleHeight={50}
+                colLineHeight={20}
+                defaultColWidth={80}
+                headers={tableHeaders}
+                data={tableData}
+                onCellClicked={onCellClicked}/>
+              <Flex m="2" alignItems="center">
+                <Flex flex="1" />
+                <Button onClick={this.onCancelBtnClicked} mr="5" variantColor="gray" width="100px" height="44px"><Trans>common.cancel</Trans></Button>
+                <Button onClick={this.onOKBtnClicked} variantColor="green" width="100px" height="44px"><Trans>common.ok</Trans></Button>
               </Flex>
             </ModalBody>
           </ModalContent>
@@ -684,7 +691,7 @@ class SolveConflictModalWrapped extends Component {
           ref={this.doubleConfirmDialog}
           negativeBtnCaption={t("common.cancel")}
           onResult={onDoubleConfirmResult} />
-      </Flex>
+      </>
     );
   }
 }

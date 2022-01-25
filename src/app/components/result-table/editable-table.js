@@ -14,18 +14,19 @@ import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 import './table.css';
 
 import { CommonRenderer } from "./common-renderer";
+import { ArrayDataRenderer } from "./arraydata-renderer";
 import { SelectorCelleditor } from "./selector-celleditor";
 
 class EditableTableWrapper extends Component {
   constructor(props) {
     super(props);
-    const { t, initPageIndex, fixedRowHeight, fixedColWidth } = props;
+    const { t, initPageIndex, rowHeight, fixedColWidth } = props;
     this.state = {
       curPageIndex: initPageIndex ? initPageIndex : 0,
       editPageNum: ""
     };
     this.defaultColDef = {
-      autoHeight: !fixedRowHeight,
+      autoHeight: !rowHeight,
       flex: 1,
       minWidth: 80,
       resizable: !fixedColWidth,
@@ -33,11 +34,18 @@ class EditableTableWrapper extends Component {
     }
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
+      arrayDataRenderer: ArrayDataRenderer,
       selectorCelleditor: SelectorCelleditor,
     }
     this.buildColDef(props);
     this.buildData(props);
     this.zixi = t("kebiao.zixi");
+    this.previousRowCount = 0;
+    this.underShrink = false;
+    this.gridSizeAdapted = false;
+    this.gridApi = null;
+    this.prevWidth = 0;
+    this.prevHeight = 0;
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -190,7 +198,7 @@ class EditableTableWrapper extends Component {
         maxWidth: headers[i].maxW,
         //lineHeight: colLineHeight,
         cellClassRules: cellClassRules,
-        cellRenderer: "commonRenderer",
+        cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
         cellRendererParams: {
           lineHeight : colLineHeight // pass the field value here
         },
@@ -338,7 +346,6 @@ class EditableTableWrapper extends Component {
 
   onGridReady = (params) => {
     this.gridApi = params.api;
-    this.gridColumnApi = params.columnApi;
     // Following line to make the currently visible columns fit the screen  
     params.api.sizeColumnsToFit();
     // Following line dymanic set height to row on content
@@ -360,14 +367,14 @@ class EditableTableWrapper extends Component {
         if (this.previousRowCount !== newRowCount) {
           if (this.previousRowCount < newRowCount && this.underShrink === false) {
             this.gridSizeAdapted = false;
-            console.log("RESULTABLE: Need re-adapt!");
+            console.log("EDITABLETABLE: Need re-adapt!");
           } else if (this.previousRowCount > newRowCount && this.underShrink === true) {
             if (max_height > newRowCount*40) {
               this.gridSizeAdapted = false;
-              console.log("RESULTABLE: Need re-adapt for RowCount!");
+              console.log("EDITABLETABLE: Need re-adapt for RowCount!");
             }
           }
-          console.log("RESULTABLE: RowCount different:"+this.previousRowCount+" to "+newRowCount);
+          console.log("EDITABLETABLE: RowCount different:"+this.previousRowCount+" to "+newRowCount);
         }
       }
       this.previousRowCount = newRowCount;
@@ -380,12 +387,12 @@ class EditableTableWrapper extends Component {
         // Perform shrink
         should_shrink = true;
       }
-      console.log("RESULTABLE: should_shrink:"+should_shrink+" grid Client h:"+event.clientHeight+
+      console.log("EDITABLETABLE: should_shrink:"+should_shrink+" grid Client h:"+event.clientHeight+
       " maxH:"+maxHeight+" screenH:"+window.screen.availHeight+" RowCount:"+this.previousRowCount);
       this.setAutoHeight(event, should_shrink, max_height);
       this.gridSizeAdapted = true;
     } else {
-      console.log("RESULTABLE: resetRowHeights:"+event.type);
+      console.log("EDITABLETABLE: resetRowHeights:"+event.type);
       //event.api.resetRowHeights();
       if (event.clientWidth !== this.prevWidth) {
         // Following line to make the currently visible columns fit the screen  
@@ -408,7 +415,7 @@ class EditableTableWrapper extends Component {
     // so the grid div should have no height set, the height is dynamic.
     document.querySelector('#editableGrid').style.height = shouldShrink?(maxTableHeight+'px'):'';
     this.underShrink = shouldShrink;
-    console.log("RESULTABLE: setDomLayout: "+(shouldShrink?'normal':'autoHeight'));
+    console.log("EDITABLETABLE: setDomLayout: "+(shouldShrink?'normal':'autoHeight'));
   }
 
   exportCsv = () => {
@@ -436,7 +443,7 @@ class EditableTableWrapper extends Component {
   render() {
     const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onGridSizeChanged,
       onCellClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
-    const { t, width, title, color, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
+    const { t, width, title, color, rowHeight, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
       rowSelection, onCellClicked: onCellClickedCallback, onCellDoubleClicked,
       onCellValueChanged, defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged, 
       ...other_props } = this.props;
@@ -467,18 +474,20 @@ class EditableTableWrapper extends Component {
             }
           </Box>
         }
-        <Box flex={1} width="100%" height="1500px" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
-          <div id="editableGrid" className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
+        <Box flex={1} width="100%" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
+          <div id="editableGrid" className="ag-theme-alpine" style={{width: "100%"}}>
             <AgGridReact
-              stopEditingWhenCellsLoseFocus={true}
-              deltaRowMode={true}
-              getRowNodeId={data=>data.id}
+              animateRows={false}
+              onGridReady={onGridReady}
+              onGridSizeChanged={onGridSizeChanged}
               defaultColDef={defaultColDef}
               frameworkComponents={frameworkComponents}
               columnDefs={columnDefs}
               rowData={rowData}
-              onGridReady={onGridReady}
-              onGridSizeChanged={onGridSizeChanged}
+              rowHeight={rowHeight}
+              stopEditingWhenCellsLoseFocus={true}
+              deltaRowMode={true}
+              //getRowNodeId={data=>data.id} // Bug: make rowHeight flash forever!
               onCellValueChanged={onCellValueChanged}
               onCellClicked={onCellClicked}
               onCellDoubleClicked={onCellDoubleClicked}

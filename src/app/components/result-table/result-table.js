@@ -23,7 +23,7 @@ import { slotsTranslation } from "../../redux/modules/rawplan";
 class ResultTableWrapper extends Component {
   constructor(props) {
     super(props);
-    const { t, onCellIndicatorClicked, initPageIndex, fixedRowHeight, fixedColWidth } = props;
+    const { t, onCellIndicatorClicked, initPageIndex, rowHeight, fixedColWidth } = props;
     this.state = {
       curPageIndex: initPageIndex ? initPageIndex : 0,
       editPageNum: ""
@@ -38,7 +38,7 @@ class ResultTableWrapper extends Component {
     };
 
     this.defaultColDef = {
-      autoHeight: !fixedRowHeight,
+      autoHeight: !rowHeight,
       flex: 1,
       minWidth: 80,
       resizable: !fixedColWidth,
@@ -127,7 +127,6 @@ class ResultTableWrapper extends Component {
         width: headers[i].width,
         minWidth: headers[i].minW,
         maxWidth: headers[i].maxW,
-        //autoHeight: false,
         sortable: headers[i].sortable ? headers[i].sortable: false,
         filter: headers[i].filter ? headers[i].filter: false,
         //lineHeight: colLineHeight,
@@ -411,7 +410,7 @@ class ResultTableWrapper extends Component {
   render() {
     const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, onGridReady,
       onCellClicked, onRowClicked, onRowSelected, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
-    const { t, width, title, titleHeight, color,
+    const { t, width, title, titleHeight, color, rowHeight,
       pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption, rowSelection, 
       onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback,
       headers, data, autoHeight, colLineHeight, autoShrinkDomHeight, onResultPageIndexChanged, onRowSelected: onRowSelectedCallback,
@@ -420,26 +419,29 @@ class ResultTableWrapper extends Component {
     //console.log("render: curPageIndex: "+curPageIndex);
     return (
       <Flex flex={1} direction="column" width={width ? width : "100%"} {...other_props}>
-        <Box display="flex" flexDirection="row" bg={color+".400"} height={titleHeight} px={4} alignItems="center"
-          borderWidth={1} borderColor={color+".200"} roundedTop="md">
-          <Text width="100%">{title}</Text>
-          {
-            pageNames && pageNames.length>0 && (!initPageIndex || initPageIndex>=0) &&
-            <Flex direction="row" alignItems="center">
-              {
-                pageInputCaption &&
-                <Flex direction="row" alignItems="center">
-                  <Text ml={2} whiteSpace="nowrap">{pageInputCaption[0]}</Text>
-                  <Input width="3rem" px="4px" textAlign="center" mx={2} size="md" value={curPageIndex+1} onChange={onEditPageNum} />
-                  <Text mr={2} whiteSpace="nowrap">{pageInputCaption[1]}</Text>
-                </Flex>
-              }
-              <Button mr={2} variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
-              { !pageInputCaption && <Text whiteSpace="nowrap" mx={2}>{this.getPageText(pageNames, curPageIndex)}</Text> }
-              <Button ml={2} variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
-            </Flex>
-          }
-        </Box>
+        {
+          (title || pageNames) &&
+          <Box display="flex" flexDirection="row" bg={color+".400"} height={titleHeight} px={4} alignItems="center"
+            borderWidth={1} borderColor={color+".200"} roundedTop="md">
+            <Text width="100%">{title}</Text>
+            {
+              pageNames && pageNames.length>0 && (!initPageIndex || initPageIndex>=0) &&
+              <Flex direction="row" alignItems="center">
+                {
+                  pageInputCaption &&
+                  <Flex direction="row" alignItems="center">
+                    <Text ml={2} whiteSpace="nowrap">{pageInputCaption[0]}</Text>
+                    <Input width="3rem" px="4px" textAlign="center" mx={2} size="md" value={curPageIndex+1} onChange={onEditPageNum} />
+                    <Text mr={2} whiteSpace="nowrap">{pageInputCaption[1]}</Text>
+                  </Flex>
+                }
+                <Button mr={2} variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
+                { !pageInputCaption && <Text whiteSpace="nowrap" mx={2}>{this.getPageText(pageNames, curPageIndex)}</Text> }
+                <Button ml={2} variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
+              </Flex>
+            }
+          </Box>
+        }
         <Box flex={1} width="100%" height="1500px" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
           <div id="myGrid" className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
             <AgGridReact
@@ -451,6 +453,7 @@ class ResultTableWrapper extends Component {
               frameworkComponents={frameworkComponents}
               columnDefs={columnDefs}
               rowData={rowData}
+              rowHeight={rowHeight}
               //rowClassRules={rowClassRules}
               onCellClicked={onCellClicked}
               onRowClicked={onRowClicked}
