@@ -301,7 +301,7 @@ class ResultTableWrapper extends Component {
     gridOptions.api.setDomLayout(shouldShrink?'normal':'autoHeight');
     // auto height will get the grid to fill the height of the contents,
     // so the grid div should have no height set, the height is dynamic.
-    document.querySelector('#myGrid').style.height = shouldShrink?(maxTableHeight+'px'):'';
+    document.querySelector('#myGrid').style.height = shouldShrink?((maxTableHeight-this.props.titleHeight)+'px'):'';
     this.underShrink = shouldShrink;
     console.log("RESULTABLE: setDomLayout: "+(shouldShrink?'normal':'autoHeight'));
   }
@@ -418,10 +418,10 @@ class ResultTableWrapper extends Component {
     const { curPageIndex } = this.state;
     //console.log("render: curPageIndex: "+curPageIndex);
     return (
-      <Flex flex={1} direction="column" width={width ? width : "100%"} {...other_props}>
+      <Flex flex={1} direction="column" width={width ? width : "100%"} height="inherit" {...other_props}>
         {
           (title || pageNames) &&
-          <Box display="flex" flexDirection="row" bg={color+".400"} height={titleHeight} px={4} alignItems="center"
+          <Box display="flex" flexDirection="row" bg={color+".400"} minH={titleHeight} px={4} alignItems="center"
             borderWidth={1} borderColor={color+".200"} roundedTop="md">
             <Text width="100%">{title}</Text>
             {
@@ -443,7 +443,7 @@ class ResultTableWrapper extends Component {
           </Box>
         }
         <Box flex={1} width="100%" height="1500px" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
-          <div id="myGrid" className="ag-theme-alpine" style={{width: "100%", height: "100%"}}>
+          <div id="myGrid" className="ag-theme-alpine" style={{width: "100%", height: "inherit"}}>
             <AgGridReact
               //domLayout={autoShrinkDomHeight?'autoHeight':'normal'}
               animateRows={false}

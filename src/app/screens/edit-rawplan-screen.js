@@ -44,8 +44,8 @@ class EditRawplanScreen extends Component {
     this.semesterPages = {};
     this.semiSemesterPages = [{name: t("kebiao.semester_first_half")}, {name: t("kebiao.semester_second_half")}];
     this.statisticsTableHeaders = [
-      {name: t("editRawplanScreen.header_teacher"), field: "name", maxW: 120, sortable: true, filter: true},
-      {name: t("editRawplanScreen.header_weektotal"), field: "total", width: 80, sortable: true},
+      {name: t("editRawplanScreen.header_teacher"), field: "name", minW: 100, sortable: true, filter: true},
+      {name: t("editRawplanScreen.header_weektotal"), field: "total", minW: 80, sortable: true},
       {name: t("editRawplanScreen.header_conflict"), field: "conflicted", minW: 420, dataType: "slot_weekday_renderer", sortable: true, resizable: true},
       {name: t("editRawplanScreen.header_overtime"), field: "overtime", minW: 400, dataType: "slot_weekday_renderer", sortable: true, resizable: true},
     ];
@@ -241,9 +241,9 @@ class EditRawplanScreen extends Component {
           statistics &&
           <ResultTable
             margin="5"
-            //fixedRowHeight
-            //maxWidth={1000}
-            minHeight={statistics.length>3?350:180}
+            maxHeight={350}
+            autoShrinkDomHeight
+            //minHeight={statistics.length>3?350:180}
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={150}

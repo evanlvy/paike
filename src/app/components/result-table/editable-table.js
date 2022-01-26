@@ -450,10 +450,10 @@ class EditableTableWrapper extends Component {
     const { curPageIndex } = this.state;
     //console.log("RowData: "+JSON.stringify(rowData));
     return (
-      <Flex direction="column" width={width ? width : "100%"} {...other_props}>
+      <Flex direction="column" width={width ? width : "100%"} height="inherit" {...other_props}>
         {
           (title || pageNames) &&
-          <Box display="flex" flexDirection="row" bg={color+".400"} height={titleHeight} px={4} alignItems="center"
+          <Box display="flex" flexDirection="row" bg={color+".400"} minH={titleHeight} px={4} alignItems="center"
             borderWidth={1} borderColor={color+".200"} roundedTop="md">
             <Text width="100%">{title}</Text>
             {
@@ -474,8 +474,8 @@ class EditableTableWrapper extends Component {
             }
           </Box>
         }
-        <Box flex={1} width="100%" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
-          <div id="editableGrid" className="ag-theme-alpine" style={{width: "100%"}}>
+        <Box flex={1} width="100%" height="inherit" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
+          <div id="editableGrid" className="ag-theme-alpine" style={{width: "100%", height: "inherit"}}>
             <AgGridReact
               animateRows={false}
               onGridReady={onGridReady}
