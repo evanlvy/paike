@@ -43,11 +43,11 @@ class ProgressdocDialog extends Component {
       {name: t("progressdocScreen.items_header_id"), field: "id", width: 80},
       {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", editable: true, width: 80},
       {name: t("progressdocScreen.items_header_chapter_name"), field: "chapter_name", editable: true},
-      {name: t("progressdocScreen.items_header_theory"), field: "theory_item_content", editable: true, width: 380},
-      {name: t("progressdocScreen.items_header_theoryhours"), field: "theory_item_hours", editable: true, width: 80},
-      {name: t("progressdocScreen.items_header_labitem"), field: "labitem_content", editable: true, width: 380},
-      {name: t("progressdocScreen.items_header_labhours"), field: "labitem_hours", editable: true, width: 80},
-      {name: t("progressdocScreen.items_header_labs"), field: "lab_alloc", width: 100, dataType: "lab_list"},
+      {name: t("progressdocScreen.items_header_theory"), field: "theory_item_content", editable: true, width: 380, fn_disable: this.theory_should_disable},
+      {name: t("progressdocScreen.items_header_theoryhours"), field: "theory_item_hours", editable: true, width: 80, fn_disable: this.theory_should_disable},
+      {name: t("progressdocScreen.items_header_labitem"), field: "labitem_content", editable: true, width: 380, fn_disable: this.lab_should_disable},
+      {name: t("progressdocScreen.items_header_labhours"), field: "labitem_hours", editable: true, width: 80, fn_disable: this.lab_should_disable},
+      {name: t("progressdocScreen.items_header_labs"), field: "lab_alloc", width: 100, dataType: "lab_list", fn_disable: this.lab_should_disable},
       {name: t("progressdocScreen.items_header_teaching_mode"), field: "teaching_mode", editable: true},
       {name: t("progressdocScreen.items_header_comment"), field: "comment", editable: true},
       {name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
@@ -75,6 +75,20 @@ class ProgressdocDialog extends Component {
       return props.docDetails["props"];
     }
     return null;
+  }
+
+  lab_should_disable = (progress_item) => {
+    if (!progress_item) {return false;}
+    if (!progress_item["theory_item_content"] && !progress_item["theory_item_hours"]) return false;
+    if (progress_item["theory_item_content"].length === 0 && progress_item["theory_item_hours"] <= 0) return false;
+    return true;
+  }
+
+  theory_should_disable = (progress_item) => {
+    if (!progress_item) {return false;}
+    if (!progress_item["labitem_content"] && !progress_item["labitem_hours"]) return false;
+    if (progress_item["labitem_content"].length === 0 && progress_item["labitem_hours"] <= 0) return false;
+    return true;
   }
 
   loadData = (doc_from_prop) => {
@@ -178,7 +192,7 @@ class ProgressdocDialog extends Component {
   }
 
   onCellDoubleClicked = (event) => {
-    if (event) {
+    if (event && event.column.colId === "lab_alloc") {
       this.setState({
         labItem: event.data.lab_alloc,
         isLabItemOpen: true

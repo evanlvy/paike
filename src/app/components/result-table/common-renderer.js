@@ -5,7 +5,7 @@ import "./table.css"
 
 class CommonRenderer extends Component {
   render() {
-    const { value, colDef, lineHeight, valueFormatted } = this.props;
+    const { value, data, colDef, lineHeight, valueFormatted, fn_disable } = this.props;
     const { editable } = colDef;
     let line_height = lineHeight?lineHeight:20;
     let value_array = [];
@@ -34,10 +34,11 @@ class CommonRenderer extends Component {
       // Empty editable will show special icon
       value_array = ['\u26A1']
     }
+    let should_disable = fn_disable && fn_disable(data);
     //console.log("CommonRenderer render: value: "+JSON.stringify(value_array));
     //{ editable && '\u26A1'}
     return (
-      <div className="common-cell" style={{lineHeight:line_height+"px",color:editable?"#015bf1":"black"}}>        
+      <div className="common-cell" style={{lineHeight:line_height+"px",color:editable?"#015bf1":"black",backgroundColor:should_disable?"#999aaa":"transparent"}}>
         {
           value_array.map((item_obj, index) => {
             let title = "";

@@ -155,7 +155,8 @@ class EditableTableWrapper extends Component {
   labListGetter = (params) => {
     let value = params.data[params.colDef.field];
     if (!value) {
-      return "";
+      // Show flash icon when lab hour > 0
+      return (params.data.lab_item_hours > 0)?"\u26A1":"";
     }
     let short_names = value.items.map(function (lab_info) {
       return lab_info.location;
@@ -200,7 +201,8 @@ class EditableTableWrapper extends Component {
         cellClassRules: cellClassRules,
         cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
         cellRendererParams: {
-          lineHeight : colLineHeight // pass the field value here
+          lineHeight : colLineHeight, // pass the field value here
+          fn_disable : headers[i].fn_disable,
         },
         editable: headers[i].editable,
       };

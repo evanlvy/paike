@@ -49,10 +49,22 @@ class LabitemDialog extends Component {
     ];
   }
 
+  static empty_object = {
+    "id": "-1",
+    "description": "",
+    "name": "",
+    "department_id": -1,
+    "max_team_headcount": 0,
+    "teacher_count": 1,
+    "labdivision_id": -1,
+  };
+
   static getDerivedStateFromProps(props, state) {
     console.log("getDerivedStateFromProps");
     let result = {isOpen: props.isOpen};
-    if (!props.data) return result;
+    if (!props.data) {
+      return {...result, ...LabitemDialog.empty_object};
+    }
     // initialize the state with props by the same name id!
     if (props.data.id !== state.id) {
       result = {...result, ...props.data};
@@ -67,15 +79,7 @@ class LabitemDialog extends Component {
       labitem_object = labitem_prop;
     }
     if (!labitem_object) {
-      labitem_object = {
-        "id": "-1",
-        "description": "",
-        "name": "",
-        "department_id": -1,
-        "max_team_headcount": 0,
-        "teacher_count": 1,
-        "labdivision_id": -1,
-      };
+      labitem_object = LabitemDialog.empty_object;
     }
 
     this.setState({ 
