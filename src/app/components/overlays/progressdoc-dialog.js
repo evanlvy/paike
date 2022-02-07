@@ -192,9 +192,9 @@ class ProgressdocDialog extends Component {
   }
 
   onCellDoubleClicked = (event) => {
-    if (event && event.column.colId === "lab_alloc") {
+    if (event && event.column.colId === "lab_alloc" && !event.data.theory_item_hours && !event.data.theory_item_content) {
       this.setState({
-        labItem: event.data.lab_alloc,
+        labItem: {...{labitem_content: event.data.labitem_content}, ...event.data.lab_alloc},
         isLabItemOpen: true
       });
     }

@@ -442,7 +442,7 @@ class ResultTableWrapper extends Component {
             }
           </Box>
         }
-        <Box flex={1} width="100%" height="1500px" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
+        <Box flex={1} width="100%" height="inherit" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
           <div id="myGrid" className="ag-theme-alpine" style={{width: "100%", height: "inherit"}}>
             <AgGridReact
               //domLayout={autoShrinkDomHeight?'autoHeight':'normal'}

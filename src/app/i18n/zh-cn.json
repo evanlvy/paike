@@ -310,6 +310,8 @@
     "list_header_updated": "更新时间"
   },
   "labitemScreen": {
+    "tab_select": "从已有实验室关联选择",
+    "tab_edit": "新建实验室关联",
     "form_title": "实验类型",
     "form_helper_dbid": "数据库项ID：",
     "form_helper_headcount": "不填则默认小组人数30人",

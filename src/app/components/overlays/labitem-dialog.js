@@ -19,6 +19,11 @@ import {
     Input,
     Box,
     Select,
+    Tabs,
+    TabPanels,
+    TabPanel,
+    Tab,
+    TabList,
   } from "@chakra-ui/core"
 import { MdEdit } from "react-icons/md"
 
@@ -46,6 +51,7 @@ class LabitemDialog extends Component {
       {id: "max_team_headcount", label: t("labitemScreen.form_label_max_team_headcount"), maxW: 100, isRequired: true},
       {id: "teacher_count", label: t("labitemScreen.form_label_teacher_count"), maxW: 100, isRequired: true},
       {id: "labdivision_id", label: t("labitemScreen.form_label_labdivision_id"), maxW: 100, isRequired: true},
+      {id: "locations", label: t("labitemScreen.form_label_labs"), minW: 280, isRequired: true},
     ];
   }
 
@@ -57,6 +63,7 @@ class LabitemDialog extends Component {
     "max_team_headcount": 0,
     "teacher_count": 1,
     "labdivision_id": -1,
+    "locations": "",
   };
 
   static getDerivedStateFromProps(props, state) {
@@ -67,6 +74,12 @@ class LabitemDialog extends Component {
     }
     // initialize the state with props by the same name id!
     if (props.data.id !== state.id) {
+      if (props.data.items) {
+        let short_names = props.data.items.map(function (lab_info) {
+          return lab_info.location;
+        });
+        result["locations"] = short_names.join(', ');
+      }
       result = {...result, ...props.data};
     }
     return result;
@@ -134,12 +147,29 @@ class LabitemDialog extends Component {
       [event.target.id] : newVal,
     });
   }
+  
+  onSearchChanged = (event) => {
+    let newVal = event.target.value;
+    if (event.target.id.endsWith("_hours")){
+      // Keep numberic value, remove 0 from header
+      newVal = newVal.replace(/[^0-9]/ig, "").replace(/\b(0+)/gi,"");
+      if (newVal.length < 1) {
+        newVal = "0";
+      }
+    } else {
+      newVal = newVal.trim();
+    }
+    // Must keep the state id same with the form input id
+    this.setState({
+      [event.target.id] : newVal,
+    });
+  }
 
 
   render() {
     const { isOpen, items, id, department_id } = this.state;
-    const { t, title, color, btnText, isSaveable, departments } = this.props;
-    const { btnRef, onClose, onFormChanged } = this;
+    const { t, title, color, btnText, isSaveable, departments, data:labitem } = this.props;
+    const { btnRef, onClose, onFormChanged, onSearchChanged } = this;
     return (
       <>
         <Modal
@@ -157,35 +187,57 @@ class LabitemDialog extends Component {
             <ModalHeader>{title}</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
-            {
-              id &&
-              <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
-                {
-                  this.forms.map((form, index) => (
-                    <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
-                      <FormLabel><b>{form.label}</b></FormLabel>
-                      <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={onFormChanged}
-                        borderColor={this.state[form.id]!==this.props.docDetails.props[form.id]?"blue.500":"gray.200"}/>
-                    </FormControl>
-                  ))
-                }
-                {
-                departments &&
-                <FormControl key="department_id" isRequired minW={280} m={2}>
-                  <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
-                  <Select id="department_id" variant="outline" value={department_id} onChange={onFormChanged}
-                    borderColor={department_id!==this.props.docDetails.props.department_id?"blue.500":"gray.200"}>
+              <Tabs isFitted variant='enclosed'>
+                <TabList mb='1em'>
+                  <Tab>{t("labitemScreen.tab_select")}</Tab>
+                  <Tab>{t("labitemScreen.tab_edit")}</Tab>
+                </TabList>
+                <TabPanels>
+                  <TabPanel>
+                      <Input id="search_content" value={this.state["labitem_content"]} onChange={onSearchChanged}
+                              borderColor={this.state["labitem_content"]!==labitem["labitem_content"]?"blue.500":"gray.200"}/>
+                      <Select id="labitem_selector" variant="outline" value={department_id} onChange={onFormChanged}
+                          borderColor={department_id!==labitem["department_id"]?"blue.500":"gray.200"}>
+                        {
+                          departments.map((dep) => (
+                            <option key={dep.id} value={dep.id} >{dep.name}</option>
+                          ))
+                        }
+                      </Select>
+                  </TabPanel>
+                  <TabPanel>
                   {
-                    departments.map((dep) => (
-                      <option key={dep.id} value={dep.id} >{dep.name}</option>
-                    ))
+                    id &&
+                    <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
+                      {
+                        this.forms.map((form, index) => (
+                          <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
+                            <FormLabel><b>{form.label}</b></FormLabel>
+                            <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={onFormChanged}
+                              borderColor={this.state[form.id]!==labitem[form.id]?"blue.500":"gray.200"}/>
+                          </FormControl>
+                        ))
+                      }
+                      {
+                      departments &&
+                      <FormControl key="department_id" isRequired minW={280} m={2}>
+                        <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
+                        <Select id="department_id" variant="outline" value={department_id} onChange={onFormChanged}
+                          borderColor={department_id!==labitem["department_id"]?"blue.500":"gray.200"}>
+                        {
+                          departments.map((dep) => (
+                            <option key={dep.id} value={dep.id} >{dep.name}</option>
+                          ))
+                        }
+                        </Select>
+                        <FormHelperText>{t("progressdocScreen.form_helper_departmentid")}</FormHelperText>
+                      </FormControl>
+                      }
+                    </Flex>
                   }
-                  </Select>
-                  <FormHelperText>{t("progressdocScreen.form_helper_departmentid")}</FormHelperText>
-                </FormControl>
-                }
-              </Flex>
-            }
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
             </ModalBody>
             <ModalFooter>
               { isSaveable && 
@@ -202,7 +254,7 @@ class LabitemDialog extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    docDetails: getDocContents(state),
+    //docDetails: getDocContents(state),
     prevDocId: getSelectedDocId(state),
   }
 }

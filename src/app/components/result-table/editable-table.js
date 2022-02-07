@@ -156,7 +156,7 @@ class EditableTableWrapper extends Component {
     let value = params.data[params.colDef.field];
     if (!value) {
       // Show flash icon when lab hour > 0
-      return (params.data.lab_item_hours > 0)?"\u26A1":"";
+      return (!params.data.theory_item_content && !params.data.theory_item_hours)?"\u26A1":"";
     }
     let short_names = value.items.map(function (lab_info) {
       return lab_info.location;
