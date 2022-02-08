@@ -19,7 +19,8 @@
     "help": "帮助",
     "save": "保存",
     "close": "关闭",
-    "open": "打开"
+    "open": "打开",
+    "or": "或"
   },
   "alert": {
     "default_title": "警告",
@@ -310,6 +311,10 @@
     "list_header_updated": "更新时间"
   },
   "labitemScreen": {
+    "cap_lab_content": "实验内容",
+    "cap_course_name": "所属课程",
+    "cap_short_name": "课程简称",
+    "hint_lab_content": "未填写",
     "tab_select": "从已有实验室关联选择",
     "tab_edit": "新建实验室关联",
     "form_title": "实验类型",

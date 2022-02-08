@@ -194,8 +194,13 @@ class ProgressdocDialog extends Component {
   onCellDoubleClicked = (event) => {
     if (event && event.column.colId === "lab_alloc" && !event.data.theory_item_hours && !event.data.theory_item_content) {
       this.setState({
-        labItem: {...{labitem_content: event.data.labitem_content}, ...event.data.lab_alloc},
-        isLabItemOpen: true
+        labs: event.data.lab_alloc,
+        context: {
+          course_name: event.data.course_name,
+          short_name: event.data.short_name,
+          content: event.data.labitem_content,
+        },
+        isLabItemOpen: true,
       });
     }
   }
@@ -207,7 +212,7 @@ class ProgressdocDialog extends Component {
   }
 
   render() {
-    const { isOpen, progressItems, id, department_id, labItem, isLabItemOpen } = this.state;
+    const { isOpen, progressItems, id, department_id, labs: labItems, context: docContext, isLabItemOpen } = this.state;
     const { t, title, color, btnText, isSaveable, tableTitle, docId, departments,
       tablePages, onPageChanged, onCellValueChanged } = this.props;
     const { tableHeaders, btnRef, loadDocDetails, onClose, onFormChanged, onCellDoubleClicked, onLabItemClosed } = this;
@@ -288,7 +293,8 @@ class ProgressdocDialog extends Component {
               <LabitemDialog
                   t={t}
                   color={color}
-                  data={labItem}
+                  data={labItems}
+                  context={docContext}
                   isOpen={isLabItemOpen}
                   onClose={onLabItemClosed}
                   departments={departments}

@@ -19,6 +19,7 @@ import {
     Input,
     Box,
     Select,
+    Text,
     Tabs,
     TabPanels,
     TabPanel,
@@ -66,12 +67,22 @@ class LabitemDialog extends Component {
     "locations": "",
   };
 
+  static empty_context = {
+    course_name: "",
+    short_name: "",
+    content: "",
+  };
+
   static getDerivedStateFromProps(props, state) {
     console.log("getDerivedStateFromProps");
     let result = {isOpen: props.isOpen};
+    if (!props.context) {
+      result = {...result, ...LabitemDialog.empty_context};
+    }
     if (!props.data) {
       return {...result, ...LabitemDialog.empty_object};
     }
+    
     // initialize the state with props by the same name id!
     if (props.data.id !== state.id) {
       if (props.data.items) {
@@ -80,7 +91,7 @@ class LabitemDialog extends Component {
         });
         result["locations"] = short_names.join(', ');
       }
-      result = {...result, ...props.data};
+      result = {...result, ...props.data, ...props.context};
     }
     return result;
   }
@@ -168,7 +179,7 @@ class LabitemDialog extends Component {
 
   render() {
     const { isOpen, items, id, department_id } = this.state;
-    const { t, title, color, btnText, isSaveable, departments, data:labitem } = this.props;
+    const { t, title, color, btnText, isSaveable, departments, data:labItem,  context:docContext} = this.props;
     const { btnRef, onClose, onFormChanged, onSearchChanged } = this;
     return (
       <>
@@ -187,6 +198,10 @@ class LabitemDialog extends Component {
             <ModalHeader>{title}</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
+              <Text fontWeight='bold' mb='1rem'>
+                {t("labitemScreen.cap_lab_content")}&#58;&nbsp;
+                {(docContext && "content" in docContext)?docContext.content:t("labitemScreen.hint_lab_content")}
+              </Text>
               <Tabs isFitted variant='enclosed'>
                 <TabList mb='1em'>
                   <Tab>{t("labitemScreen.tab_select")}</Tab>
@@ -194,10 +209,15 @@ class LabitemDialog extends Component {
                 </TabList>
                 <TabPanels>
                   <TabPanel>
-                      <Input id="search_content" value={this.state["labitem_content"]} onChange={onSearchChanged}
-                              borderColor={this.state["labitem_content"]!==labitem["labitem_content"]?"blue.500":"gray.200"}/>
+                      <Input id="kw_coursename" value={this.state["course_name"]} onChange={onSearchChanged}
+                              borderColor={(docContext && "course_name" in docContext && this.state.content!==docContext.course_name)?"blue.500":"gray.200"}/>
+                      <Text fontWeight='bold' mb='1rem'>
+                        {t("common.or")}&#58;&nbsp;
+                      </Text>
+                      <Input id="kw_shortname" value={this.state["short_name"]} onChange={onSearchChanged}
+                              borderColor={(docContext && "short_name" in docContext && this.state.content!==docContext.short_name)?"blue.500":"gray.200"}/>
                       <Select id="labitem_selector" variant="outline" value={department_id} onChange={onFormChanged}
-                          borderColor={department_id!==labitem["department_id"]?"blue.500":"gray.200"}>
+                          borderColor={(labItem && "department_id" in labItem && department_id!==labItem.department_id)?"blue.500":"gray.200"}>
                         {
                           departments.map((dep) => (
                             <option key={dep.id} value={dep.id} >{dep.name}</option>
@@ -214,7 +234,7 @@ class LabitemDialog extends Component {
                           <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
                             <FormLabel><b>{form.label}</b></FormLabel>
                             <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={onFormChanged}
-                              borderColor={this.state[form.id]!==labitem[form.id]?"blue.500":"gray.200"}/>
+                              borderColor={(labItem && form.id in labItem && this.state[form.id]!==labItem[form.id])?"blue.500":"gray.200"}/>
                           </FormControl>
                         ))
                       }
@@ -223,7 +243,7 @@ class LabitemDialog extends Component {
                       <FormControl key="department_id" isRequired minW={280} m={2}>
                         <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
                         <Select id="department_id" variant="outline" value={department_id} onChange={onFormChanged}
-                          borderColor={department_id!==labitem["department_id"]?"blue.500":"gray.200"}>
+                          borderColor={(labItem && "department_id" in labItem && department_id!==labItem.department_id)?"blue.500":"gray.200"}>
                         {
                           departments.map((dep) => (
                             <option key={dep.id} value={dep.id} >{dep.name}</option>
