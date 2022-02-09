@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
-import { withTranslation } from 'react-i18next';
+import { Trans, withTranslation } from 'react-i18next';
 import {
     Modal,
     ModalOverlay,
@@ -26,9 +26,7 @@ import {
     Tab,
     TabList,
   } from "@chakra-ui/core"
-import { MdEdit } from "react-icons/md"
 
-import { EditableTable } from '../result-table/editable-table';
 import { actions as progressdocActions, getDocContents, getSelectedDocId } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
@@ -176,11 +174,14 @@ class LabitemDialog extends Component {
     });
   }
 
+  onSearch = () => {
+
+  }
 
   render() {
     const { isOpen, items, id, department_id } = this.state;
     const { t, title, color, btnText, isSaveable, departments, data:labItem,  context:docContext} = this.props;
-    const { btnRef, onClose, onFormChanged, onSearchChanged } = this;
+    const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch } = this;
     return (
       <>
         <Modal
@@ -202,20 +203,22 @@ class LabitemDialog extends Component {
                 {t("labitemScreen.cap_lab_content")}&#58;&nbsp;
                 {(docContext && "content" in docContext)?docContext.content:t("labitemScreen.hint_lab_content")}
               </Text>
-              <Tabs isFitted variant='enclosed'>
+              <Tabs isFitted>
                 <TabList mb='1em'>
-                  <Tab>{t("labitemScreen.tab_select")}</Tab>
-                  <Tab>{t("labitemScreen.tab_edit")}</Tab>
+                  <Tab><Trans>labitemScreen.tab_select</Trans></Tab>
+                  <Tab><Trans>labitemScreen.tab_edit</Trans></Tab>
                 </TabList>
                 <TabPanels>
                   <TabPanel>
-                      <Input id="kw_coursename" value={this.state["course_name"]} onChange={onSearchChanged}
-                              borderColor={(docContext && "course_name" in docContext && this.state.content!==docContext.course_name)?"blue.500":"gray.200"}/>
-                      <Text fontWeight='bold' mb='1rem'>
-                        {t("common.or")}&#58;&nbsp;
-                      </Text>
-                      <Input id="kw_shortname" value={this.state["short_name"]} onChange={onSearchChanged}
-                              borderColor={(docContext && "short_name" in docContext && this.state.content!==docContext.short_name)?"blue.500":"gray.200"}/>
+                      <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_by_course</Trans>&#58;&nbsp;</Text>
+                      <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
+                        <Input id="kw_coursename" value={this.state["course_name"]} onChange={onSearchChanged} maxW={300}
+                                borderColor={(docContext && "course_name" in docContext && this.state.content!==docContext.course_name)?"blue.500":"gray.200"}/>
+                        <Text fontWeight='bold' mb='1rem'><Trans>common.or</Trans>&#58;&nbsp;</Text>
+                        <Input id="kw_shortname" value={this.state["short_name"]} onChange={onSearchChanged} maxW={300}
+                                borderColor={(docContext && "short_name" in docContext && this.state.content!==docContext.short_name)?"blue.500":"gray.200"}/>
+                        <Button onClick={onSearch}>{t("common.search")}</Button>
+                      </Flex>
                       <Select id="labitem_selector" variant="outline" value={department_id} onChange={onFormChanged}
                           borderColor={(labItem && "department_id" in labItem && department_id!==labItem.department_id)?"blue.500":"gray.200"}>
                         {
@@ -241,7 +244,7 @@ class LabitemDialog extends Component {
                       {
                       departments &&
                       <FormControl key="department_id" isRequired minW={280} m={2}>
-                        <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
+                        <FormLabel><b><Trans>progressdocScreen.form_label_departmentid</Trans></b></FormLabel>
                         <Select id="department_id" variant="outline" value={department_id} onChange={onFormChanged}
                           borderColor={(labItem && "department_id" in labItem && department_id!==labItem.department_id)?"blue.500":"gray.200"}>
                         {
@@ -250,7 +253,7 @@ class LabitemDialog extends Component {
                           ))
                         }
                         </Select>
-                        <FormHelperText>{t("progressdocScreen.form_helper_departmentid")}</FormHelperText>
+                        <FormHelperText><Trans>progressdocScreen.form_helper_departmentid</Trans></FormHelperText>
                       </FormControl>
                       }
                     </Flex>

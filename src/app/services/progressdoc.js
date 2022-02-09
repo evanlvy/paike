@@ -241,7 +241,7 @@ class Api {
     }
   }
   
-  getLabItems = async (itemId, keyword="", course_name="", department_id=0, items_per_page=0, page_id=0) => {
+  getLabItems = async (itemId, content="", accurate_course="", course_name="", short_name="", department_id=0, items_per_page=0, page_id=0) => {
     try {
       const url = this.baseUrl+"/get_labitem";
       console.log("Request url "+url+" with itemId: "+itemId);
@@ -251,16 +251,24 @@ class Api {
       if (itemId <= 0) {
         request_param = {
           department_id: department_id,
-          description: course_name,
-          name: keyword,
+          description: accurate_course,
+          course_name: course_name,
+          short_name: short_name,
+          name: content,
           items_per_page: items_per_page,
           page_id: page_id,
         }
-        if (keyword <= 0) {
+        if (content.length == 0) {
           delete request_param.name;
         }
-        if (course_name <= 0) {
+        if (accurate_course.length == 0) {
           delete request_param.description;
+        }
+        if (course_name.length == 0) {
+          delete request_param.course_name;
+        }
+        if (short_name.length == 0) {
+          delete request_param.short_name;
         }
         if (department_id <= 0) {
           delete request_param.department_id;

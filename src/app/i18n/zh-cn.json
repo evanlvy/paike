@@ -20,6 +20,7 @@
     "save": "保存",
     "close": "关闭",
     "open": "打开",
+    "search": "查找",
     "or": "或"
   },
   "alert": {
@@ -315,8 +316,9 @@
     "cap_course_name": "所属课程",
     "cap_short_name": "课程简称",
     "hint_lab_content": "未填写",
-    "tab_select": "从已有实验室关联选择",
-    "tab_edit": "新建实验室关联",
+    "cap_search_by_course": "按课程名称查找",
+    "tab_select": "\u261D 从已有实验室关联选择",
+    "tab_edit": "\u270D 新建实验室关联",
     "form_title": "实验类型",
     "form_helper_dbid": "数据库项ID：",
     "form_helper_headcount": "不填则默认小组人数30人",
