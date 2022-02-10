@@ -27,7 +27,7 @@ import {
     TabList,
   } from "@chakra-ui/core"
 
-import { actions as progressdocActions, getDocContents, getSelectedDocId } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, getLabitemContent, getSearchedLabitemBriefs } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -118,10 +118,10 @@ class LabitemDialog extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { data } = this.props;
+    const { data, searchResult, labItem } = this.props;
     const { isOpen, department_id, items } = this.state;
     
-    if (nextProps.data !== data) {
+    if (nextProps.data !== data || nextProps.searchResult !== searchResult || nextProps.labItem !== labItem) {
       console.log("shouldComponentUpdate, nextProp data diff");
       return true;
     }
@@ -174,14 +174,20 @@ class LabitemDialog extends Component {
     });
   }
 
-  onSearch = () => {
+  onLabitemChanged = (event) => {
 
   }
 
+  onConditionDepartmentChanged = (event) => {}
+
+  onSearch = () => {
+    this.props.searchLabitem("生物化学", "", 5);
+  }
+
   render() {
-    const { isOpen, items, id, department_id } = this.state;
-    const { t, title, color, btnText, isSaveable, departments, data:labItem,  context:docContext} = this.props;
-    const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch } = this;
+    const { isOpen, id:labitem_id, department_id } = this.state;
+    const { t, title, color, btnText, isSaveable, departments, searchResult, data:labItem,  context:docContext} = this.props;
+    const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch, onLabitemChanged, onConditionDepartmentChanged } = this;
     return (
       <>
         <Modal
@@ -217,20 +223,27 @@ class LabitemDialog extends Component {
                         <Text fontWeight='bold' mb='1rem'><Trans>common.or</Trans>&#58;&nbsp;</Text>
                         <Input id="kw_shortname" value={this.state["short_name"]} onChange={onSearchChanged} maxW={300}
                                 borderColor={(docContext && "short_name" in docContext && this.state.content!==docContext.short_name)?"blue.500":"gray.200"}/>
-                        <Button onClick={onSearch}>{t("common.search")}</Button>
+                        <Select id="department_selector" variant="outline" value={department_id} onChange={onLabitemChanged}
+                            borderColor={(labItem && "department_id" in labItem && department_id!==labItem.department_id)?"blue.500":"gray.200"}>
+                          {
+                            departments.map((dep) => (
+                              <option key={dep.id} value={dep.id} >{dep.name}</option>
+                            ))
+                          }
+                        </Select>
                       </Flex>
-                      <Select id="labitem_selector" variant="outline" value={department_id} onChange={onFormChanged}
-                          borderColor={(labItem && "department_id" in labItem && department_id!==labItem.department_id)?"blue.500":"gray.200"}>
+                      <Button onClick={onSearch}>{t("common.search")}</Button>
+                      <Select id="labitem_selector" variant="outline" value={labitem_id} onChange={onConditionDepartmentChanged}>
                         {
-                          departments.map((dep) => (
-                            <option key={dep.id} value={dep.id} >{dep.name}</option>
+                          Object.entries(searchResult).map((item) => (
+                            <option key={item[0]} value={item[0]} >{item[1]}</option>
                           ))
                         }
                       </Select>
                   </TabPanel>
                   <TabPanel>
                   {
-                    id &&
+                    labitem_id &&
                     <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
                       {
                         this.forms.map((form, index) => (
@@ -277,8 +290,8 @@ class LabitemDialog extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    //docDetails: getDocContents(state),
-    prevDocId: getSelectedDocId(state),
+    searchResult: getSearchedLabitemBriefs(state),
+    labItem: getLabitemContent(state),
   }
 }
 

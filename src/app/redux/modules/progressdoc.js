@@ -19,10 +19,12 @@ export const types = {
     ADD_ROW: "PROGRESSDOC/ADD_ROW",
     DEL_ROW: "PROGRESSDOC/DEL_ROW",
     UPDATE_ROW: "PROGRESSDOC/UPDATE_ROW",
+    FETCH_LABITEM: "PROGRESSDOC/FETCH_LABITEM",
+    SEARCH_LABITEM: "PROGRESSDOC/SEARCH_LABITEM",
+    UPDATE_LABITEM: "PROGRESSDOC/UPDATE_LABITEM",
     ADD_LABITEM: "PROGRESSDOC/ADD_LABITEM",
     DEL_LABITEM: "PROGRESSDOC/DEL_LABITEM",
-    UPDATE_LABITEM: "PROGRESSDOC/UPDATE_LABITEM",
-    SEARCH_LABITEM: "PROGRESSDOC/SEARCH_LABITEM",
+    SET_SELECTED_LABITEM: "PROGRESSDOC/SET_SELECTED_LABITEM"
   };
 
 export const buildGroupStageWeekId = (stage, weekIdx, degreeId, gradeId) => {
@@ -82,6 +84,39 @@ export const actions = {
           dispatch(appActions.setError(error));
         }
       }
+    },
+    fetchLabitem: (id) => {
+      console.log(`fetchLabitem: labitem_id: ${id}`);
+      return async (dispatch, getState) => {
+        try {
+            if (shouldFetchLabitem(id, getState())) {
+              console.log("shouldFetchLabitem: return yes!");
+              dispatch(appActions.startRequest());
+              const data = await progressdocApi.getLabItems(id);
+              dispatch(appActions.finishRequest());
+              dispatch(fetchLabitemSuccess(id, data));
+            }
+            dispatch(setSelectedLabitem(id));
+        } catch (error) {
+          dispatch(appActions.setError(error));
+        }
+      }
+    },
+    searchLabitem: (course_name, short_name="", department_id=-1) => {
+      console.log(`searchLabitem: course_name: ${course_name}`);
+      return async (dispatch, getState) => {
+        try {
+            //if (shouldSearchLabitem(id, getState())) {
+              //console.log("shouldFetchLabitem: return yes!");
+              dispatch(appActions.startRequest());
+              const data = await progressdocApi.getLabItems(-1, true, "", "", course_name, short_name, department_id);
+              dispatch(appActions.finishRequest());
+              dispatch(searchLabitemSuccess(data));
+            //}
+        } catch (error) {
+          dispatch(appActions.setError(error));
+        }
+      }
     }
 }
 
@@ -98,6 +133,11 @@ const shouldFetchList = (department_id, stage, state) => {
 const shouldFetchDoc = (doc_id, state) => {
   const doc = state.getIn(["progressdoc", "fetchedDoc", ""+doc_id]);
   return !doc || doc.length === 0;
+}
+
+const shouldFetchLabitem = (labitem_id, state) => {
+  const item = state.getIn(["progressdoc", "fetchedLabitems", ""+labitem_id]);
+  return !item || item.length === 0;
 }
 
 const convertGroupsToPlain = (groupsInfo) => {
@@ -139,6 +179,20 @@ const fetchDocSuccess = (id, data) => {
   })
 }
 
+const fetchLabitemSuccess = (id, data) => {
+  return ({
+    type: types.FETCH_LABITEM,
+    data
+  })
+}
+
+const searchLabitemSuccess = (data) => {
+  return ({
+    type: types.SEARCH_LABITEM,
+    data,
+  })
+}
+
 const setSelectedDoc = (id) => {
   return ({
     type: types.SET_OPENED_DOC_ID,
@@ -151,6 +205,13 @@ const setSelectedDepartment = (id, stage) => {
     type: types.SET_SELECTED_DEPAETMENT,
     id,
     stage
+  })
+}
+
+const setSelectedLabitem = (id) => {
+  return ({
+    type: types.SET_SELECTED_LABITEM,
+    id
   })
 }
 
@@ -188,10 +249,32 @@ const fetchedDoc = (state = Immutable.fromJS({}), action) => {
   }
 }
 
+const fetchedLabitems = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.FETCH_LABITEM:
+      return state.merge(action.data);
+    case types.SET_SELECTED_LABITEM:
+      return state.merge({selected: action.id})
+    default:
+      return state;
+  }
+}
+
+const searchedLabitemBriefs = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.SEARCH_LABITEM:
+      return state.merge(action.data);
+    default:
+      return state;
+  }
+}
+
 const reducer = combineReducers({
   searchedList,
   fetchedList,
   fetchedDoc,
+  fetchedLabitems,
+  searchedLabitemBriefs,
 });
 
 export default reducer;
@@ -205,6 +288,11 @@ export const getSelectedSearch = (state) => state.getIn(["progressdoc", "searche
 
 export const getDoc = (state) => state.getIn(["progressdoc", "fetchedDoc", ""+getSelectedDocId(state)]);
 export const getSelectedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
+
+export const getLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", ""+getSelectedLabitem(state)]);
+export const getSelectedLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", "selected"]);
+export const getCachedLabitems = (state) => state.getIn(["progressdoc", "fetchedLabitems"]);
+export const getSearchedLabitemBriefs = (state) => state.getIn(["progressdoc", "searchedLabitemBriefs"]).valueSeq();
 
 export const getDocList = createSelector(
   getList,
@@ -226,6 +314,14 @@ export const getDocContents = createSelector(
   getDoc,
   (value) => {
     console.log("getDocContents: "+JSON.stringify(value));
+    return value;
+  }
+);
+
+export const getLabitemContent = createSelector(
+  getLabitem,
+  (value) => {
+    if (!value) return [];
     return value;
   }
 );

@@ -241,7 +241,7 @@ class Api {
     }
   }
   
-  getLabItems = async (itemId, content="", accurate_course="", course_name="", short_name="", department_id=0, items_per_page=0, page_id=0) => {
+  getLabItems = async (itemId, isBrief=false, content="", accurate_course="", course_name="", short_name="", department_id=-1, items_per_page=-1, page_id=-1) => {
     try {
       const url = this.baseUrl+"/get_labitem";
       console.log("Request url "+url+" with itemId: "+itemId);
@@ -250,6 +250,7 @@ class Api {
       };
       if (itemId <= 0) {
         request_param = {
+          brief: isBrief,
           department_id: department_id,
           description: accurate_course,
           course_name: course_name,
@@ -258,27 +259,18 @@ class Api {
           items_per_page: items_per_page,
           page_id: page_id,
         }
-        if (content.length == 0) {
-          delete request_param.name;
-        }
-        if (accurate_course.length == 0) {
-          delete request_param.description;
-        }
-        if (course_name.length == 0) {
-          delete request_param.course_name;
-        }
-        if (short_name.length == 0) {
-          delete request_param.short_name;
-        }
-        if (department_id <= 0) {
-          delete request_param.department_id;
-        }
-        if (items_per_page <= 0) {
-          delete request_param.items_per_page;
-        }
-        if (page_id <= 0) {
-          delete request_param.page_id;
-        }
+        Object.keys(request_param).forEach((key) => {
+          let value = request_param[key];
+          if (!value) {
+            delete request_param[key];
+          }
+          else if (typeof value === 'string' && value.length == 0) {
+            delete request_param[key];
+          }
+          else if (typeof value === 'number' && value < 0) {
+            delete request_param[key];
+          }
+        });
         if (request_param === {}) {
           throw new Error("Missing parameter!");
         }
@@ -288,7 +280,7 @@ class Api {
       if (!success) {
         throw new Error(message.message);
       }
-      return data.id;
+      return data;
     } catch (error) {
       throw error;
     }
