@@ -43,7 +43,7 @@ class LabitemDialog extends Component {
     this.color = color ? color : DEFAULT_COLOR;
 
     this.btnRef = React.createRef()
-    this.forms = [
+    this.edit_form = [
       {id: "description", label: t("labitemScreen.form_label_keyword"), minW: 280, isRequired: true},
       {id: "name", label: t("labitemScreen.form_label_name"), minW: 280, isRequired: true},
       //{id: "department_id", label: t("labitemScreen.form_label_department"), minW: 280, isRequired: false},
@@ -94,6 +94,16 @@ class LabitemDialog extends Component {
     return result;
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    console.log("LIFECYCLE: componentDidUpdate");
+    if (prevProps.searchResult !== this.props.searchResult && prevState.isSearching) {
+      // Got the search API result! Change button loading state.
+      this.setState({
+        isSearching: false,
+      });
+    }
+  }
+
   loadData = (labitem_from_prop) => {
     let labitem_object = labitem_from_prop;
     if (!labitem_object) {
@@ -130,8 +140,8 @@ class LabitemDialog extends Component {
       return true;
     }
 
-    for (let index = 0; index < this.forms.length; index++) {
-      let form = this.forms[index];
+    for (let index = 0; index < this.edit_form.length; index++) {
+      let form = this.edit_form[index];
       if (this.state[form.id] !== nextState[form.id]) {
         console.log("shouldComponentUpdate, FORMs diff:"+form.id);
         return true;
@@ -181,11 +191,14 @@ class LabitemDialog extends Component {
   onConditionDepartmentChanged = (event) => {}
 
   onSearch = () => {
+    this.setState({
+      isSearching: true,
+    });
     this.props.searchLabitem("生物化学", "", 5);
   }
 
   render() {
-    const { isOpen, id:labitem_id, department_id } = this.state;
+    const { isOpen, id:labitem_id, department_id, isSearching } = this.state;
     const { t, title, color, btnText, isSaveable, departments, searchResult, data:labItem,  context:docContext} = this.props;
     const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch, onLabitemChanged, onConditionDepartmentChanged } = this;
     return (
@@ -216,37 +229,52 @@ class LabitemDialog extends Component {
                 </TabList>
                 <TabPanels>
                   <TabPanel>
+                    <Box w='100%' borderWidth='1px' borderRadius='lg'>
                       <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_by_course</Trans>&#58;&nbsp;</Text>
                       <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
-                        <Input id="kw_coursename" value={this.state["course_name"]} onChange={onSearchChanged} maxW={300}
+                        <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_by_course</Trans>&#58;&nbsp;</Text>
+                        <Input id="kw_bycoursename" value={this.state["course_name"]} onChange={onSearchChanged} maxW={300}
                                 borderColor={(docContext && "course_name" in docContext && this.state.content!==docContext.course_name)?"blue.500":"gray.200"}/>
                         <Text fontWeight='bold' mb='1rem'><Trans>common.or</Trans>&#58;&nbsp;</Text>
-                        <Input id="kw_shortname" value={this.state["short_name"]} onChange={onSearchChanged} maxW={300}
+                        <Input id="kw_byshortname" value={this.state["short_name"]} onChange={onSearchChanged} maxW={300}
                                 borderColor={(docContext && "short_name" in docContext && this.state.content!==docContext.short_name)?"blue.500":"gray.200"}/>
+                      </Flex>
+                      <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
+                        <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_by_content</Trans>&#58;&nbsp;</Text>
+                        <Input id="kw_bycontent" value={this.state["course_name"]} onChange={onSearchChanged} maxW={300}
+                                borderColor={(docContext && "course_name" in docContext && this.state.content!==docContext.course_name)?"blue.500":"gray.200"}/>
+                      </Flex>
+                      <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
+                        <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_by_department</Trans>&#58;&nbsp;</Text>
                         <Select id="department_selector" variant="outline" value={department_id} onChange={onLabitemChanged}
-                            borderColor={(labItem && "department_id" in labItem && department_id!==labItem.department_id)?"blue.500":"gray.200"}>
-                          {
-                            departments.map((dep) => (
-                              <option key={dep.id} value={dep.id} >{dep.name}</option>
-                            ))
-                          }
+                              borderColor={(labItem && "department_id" in labItem && department_id!==labItem.department_id)?"blue.500":"gray.200"}>
+                              <option key={0} value={0}><Trans>common.no_limitation</Trans></option>
+                            {
+                              departments.map((dep) => (
+                                <option key={dep.id} value={dep.id} >{dep.name}</option>
+                              ))
+                            }
                         </Select>
                       </Flex>
-                      <Button onClick={onSearch}>{t("common.search")}</Button>
-                      <Select id="labitem_selector" variant="outline" value={labitem_id} onChange={onConditionDepartmentChanged}>
+                      <Button isLoading={isSearching} loadingText='Submitting' colorScheme='teal' variant='outline'onClick={onSearch}>{t("common.search")}</Button>
+                    </Box>
+                    <Box w='100%' borderWidth='1px' borderRadius='lg'>
+                      <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_result</Trans>&#58;&nbsp;</Text>
+                      <Select id="search_result_selector" variant="outline" value={labitem_id} onChange={onConditionDepartmentChanged}>
                         {
                           Object.entries(searchResult).map((item) => (
                             <option key={item[0]} value={item[0]} >{item[1]}</option>
                           ))
                         }
                       </Select>
+                    </Box>
                   </TabPanel>
                   <TabPanel>
                   {
                     labitem_id &&
                     <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
                       {
-                        this.forms.map((form, index) => (
+                        this.edit_form.map((form, index) => (
                           <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
                             <FormLabel><b>{form.label}</b></FormLabel>
                             <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={onFormChanged}

@@ -292,7 +292,7 @@ export const getSelectedDocId = (state) => state.getIn(["progressdoc", "fetchedD
 export const getLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", ""+getSelectedLabitem(state)]);
 export const getSelectedLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", "selected"]);
 export const getCachedLabitems = (state) => state.getIn(["progressdoc", "fetchedLabitems"]);
-export const getSearchedLabitemBriefs = (state) => state.getIn(["progressdoc", "searchedLabitemBriefs"]).valueSeq();
+export const getSearchedLabitemBriefs = (state) => state.getIn(["progressdoc", "searchedLabitemBriefs"]).toJS();
 
 export const getDocList = createSelector(
   getList,
