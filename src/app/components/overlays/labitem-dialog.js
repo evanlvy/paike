@@ -26,7 +26,7 @@ import {
     Tab,
     TabList,
   } from "@chakra-ui/core"
-
+import { MdSearch } from "react-icons/md"
 import { actions as progressdocActions, getLabitemContent, getSearchedLabitemBriefs } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
@@ -222,6 +222,7 @@ class LabitemDialog extends Component {
                 {t("labitemScreen.cap_lab_content")}&#58;&nbsp;
                 {(docContext && "content" in docContext)?docContext.content:t("labitemScreen.hint_lab_content")}
               </Text>
+              <Box w='100%' borderWidth='2px' borderRadius='lg'>
               <Tabs isFitted>
                 <TabList mb='1em'>
                   <Tab><Trans>labitemScreen.tab_select</Trans></Tab>
@@ -229,45 +230,46 @@ class LabitemDialog extends Component {
                 </TabList>
                 <TabPanels>
                   <TabPanel>
-                    <Box w='100%' borderWidth='1px' borderRadius='lg'>
-                      <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_by_course</Trans>&#58;&nbsp;</Text>
+                    <Text fontWeight='bold' ml="1rem" mb="2"><Trans>labitemScreen.cap_search_conditions</Trans>&#58;&nbsp;</Text>
+                    <Box w='100%' borderWidth='1px'>
+                      <Text flex="0" fontWeight='bold' mx='1rem' mt="1rem"><Trans>labitemScreen.cap_search_by_course</Trans>&#58;&nbsp;</Text>
                       <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
-                        <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_by_course</Trans>&#58;&nbsp;</Text>
-                        <Input id="kw_bycoursename" value={this.state["course_name"]} onChange={onSearchChanged} maxW={300}
+                        <Input flex="1" id="kw_bycoursename" value={this.state["course_name"]} onChange={onSearchChanged}
                                 borderColor={(docContext && "course_name" in docContext && this.state.content!==docContext.course_name)?"blue.500":"gray.200"}/>
-                        <Text fontWeight='bold' mb='1rem'><Trans>common.or</Trans>&#58;&nbsp;</Text>
-                        <Input id="kw_byshortname" value={this.state["short_name"]} onChange={onSearchChanged} maxW={300}
+                        <Text flex="0" fontWeight='bold' mx='1rem'><Trans>common.or</Trans></Text>
+                        <Input flex="1" id="kw_byshortname" value={this.state["short_name"]} onChange={onSearchChanged}
                                 borderColor={(docContext && "short_name" in docContext && this.state.content!==docContext.short_name)?"blue.500":"gray.200"}/>
                       </Flex>
+                      <Text flex="0" fontWeight='bold' mx='1rem'><Trans>labitemScreen.cap_search_by_content</Trans>&#58;&nbsp;</Text>
                       <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
-                        <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_by_content</Trans>&#58;&nbsp;</Text>
-                        <Input id="kw_bycontent" value={this.state["course_name"]} onChange={onSearchChanged} maxW={300}
+                        <Input flex="1" id="kw_bycontent" value={this.state["course_name"]} onChange={onSearchChanged}
                                 borderColor={(docContext && "course_name" in docContext && this.state.content!==docContext.course_name)?"blue.500":"gray.200"}/>
                       </Flex>
-                      <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
-                        <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_by_department</Trans>&#58;&nbsp;</Text>
-                        <Select id="department_selector" variant="outline" value={department_id} onChange={onLabitemChanged}
+                      <Text flex="0" fontWeight='bold' mx='1rem'><Trans>labitemScreen.cap_search_by_department</Trans>&#58;&nbsp;</Text>
+                      <Flex direction="row" alignItems="center" wrap="wrap" px={5} pt={2} pb={4}>
+                        <Select flex="1" id="department_selector" variant="outline" value={department_id} onChange={onLabitemChanged} placeholder={t("labitemScreen.search_placeholder")}
                               borderColor={(labItem && "department_id" in labItem && department_id!==labItem.department_id)?"blue.500":"gray.200"}>
-                              <option key={0} value={0}><Trans>common.no_limitation</Trans></option>
                             {
                               departments.map((dep) => (
                                 <option key={dep.id} value={dep.id} >{dep.name}</option>
                               ))
                             }
                         </Select>
+                        <Button flex="1" leftIcon={MdSearch} variantColor="blue" variant="solid" ml={5} minW="80" isLoading={isSearching} loadingText={t("common.search")} 
+                        onClick={onSearch}>{t("common.search")}</Button>
                       </Flex>
-                      <Button isLoading={isSearching} loadingText='Submitting' colorScheme='teal' variant='outline'onClick={onSearch}>{t("common.search")}</Button>
                     </Box>
-                    <Box w='100%' borderWidth='1px' borderRadius='lg'>
-                      <Text fontWeight='bold' mb='1rem'><Trans>labitemScreen.cap_search_result</Trans>&#58;&nbsp;</Text>
-                      <Select id="search_result_selector" variant="outline" value={labitem_id} onChange={onConditionDepartmentChanged}>
+                    <Text fontWeight='bold' mx='1rem' mt='1rem'><Trans>labitemScreen.cap_search_result</Trans>&#58;&nbsp;</Text>
+                    <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={4}>
+                      <Select id="search_result_selector" flex="1" isDisabled={isSearching} variant="outline" placeholder={t("labitemScreen.search_placeholder")} 
+                      value={labitem_id} onChange={onConditionDepartmentChanged}>
                         {
                           Object.entries(searchResult).map((item) => (
                             <option key={item[0]} value={item[0]} >{item[1]}</option>
                           ))
                         }
                       </Select>
-                    </Box>
+                    </Flex>
                   </TabPanel>
                   <TabPanel>
                   {
@@ -302,6 +304,7 @@ class LabitemDialog extends Component {
                   </TabPanel>
                 </TabPanels>
               </Tabs>
+              </Box>
             </ModalBody>
             <ModalFooter>
               { isSaveable && 
