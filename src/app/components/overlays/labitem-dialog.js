@@ -90,6 +90,7 @@ class LabitemDialog extends Component {
         result["locations"] = short_names.join(', ');
       }
       result = {...result, ...props.data, ...props.context};
+      result["doc_lab_content"] = "";
     }
     return result;
   }
@@ -129,24 +130,27 @@ class LabitemDialog extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { data, searchResult, labItem } = this.props;
-    const { isOpen, department_id, items } = this.state;
+    //const { isOpen, department_id, items } = this.state;
     
     if (nextProps.data !== data || nextProps.searchResult !== searchResult || nextProps.labItem !== labItem) {
       console.log("shouldComponentUpdate, nextProp data diff");
       return true;
     }
-    if (nextState.isOpen !== isOpen /*|| nextState.items !== items || nextState.department_id !== department_id*/) {
+    if (nextState.isSearching !== this.state.isSearching) {
+      return false;
+    }
+    if (nextState !== this.state/*nextState.isOpen !== isOpen || nextState.items !== items || nextState.department_id !== department_id*/) {
       console.log("shouldComponentUpdate, nextState diff");
       return true;
     }
 
-    for (let index = 0; index < this.edit_form.length; index++) {
+    /*for (let index = 0; index < this.edit_form.length; index++) {
       let form = this.edit_form[index];
       if (this.state[form.id] !== nextState[form.id]) {
         console.log("shouldComponentUpdate, FORMs diff:"+form.id);
         return true;
       }
-    }
+    }*/
     return false;
   }
   
@@ -184,23 +188,20 @@ class LabitemDialog extends Component {
     });
   }
 
-  onLabitemChanged = (event) => {
-
-  }
-
-  onConditionDepartmentChanged = (event) => {}
+  onSearchResultSelected = (event) => {}
 
   onSearch = () => {
+    const { doc_department_id, doc_short_name, doc_course_name, doc_lab_content } = this.state;
     this.setState({
       isSearching: true,
     });
-    this.props.searchLabitem("生物化学", "", 5);
+    this.props.searchLabitem(doc_course_name, doc_short_name, doc_lab_content, doc_department_id);
   }
 
   render() {
-    const { isOpen, id:labitem_id, department_id, isSearching } = this.state;
-    const { t, title, color, btnText, isSaveable, departments, searchResult, data:labItem,  context:docContext} = this.props;
-    const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch, onLabitemChanged, onConditionDepartmentChanged } = this;
+    const { isOpen, id:labitem_id, department_id, isSearching, doc_department_id, doc_short_name, doc_course_name, doc_lab_content } = this.state;
+    const { t, title, color, isSaveable, departments, searchResult, data:labItem,  context:docContext} = this.props;
+    const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch, onSearchResultSelected } = this;
     return (
       <>
         <Modal
@@ -220,7 +221,7 @@ class LabitemDialog extends Component {
             <ModalBody>
               <Text fontWeight='bold' mb='1rem'>
                 {t("labitemScreen.cap_lab_content")}&#58;&nbsp;
-                {(docContext && "content" in docContext)?docContext.content:t("labitemScreen.hint_lab_content")}
+                {(docContext && "doc_lab_content" in docContext)?docContext.doc_lab_content:t("labitemScreen.hint_lab_content")}
               </Text>
               <Box w='100%' borderWidth='2px' borderRadius='lg'>
               <Tabs isFitted>
@@ -234,21 +235,23 @@ class LabitemDialog extends Component {
                     <Box w='100%' borderWidth='1px'>
                       <Text flex="0" fontWeight='bold' mx='1rem' mt="1rem"><Trans>labitemScreen.cap_search_by_course</Trans>&#58;&nbsp;</Text>
                       <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
-                        <Input flex="1" id="kw_bycoursename" value={this.state["course_name"]} onChange={onSearchChanged}
-                                borderColor={(docContext && "course_name" in docContext && this.state.content!==docContext.course_name)?"blue.500":"gray.200"}/>
+                        <Input flex="1" id="doc_course_name" value={doc_course_name} onChange={onSearchChanged} isDisabled={isSearching}
+                                borderColor={(docContext && "doc_course_name" in docContext && doc_course_name!==docContext.doc_course_name)?"blue.500":"gray.200"}/>
                         <Text flex="0" fontWeight='bold' mx='1rem'><Trans>common.or</Trans></Text>
-                        <Input flex="1" id="kw_byshortname" value={this.state["short_name"]} onChange={onSearchChanged}
-                                borderColor={(docContext && "short_name" in docContext && this.state.content!==docContext.short_name)?"blue.500":"gray.200"}/>
+                        <Input flex="1" id="doc_short_name" value={doc_short_name} onChange={onSearchChanged} isDisabled={isSearching}
+                                borderColor={(docContext && "doc_short_name" in docContext && doc_short_name!==docContext.doc_short_name)?"blue.500":"gray.200"}/>
                       </Flex>
                       <Text flex="0" fontWeight='bold' mx='1rem'><Trans>labitemScreen.cap_search_by_content</Trans>&#58;&nbsp;</Text>
                       <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
-                        <Input flex="1" id="kw_bycontent" value={this.state["course_name"]} onChange={onSearchChanged}
-                                borderColor={(docContext && "course_name" in docContext && this.state.content!==docContext.course_name)?"blue.500":"gray.200"}/>
+                        <Input flex="1" id="doc_lab_content" value={doc_lab_content} onChange={onSearchChanged} isDisabled={isSearching}
+                                placeholder = {t("labitemScreen.placeholder_search_lab_content")}
+                                borderColor={(docContext && "doc_lab_content" in docContext && doc_lab_content!==docContext.doc_lab_content)?"blue.500":"gray.200"}/>
                       </Flex>
                       <Text flex="0" fontWeight='bold' mx='1rem'><Trans>labitemScreen.cap_search_by_department</Trans>&#58;&nbsp;</Text>
                       <Flex direction="row" alignItems="center" wrap="wrap" px={5} pt={2} pb={4}>
-                        <Select flex="1" id="department_selector" variant="outline" value={department_id} onChange={onLabitemChanged} placeholder={t("labitemScreen.search_placeholder")}
-                              borderColor={(labItem && "department_id" in labItem && department_id!==labItem.department_id)?"blue.500":"gray.200"}>
+                        <Select flex="1" id="doc_department_id" variant="outline" value={doc_department_id} onChange={onSearchChanged} 
+                        isDisabled={isSearching} placeholder={t("labitemScreen.search_placeholder")}
+                              borderColor={(docContext && "doc_department_id" in docContext && doc_department_id!==docContext.doc_department_id)?"blue.500":"gray.200"}>
                             {
                               departments.map((dep) => (
                                 <option key={dep.id} value={dep.id} >{dep.name}</option>
@@ -262,7 +265,7 @@ class LabitemDialog extends Component {
                     <Text fontWeight='bold' mx='1rem' mt='1rem'><Trans>labitemScreen.cap_search_result</Trans>&#58;&nbsp;</Text>
                     <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={4}>
                       <Select id="search_result_selector" flex="1" isDisabled={isSearching} variant="outline" placeholder={t("labitemScreen.search_placeholder")} 
-                      value={labitem_id} onChange={onConditionDepartmentChanged}>
+                      value={labitem_id} onChange={onSearchResultSelected}>
                         {
                           Object.entries(searchResult).map((item) => (
                             <option key={item[0]} value={item[0]} >{item[1]}</option>

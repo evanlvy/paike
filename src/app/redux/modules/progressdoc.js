@@ -102,14 +102,14 @@ export const actions = {
         }
       }
     },
-    searchLabitem: (course_name, short_name="", department_id=-1) => {
+    searchLabitem: (course_name, short_name="", content="", department_id=-1) => {
       console.log(`searchLabitem: course_name: ${course_name}`);
       return async (dispatch, getState) => {
         try {
             //if (shouldSearchLabitem(id, getState())) {
               //console.log("shouldFetchLabitem: return yes!");
               dispatch(appActions.startRequest());
-              const data = await progressdocApi.getLabItems(-1, true, "", "", course_name, short_name, department_id);
+              const data = await progressdocApi.getLabItems(-1, true, content, "", course_name, short_name, department_id);
               dispatch(appActions.finishRequest());
               dispatch(searchLabitemSuccess(data));
             //}
@@ -263,7 +263,7 @@ const fetchedLabitems = (state = Immutable.fromJS({}), action) => {
 const searchedLabitemBriefs = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.SEARCH_LABITEM:
-      return state.merge(action.data);
+      return Immutable.fromJS(action.data);//state.merge(action.data);
     default:
       return state;
   }

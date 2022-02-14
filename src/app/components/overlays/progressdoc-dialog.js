@@ -196,9 +196,10 @@ class ProgressdocDialog extends Component {
       this.setState({
         labs: event.data.lab_alloc,
         context: {
-          course_name: event.data.course_name,
-          short_name: event.data.short_name,
-          content: event.data.labitem_content,
+          doc_course_name: this.state.course_name,
+          doc_short_name: this.state.short_name,
+          doc_department_id: this.state.department_id,
+          doc_lab_content: event.data.labitem_content,
         },
         isLabItemOpen: true,
       });
@@ -298,7 +299,7 @@ class ProgressdocDialog extends Component {
                   isOpen={isLabItemOpen}
                   onClose={onLabItemClosed}
                   departments={departments}
-                  title={t("labitemScreen.form_title")}
+                  title={t("labitemScreen.title")}
                   isSaveable />
             </ModalBody>
             <ModalFooter>
