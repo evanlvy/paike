@@ -117,6 +117,11 @@ export const actions = {
           dispatch(appActions.setError(error));
         }
       }
+    },
+    clearSearchedLabitem: () => {
+      return async (dispatch, getState) => {
+        dispatch(searchLabitemSuccess({}));
+      }
     }
 }
 

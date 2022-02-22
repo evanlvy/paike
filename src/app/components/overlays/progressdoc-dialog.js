@@ -213,7 +213,7 @@ class ProgressdocDialog extends Component {
   }
 
   render() {
-    const { isOpen, progressItems, id, department_id, labs: labItems, context: docContext, isLabItemOpen } = this.state;
+    const { isOpen, progressItems, id, department_id, labs: labItem, context: docContext, isLabItemOpen } = this.state;
     const { t, title, color, btnText, isSaveable, tableTitle, docId, departments,
       tablePages, onPageChanged, onCellValueChanged } = this.props;
     const { tableHeaders, btnRef, loadDocDetails, onClose, onFormChanged, onCellDoubleClicked, onLabItemClosed } = this;
@@ -294,7 +294,7 @@ class ProgressdocDialog extends Component {
               <LabitemDialog
                   t={t}
                   color={color}
-                  data={labItems}
+                  data={labItem}
                   context={docContext}
                   isOpen={isLabItemOpen}
                   onClose={onLabItemClosed}
