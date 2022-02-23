@@ -24,7 +24,7 @@ import { MdEdit } from "react-icons/md"
 
 import { EditableTable } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
-import { actions as progressdocActions, getDocContents, getSelectedDocId } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocProps, getDocItems, getSelectedDocId } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -69,12 +69,13 @@ class ProgressdocDialog extends Component {
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (!props.docDetails) return null;
+    if (!props.docProps) return null;
+    let result = {};
     // initialize the state with props by the same name id!
-    if (props.docDetails.props.id !== state.id) {
-      return props.docDetails["props"];
+    if (props.docProps.id !== state.id) {
+      result = {result, ...props.docProps}//props.docDetails["props"];
     }
-    return null;
+    return result;
   }
 
   lab_should_disable = (progress_item) => {
@@ -89,46 +90,6 @@ class ProgressdocDialog extends Component {
     if (!progress_item["labitem_content"] && !progress_item["labitem_hours"]) return false;
     if (progress_item["labitem_content"].length === 0 && progress_item["labitem_hours"] <= 0) return false;
     return true;
-  }
-
-  loadData = (doc_from_prop) => {
-    let doc_object = doc_from_prop;
-    if (!doc_object) {
-      const { docDetails } = this.props;
-      doc_object = docDetails;
-    }
-
-    let progress_items = null;
-    let progress_items_array = null;
-    if (doc_object) {
-      progress_items = doc_object["items"];
-    }
-    if (!progress_items || progress_items === null) {
-      progress_items_array = [{
-        "id": "-1",
-        "week_idx": 1,
-        "chapter_name": "",
-        "theory_item_content": "",
-        "theory_item_hours": 0,
-        "labitem_content": "",
-        "labitem_hours": 0,
-        "teaching_mode": "",
-        "stage_bias": 0,
-        "comment": "",
-        "labitem_id": -1,
-        "doc_id": -1,
-      }];
-    }
-    else {
-      progress_items_array = Object.keys(progress_items).map((key) => {
-        let item_obj = progress_items[key]
-        return Object.defineProperty(item_obj, 'id', {value: key})
-      });
-    }
-    this.setState({ 
-      isOpen: true,
-      progressItems: progress_items_array,
-    });
   }
 
   onClose = () => {
@@ -149,11 +110,17 @@ class ProgressdocDialog extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { docId, docDetails } = this.props;
+    const { docId, docProps, docItems } = this.props;
     const { isOpen, progressItems, department_id, isLabItemOpen } = this.state;
-    if (nextProps.docDetails !== docDetails){
-      console.log("shouldComponentUpdate, docDetails diff: isdefined? next="+!nextProps.docDetails+" cur="+!docDetails);
-      this.loadData(nextProps.docDetails);
+    if (nextProps.docProps !== docProps){
+      console.log("shouldComponentUpdate, docProps");
+      this.setState({
+        isOpen: true,
+      });
+      return true;
+    }
+    if (nextProps.docItems != docItems) {
+      console.log("shouldComponentUpdate, docItems");
       return false;
     }
     for (let index = 0; index < this.forms.length; index++) {
@@ -206,6 +173,17 @@ class ProgressdocDialog extends Component {
     }
   }
 
+  onCellValueChanged = (params) => {
+    let dest_col = params.colDef.field;
+    console.log("onCellValueChanged: newValue:"+JSON.stringify(params.newValue)+" oldValue:"+params.oldValue+" ColRef:"+JSON.stringify(params.colDef));
+    console.log("onCellValueChanged: cell obj:"+JSON.stringify(params.data[dest_col]));
+    if (params.oldValue && params.newValue.length > 1 && params.newValue === params.oldValue) {
+      // Compare value with no change
+      return;
+    }
+    this.props.setRowChanged(this.props.selectedDataId, params.data["id"], dest_col, params.data[dest_col]);
+  }
+
   onLabItemClosed = (event) => {
     this.setState({
       isLabItemOpen: false
@@ -214,9 +192,8 @@ class ProgressdocDialog extends Component {
 
   render() {
     const { isOpen, progressItems, id, department_id, labs: labItem, context: docContext, isLabItemOpen } = this.state;
-    const { t, title, color, btnText, isSaveable, tableTitle, docId, departments,
-      tablePages, onPageChanged, onCellValueChanged } = this.props;
-    const { tableHeaders, btnRef, loadDocDetails, onClose, onFormChanged, onCellDoubleClicked, onLabItemClosed } = this;
+    const { t, title, color, btnText, isSaveable, tableTitle, docId, departments, docProps, docItems } = this.props;
+    const { tableHeaders, btnRef, loadDocDetails, onClose, onFormChanged, onCellDoubleClicked, onLabItemClosed, onCellValueChanged } = this;
     return (
       <>
         <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={btnRef} onClick={(e) => {
@@ -246,7 +223,7 @@ class ProgressdocDialog extends Component {
                     <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
                       <FormLabel><b>{form.label}</b></FormLabel>
                       <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={onFormChanged}
-                        borderColor={this.state[form.id]!==this.props.docDetails.props[form.id]?"blue.500":"gray.200"}/>
+                        borderColor={this.state[form.id]!==docProps[form.id]?"blue.500":"gray.200"}/>
                     </FormControl>
                   ))
                 }
@@ -255,7 +232,7 @@ class ProgressdocDialog extends Component {
                 <FormControl key="department_id" isRequired minW={280} m={2}>
                   <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
                   <Select id="department_id" variant="outline" value={department_id} onChange={onFormChanged}
-                    borderColor={department_id!==this.props.docDetails.props.department_id?"blue.500":"gray.200"}>
+                    borderColor={department_id!==docProps.department_id?"blue.500":"gray.200"}>
                   {
                     departments.map((dep) => (
                       <option key={dep.id} value={dep.id} >{dep.name}</option>
@@ -268,7 +245,7 @@ class ProgressdocDialog extends Component {
               </Flex>
             }
             {
-              progressItems &&
+              docItems &&
               <EditableTable 
                 flex={1}
                 autoShrinkDomHeight
@@ -279,11 +256,9 @@ class ProgressdocDialog extends Component {
                 title={tableTitle}
                 color={color}
                 headers={tableHeaders}
-                data={progressItems}
-                pageNames={tablePages}
+                data={docItems}
                 pagePrevCaption={t("common.previous")}
                 pageNextCaption={t("common.next")}
-                onResultPageIndexChanged={onPageChanged}
                 initPageIndex={0}
                 onCellValueChanged={onCellValueChanged}
                 onCellDoubleClicked={onCellDoubleClicked}
@@ -317,7 +292,8 @@ class ProgressdocDialog extends Component {
 
 const mapStateToProps = (state) => {
   return {
-    docDetails: getDocContents(state),
+    docProps: getDocProps(state),
+    docItems: getDocItems(state),
     prevDocId: getSelectedDocId(state),
   }
 }

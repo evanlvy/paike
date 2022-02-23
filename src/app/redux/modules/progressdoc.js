@@ -24,7 +24,9 @@ export const types = {
     UPDATE_LABITEM: "PROGRESSDOC/UPDATE_LABITEM",
     ADD_LABITEM: "PROGRESSDOC/ADD_LABITEM",
     DEL_LABITEM: "PROGRESSDOC/DEL_LABITEM",
-    SET_SELECTED_LABITEM: "PROGRESSDOC/SET_SELECTED_LABITEM"
+    SET_SELECTED_LABITEM: "PROGRESSDOC/SET_SELECTED_LABITEM",
+    SET_ROW_CHANGED: "PROGRESSDOC/SET_ROW_CHANGED",
+    CLEAR_ROW_CHANGES: "PROGRESSDOC/CLEAR_ROW_CHANGES"
   };
 
 export const buildGroupStageWeekId = (stage, weekIdx, degreeId, gradeId) => {
@@ -122,7 +124,28 @@ export const actions = {
       return async (dispatch, getState) => {
         dispatch(searchLabitemSuccess({}));
       }
-    }
+    },
+    setStateProgressItem: (id) => {
+
+    },
+    setRowChanged: (selectedDataId, rowId, colId, newVal) => ({
+      type: types.SET_ROW_CHANGED,
+      selectedDataId,
+      rowId,
+      colId,
+      newVal
+    }),
+    clearRowChanges: (selectedDataId) => ({
+      type: types.CLEAR_ROW_CHANGES,
+      selectedDataId
+    }),
+    /*getChangedRowIds: () => {
+      // Use thunk to call selector with State ref. In order to peek state value only.
+      return (dispatch, getState) => {
+        const state = getState();
+        return getChangedRowIds(state);
+      }
+    },*/
 }
 
 const shouldSearchList = (keyword, department_id, state) => {
@@ -274,12 +297,33 @@ const searchedLabitemBriefs = (state = Immutable.fromJS({}), action) => {
   }
 }
 
+const rowChanged = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.SET_ROW_CHANGED:
+      //console.log("rowChanged reducer:" + JSON.stringify(state));
+      // How to change deep level state!
+      // Ref: https://stackoverflow.com/questions/36031590/right-way-to-update-state-in-redux-reducers
+      return state.mergeDeep({
+        [action.selectedDataId]: {
+          [action.rowId]: {
+            [action.colId]: action.newVal
+          }
+        }
+      });
+    case types.CLEAR_ROW_CHANGES:
+      return state.remove(action.selectedDataId);  // Should return ImmutableJS object instead of empty obj {} directly!
+    default:
+      return state;
+  }
+}
+
 const reducer = combineReducers({
   searchedList,
   fetchedList,
   fetchedDoc,
   fetchedLabitems,
   searchedLabitemBriefs,
+  rowChanged,
 });
 
 export default reducer;
@@ -315,11 +359,25 @@ export const getSearchedDocList = createSelector(
   }
 );
 
-export const getDocContents = createSelector(
+export const getDocProps = createSelector(
   getDoc,
   (value) => {
+    if (!value || value.length <= 0) {
+      return null;
+    }
     console.log("getDocContents: "+JSON.stringify(value));
-    return value;
+    return value.props;
+  }
+);
+
+export const getDocItems = createSelector(
+  getDoc, 
+  (value) => {
+    if (!value || value.length <= 0) {
+      return null;
+    }
+    //console.log("ReSelector: rows="+JSON.stringify(rows));
+    return Object.values(value.items);
   }
 );
 

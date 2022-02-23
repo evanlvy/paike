@@ -238,11 +238,19 @@ class LabitemDialog extends Component {
     });
   }
 
+  onSaveSelected = () => {
+    
+  }
+  
+  onSaveEdited = () => {
+    
+  }
+
   render() {
     const { isOpen, selectedId, isSearching, tabIndex, original:edit_source,
       doc_department_id, doc_short_name, doc_course_name, doc_lab_content, doc_locs } = this.state;
     const { t, title, color, isSaveable, departments, searchResult, data:labItemProp,  context:docContext } = this.props;
-    const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch, onSearchResultSelected, handleTabsChange, onLoadExisted } = this;
+    const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch, onSearchResultSelected, handleTabsChange, onLoadExisted, onSaveSelected, onSaveEdited } = this;
     return (
       <>
         <Modal
@@ -360,7 +368,7 @@ class LabitemDialog extends Component {
                 <Button variantColor="green" mr={3} isDisabled={selectedId.length<=0} onClick={onLoadExisted}>{t("labitemScreen.btn_import_labitem")}</Button>
               }
               { isSaveable && 
-                <Button variantColor="red" mr={3} 
+                <Button variantColor="red" mr={3} onClick={tabIndex === 0?onSaveSelected:onSaveEdited}
                 isDisabled={(tabIndex === 0 && selectedId.length <= 0) || (tabIndex === 1 && (edit_source.description.length <= 0 || edit_source.locations.length <= 0 || edit_source.name.length <= 0))} >
                   {t("common.save")}</Button>
               }
