@@ -66,6 +66,7 @@ class ProgressdocDialog extends Component {
       {id: "exam_type", label: t("progressdocScreen.form_label_examtype"), minW: 280, isRequired: true},
       {id: "comments", label: t("progressdocScreen.form_label_comments"), minW: 280, isRequired: false},
     ];
+    this.editedRowCache = {};
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -111,7 +112,7 @@ class ProgressdocDialog extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { docId, docProps, docItems } = this.props;
-    const { isOpen, progressItems, department_id, isLabItemOpen } = this.state;
+    const { isOpen, department_id, isLabItemOpen } = this.state;
     if (nextProps.docProps !== docProps){
       console.log("shouldComponentUpdate, docProps");
       this.setState({
@@ -133,7 +134,7 @@ class ProgressdocDialog extends Component {
     if (nextProps.docId !== docId) {
       console.log("shouldComponentUpdate, props diff: "+nextProps.docId+" "+docId);
       return true;
-    } else if (nextState.isOpen !== isOpen || nextState.progressItems !== progressItems 
+    } else if (nextState.isOpen !== isOpen 
       || nextState.department_id !== department_id || nextState.isLabItemOpen !== isLabItemOpen) {
       console.log("shouldComponentUpdate, nextState diff");
       return true;
@@ -181,7 +182,20 @@ class ProgressdocDialog extends Component {
       // Compare value with no change
       return;
     }
-    this.props.setRowChanged(this.props.selectedDataId, params.data["id"], dest_col, params.data[dest_col]);
+    let column = params.column.colDef.field;
+    params.column.colDef.cellStyle = { 'background-color': '#FED7E2' };
+    params.api.refreshCells({
+        force: true,
+        columns: [column],
+        rowNodes: [params.node]
+    });
+    if (!(params.rowIndex in this.editedRowCache)) {
+      this.editedRowCache[params.rowIndex] = {};
+    }
+    this.editedRowCache[params.rowIndex]["id"] = params.data.id;
+    this.editedRowCache[params.rowIndex][dest_col] = params.newValue;
+    console.log(this.editedRowCache);
+    //this.props.setRowChanged(this.props.selectedDataId, params.data["id"], dest_col, params.data[dest_col]);
   }
 
   onLabItemClosed = (event) => {
@@ -190,10 +204,28 @@ class ProgressdocDialog extends Component {
     });
   }
 
+  // TBD: Add Create-new-line button.
+  // Add order to database for progress items display order.
+  // Can modify row order
+  onSave = () => {
+    
+  }
+
+  // CellClassRules will be verified (excute this func) before onCellValueChanged called!
+  // params.data.isEdited will be aware for the whole row instead of a cell!
+  /*
+  cellClassRules = {
+    'edited-cell': (params) => {
+      let edited = !!params.data.isEdited && (params.colDef.field in params.data.isEdited);
+      console.log("cellClassRules: "+params.colDef.field+" result="+String(edited));
+      return edited;
+    }
+  };*/
+
   render() {
-    const { isOpen, progressItems, id, department_id, labs: labItem, context: docContext, isLabItemOpen } = this.state;
+    const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen } = this.state;
     const { t, title, color, btnText, isSaveable, tableTitle, docId, departments, docProps, docItems } = this.props;
-    const { tableHeaders, btnRef, loadDocDetails, onClose, onFormChanged, onCellDoubleClicked, onLabItemClosed, onCellValueChanged } = this;
+    const { tableHeaders, btnRef, loadDocDetails, onClose, onSave, onFormChanged, onCellDoubleClicked, onLabItemClosed, onCellValueChanged } = this;
     return (
       <>
         <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={btnRef} onClick={(e) => {
@@ -279,7 +311,7 @@ class ProgressdocDialog extends Component {
             </ModalBody>
             <ModalFooter>
               { isSaveable && 
-                <Button variantColor="red" mr={3}>{t("common.save")}</Button>
+                <Button variantColor="red" mr={3} onClick={onSave}>{t("common.save")}</Button>
               }
               <Button onClick={onClose}>{t("common.close")}</Button>
             </ModalFooter>

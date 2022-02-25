@@ -146,6 +146,22 @@ export const actions = {
         return getChangedRowIds(state);
       }
     },*/
+    saveDocProps: (docPropsDiffDict) => {
+      // Save progress doc props from form to progress_doc table
+      return async (dispatch, getState) => {
+        dispatch(searchLabitemSuccess({}));
+      }
+    },
+    saveDocItems: (docItemsDiffDict) => {
+      // Add/modify progressItem table (id -1 means add)
+      // Add/remove connection to labItems
+      return async (dispatch, getState) => {
+        dispatch(searchLabitemSuccess({}));
+      }
+    },
+    saveLabItem: (labItemDiffDict) => {
+      // Add/modify a lab item, return the created/modified labitem_id
+    },
 }
 
 const shouldSearchList = (keyword, department_id, state) => {
@@ -365,7 +381,7 @@ export const getDocProps = createSelector(
     if (!value || value.length <= 0) {
       return null;
     }
-    console.log("getDocContents: "+JSON.stringify(value));
+    //console.log("getDocContents: "+JSON.stringify(value));
     return value.props;
   }
 );
