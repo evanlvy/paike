@@ -13,6 +13,7 @@ export const types = {
     SET_SELECTED_DEPAETMENT: "PROGRESSDOC/SET_SELECTED_DEPAETMENT",
     SET_SELECTED_SEARCH: "PROGRESSDOC/SET_SELECTED_SEARCH",
     SET_OPENED_DOC_ID: "PROGRESSDOC/SET_OPENED_DOC_ID",
+    CLR_OPENED_DOC_ID: "PROGRESSDOC/CLR_OPENED_DOC_ID",
     ADD_DOC: "PROGRESSDOC/ADD_DOC",
     DEL_DOC: "PROGRESSDOC/DEL_DOC",
     UPDATE_DOC: "PROGRESSDOC/UPDATE_DOC",
@@ -138,6 +139,9 @@ export const actions = {
     clearRowChanges: (selectedDataId) => ({
       type: types.CLEAR_ROW_CHANGES,
       selectedDataId
+    }),
+    closeDoc: () => ({
+      type: types.CLR_OPENED_DOC_ID,
     }),
     /*getChangedRowIds: () => {
       // Use thunk to call selector with State ref. In order to peek state value only.
@@ -288,6 +292,8 @@ const fetchedDoc = (state = Immutable.fromJS({}), action) => {
       return state.merge({[""+action.id]: action.data});
     case types.SET_OPENED_DOC_ID:
       return state.merge({selected: action.id})
+    case types.CLR_OPENED_DOC_ID:
+      return state.merge({selected: -1})
     default:
       return state;
   }
@@ -351,8 +357,8 @@ export const getSelectedDepartment = (state) => state.getIn(["progressdoc", "fet
 export const getSearchedList = (state) => state.getIn(["progressdoc", "searchedList", getSelectedSearch(state)]).valueSeq();
 export const getSelectedSearch = (state) => state.getIn(["progressdoc", "searchedList", "selected"]);
 
-export const getDoc = (state) => state.getIn(["progressdoc", "fetchedDoc", ""+getSelectedDocId(state)]);
-export const getSelectedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
+export const getDoc = (state) => state.getIn(["progressdoc", "fetchedDoc", ""+getOpenedDocId(state)]);
+export const getOpenedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
 
 export const getLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", ""+getSelectedLabitem(state)]);
 export const getSelectedLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", "selected"]);

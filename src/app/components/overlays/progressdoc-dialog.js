@@ -24,7 +24,7 @@ import { MdEdit } from "react-icons/md"
 
 import { EditableTable } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
-import { actions as progressdocActions, getDocProps, getDocItems, getSelectedDocId } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocProps, getDocItems, getOpenedDocId } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -70,8 +70,12 @@ class ProgressdocDialog extends Component {
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (!props.docProps) return null;
     let result = {};
+    if (props.prevDocId) {
+      if (props.prevDocId >= 0 && !state.isOpen) result = {isOpen: true};
+      else if (props.prevDocId < 0 && state.isOpen) result = {isOpen: false};
+    }
+    if (!props.docProps) return result;
     // initialize the state with props by the same name id!
     if (props.docProps.id !== state.id) {
       result = {result, ...props.docProps}//props.docDetails["props"];
@@ -94,7 +98,8 @@ class ProgressdocDialog extends Component {
   }
 
   onClose = () => {
-    this.setState({ isOpen: false });
+    this.props.closeDoc();
+    //this.setState({ isOpen: false });
   }
 
   loadDocDetails = (docId) => {
@@ -255,7 +260,7 @@ class ProgressdocDialog extends Component {
                     <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
                       <FormLabel><b>{form.label}</b></FormLabel>
                       <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={onFormChanged}
-                        borderColor={this.state[form.id]!==docProps[form.id]?"blue.500":"gray.200"}/>
+                        borderColor={(docProps && this.state[form.id]===docProps[form.id])?"gray.200":"blue.500"}/>
                     </FormControl>
                   ))
                 }
@@ -264,7 +269,7 @@ class ProgressdocDialog extends Component {
                 <FormControl key="department_id" isRequired minW={280} m={2}>
                   <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
                   <Select id="department_id" variant="outline" value={department_id} onChange={onFormChanged}
-                    borderColor={department_id!==docProps.department_id?"blue.500":"gray.200"}>
+                    borderColor={(docProps && department_id===docProps.department_id)?"gray.200":"blue.500"}>
                   {
                     departments.map((dep) => (
                       <option key={dep.id} value={dep.id} >{dep.name}</option>
@@ -326,7 +331,7 @@ const mapStateToProps = (state) => {
   return {
     docProps: getDocProps(state),
     docItems: getDocItems(state),
-    prevDocId: getSelectedDocId(state),
+    prevDocId: getOpenedDocId(state),
   }
 }
 

@@ -199,10 +199,18 @@ class ProgressdocScreen extends Component {
     this.loadDocList(this.state.selectedJysIdList, target_stage);
   }
 
+  onRowDoubleClicked = (rowId, docId) => {
+    console.log(`onRowDoubleClicked: rowId=${rowId} docId=${docId}`);
+    this.setState({
+      selectedDocId: docId
+    });
+    this.props.fetchDoc(docId);
+  }
+
   render() {
     const { t, jysList, docList } = this.props;
     const { selectStage, selectedDocId } = this.state;
-    const { color, jysTitle, titleSelected, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, loadDocDetails} = this;
+    const { color, jysTitle, titleSelected, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, onRowDoubleClicked } = this;
     let tableTitle = "";
     if (titleSelected && titleSelected.length > 0) {
       tableTitle =  t("progressdocScreen.doclist_table_title_template", {jys_name: titleSelected});
@@ -250,6 +258,7 @@ class ProgressdocScreen extends Component {
             data={docList}
             rowSelection="single"
             onRowSelected={onRowSelected}
+            onRowDoubleClicked={onRowDoubleClicked}
             //pageNames={semesterPages}
             //pagePrevCaption={t("common.previous")}
             //pageNextCaption={t("common.next")}

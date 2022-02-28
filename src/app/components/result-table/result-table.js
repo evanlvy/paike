@@ -328,6 +328,19 @@ class ResultTableWrapper extends Component {
     }
   }
 
+  onRowDoubleClicked = (event) => {
+    const { onRowDoubleClicked: onRowDoubleClickedCallback } = this.props;
+    if (!onRowDoubleClickedCallback) {
+      return;
+    }
+    if (event.data.hasOwnProperty("id")) {
+      onRowDoubleClickedCallback(event.rowIndex, event.data["id"]);
+    }
+    else {
+      onRowDoubleClickedCallback(event.rowIndex);
+    }
+  }
+
   onRowSelected = (event) => {
     const { onRowSelected: onRowSelectedCallback } = this.props;
     if (!onRowSelectedCallback || !event.node.selected) {// This is for unselected! not selected.
@@ -409,7 +422,7 @@ class ResultTableWrapper extends Component {
 
   render() {
     const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, onGridReady,
-      onCellClicked, onRowClicked, onRowSelected, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
+      onCellClicked, onRowClicked, onRowDoubleClicked, onRowSelected, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, titleHeight, color, rowHeight,
       pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption, rowSelection, 
       onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback,
@@ -457,6 +470,7 @@ class ResultTableWrapper extends Component {
               //rowClassRules={rowClassRules}
               onCellClicked={onCellClicked}
               onRowClicked={onRowClicked}
+              onRowDoubleClicked={onRowDoubleClicked}
               rowSelection={rowSelection}
               onRowSelected={onRowSelected} >
             </AgGridReact>
