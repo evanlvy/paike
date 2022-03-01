@@ -37,6 +37,7 @@ class ProgressdocDialog extends Component {
       isLabItemOpen: false,
       isOpen: false,
       depSelected: -1,
+      editedRowCache: {},
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.tableHeaders = [
@@ -66,7 +67,7 @@ class ProgressdocDialog extends Component {
       {id: "exam_type", label: t("progressdocScreen.form_label_examtype"), minW: 280, isRequired: true},
       {id: "comments", label: t("progressdocScreen.form_label_comments"), minW: 280, isRequired: false},
     ];
-    this.editedRowCache = {};
+    this.gridApi = null;
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -78,7 +79,7 @@ class ProgressdocDialog extends Component {
     if (!props.docProps) return result;
     // initialize the state with props by the same name id!
     if (props.docProps.id !== state.id) {
-      result = {result, ...props.docProps}//props.docDetails["props"];
+      result = {result, ...props.docProps, editedRowCache:{}}//props.docDetails["props"];
     }
     return result;
   }
@@ -117,7 +118,7 @@ class ProgressdocDialog extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { docId, docProps, docItems } = this.props;
-    const { isOpen, department_id, isLabItemOpen } = this.state;
+    const { isOpen, department_id, isLabItemOpen, editedRowCache } = this.state;
     if (nextProps.docProps !== docProps){
       console.log("shouldComponentUpdate, docProps");
       this.setState({
@@ -139,7 +140,7 @@ class ProgressdocDialog extends Component {
     if (nextProps.docId !== docId) {
       console.log("shouldComponentUpdate, props diff: "+nextProps.docId+" "+docId);
       return true;
-    } else if (nextState.isOpen !== isOpen 
+    } else if (nextState.isOpen !== isOpen || nextState.editedRowCache !== editedRowCache
       || nextState.department_id !== department_id || nextState.isLabItemOpen !== isLabItemOpen) {
       console.log("shouldComponentUpdate, nextState diff");
       return true;
@@ -181,26 +182,33 @@ class ProgressdocDialog extends Component {
 
   onCellValueChanged = (params) => {
     let dest_col = params.colDef.field;
-    console.log("onCellValueChanged: newValue:"+JSON.stringify(params.newValue)+" oldValue:"+params.oldValue+" ColRef:"+JSON.stringify(params.colDef));
-    console.log("onCellValueChanged: cell obj:"+JSON.stringify(params.data[dest_col]));
+    console.log("onCellValueChanged: newValue:"+JSON.stringify(params.newValue)+" oldValue:"+params.oldValue);
+    //console.log("onCellValueChanged: cell obj:"+JSON.stringify(params.data[dest_col]));
     if (params.oldValue && params.newValue.length > 1 && params.newValue === params.oldValue) {
       // Compare value with no change
       return;
     }
-    let column = params.column.colDef.field;
+    /*let column = params.column.colDef.field;
     params.column.colDef.cellStyle = { 'background-color': '#FED7E2' };
     params.api.refreshCells({
         force: true,
         columns: [column],
         rowNodes: [params.node]
-    });
-    if (!(params.rowIndex in this.editedRowCache)) {
-      this.editedRowCache[params.rowIndex] = {};
-    }
-    this.editedRowCache[params.rowIndex]["id"] = params.data.id;
-    this.editedRowCache[params.rowIndex][dest_col] = params.newValue;
-    console.log(this.editedRowCache);
+    });*/
+    this.gridApi = params.api;
+    this.setState({editedRowCache: {...this.state.editedRowCache, 
+      [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.data.id, [dest_col]: params.newValue}}});
     //this.props.setRowChanged(this.props.selectedDataId, params.data["id"], dest_col, params.data[dest_col]);
+  }
+
+  onFlashCells = () => {
+    if (!this.gridApi || !this.state.editedRowCache) return;
+    Object.keys(this.state.editedRowCache).forEach(function(idx){
+      let row = this.gridApi.getDisplayedRowAtIndex(parseInt(idx));
+      if (row) {
+        this.gridApi.flashCells({ rowNodes: [row], columns: Object.keys(this.state.editedRowCache[idx]) });
+      }
+    }, this);
   }
 
   onLabItemClosed = (event) => {
@@ -213,7 +221,6 @@ class ProgressdocDialog extends Component {
   // Add order to database for progress items display order.
   // Can modify row order
   onSave = () => {
-    
   }
 
   // CellClassRules will be verified (excute this func) before onCellValueChanged called!
@@ -228,9 +235,9 @@ class ProgressdocDialog extends Component {
   };*/
 
   render() {
-    const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen } = this.state;
+    const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache } = this.state;
     const { t, title, color, btnText, isSaveable, tableTitle, docId, departments, docProps, docItems } = this.props;
-    const { tableHeaders, btnRef, loadDocDetails, onClose, onSave, onFormChanged, onCellDoubleClicked, onLabItemClosed, onCellValueChanged } = this;
+    const { tableHeaders, btnRef, loadDocDetails, onClose, onSave, onFormChanged, onCellDoubleClicked, onLabItemClosed, onCellValueChanged, onFlashCells } = this;
     return (
       <>
         <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={btnRef} onClick={(e) => {
@@ -315,6 +322,7 @@ class ProgressdocDialog extends Component {
                   isSaveable />
             </ModalBody>
             <ModalFooter>
+              <Button variantColor="green" mr={3} onClick={onFlashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button>
               { isSaveable && 
                 <Button variantColor="red" mr={3} onClick={onSave}>{t("common.save")}</Button>
               }

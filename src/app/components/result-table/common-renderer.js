@@ -30,15 +30,16 @@ class CommonRenderer extends Component {
         value_array = value_obj.titles;
       }
     }
+    let should_disable = fn_disable && fn_disable(data);
     if (editable && value_array.length <= 0) {
       // Empty editable will show special icon
-      value_array = ['\u26A1']
+      value_array = [should_disable?'\u26D4':'\u2795']
     }
-    let should_disable = fn_disable && fn_disable(data);
     //console.log("CommonRenderer render: value: "+JSON.stringify(value_array));
     //{ editable && '\u26A1'}
+    // backgroundColor:should_disable?"#999aaa":"transparent"
     return (
-      <div className="common-cell" style={{lineHeight:line_height+"px",color:editable?"#015bf1":"black",backgroundColor:should_disable?"#999aaa":"transparent"}}>
+      <div className="common-cell" style={{lineHeight:line_height+"px",color:editable?"#015bf1":"black"}}>
         {
           value_array.map((item_obj, index) => {
             let title = "";

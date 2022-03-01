@@ -22,7 +22,8 @@
     "open": "打开",
     "search": "查找",
     "or": "或",
-    "no_limitation": "不限"
+    "no_limitation": "不限",
+    "flash_changed_cells": "高亮我的改动"
   },
   "alert": {
     "default_title": "警告",
