@@ -150,15 +150,9 @@ export const actions = {
         return getChangedRowIds(state);
       }
     },*/
-    saveDocProps: (docPropsDiffDict) => {
+    saveDoc: (docDiffDict, itemsDiffDict) => {
       // Save progress doc props from form to progress_doc table
-      return async (dispatch, getState) => {
-        dispatch(searchLabitemSuccess({}));
-      }
-    },
-    saveDocItems: (docItemsDiffDict) => {
-      // Add/modify progressItem table (id -1 means add)
-      // Add/remove connection to labItems
+      
       return async (dispatch, getState) => {
         dispatch(searchLabitemSuccess({}));
       }

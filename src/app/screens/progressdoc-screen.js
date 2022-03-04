@@ -45,6 +45,7 @@ class ProgressdocScreen extends Component {
     this.semesterPages = [];
 
     this.docListHeaders = [
+      {name: t("progressdocScreen.list_header_id"), field: "id", width: 80},
       {name: t("progressdocScreen.list_header_name"), field: "course_name"},
       {name: t("progressdocScreen.list_header_short"), field: "short_name"},
       {name: t("progressdocScreen.list_header_description"), field: "description"},
@@ -58,7 +59,6 @@ class ProgressdocScreen extends Component {
       {name: t("progressdocScreen.list_header_classes"), field: "classes", dataType: "classes_id_name_obj"},
       {name: t("progressdocScreen.list_header_created"), field: "created_at"},
       {name: t("progressdocScreen.list_header_updated"), field: "updated_at"},
-      {name: t("progressdocScreen.list_header_id"), field: "id", width: 80},
     ];
 
     this.weekdayNames = [

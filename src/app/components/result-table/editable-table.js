@@ -352,6 +352,17 @@ class EditableTableWrapper extends Component {
     params.api.sizeColumnsToFit();
     // Following line dymanic set height to row on content
     params.api.resetRowHeights();
+    // Order rows by colId from props
+    if (this.props.orderbyAsc || this.props.orderbyDesc) {
+      let _sort = this.props.orderbyAsc?'asc':'desc';
+      let _col = this.props.orderbyAsc?this.props.orderbyAsc:this.props.orderbyDesc;
+      if (typeof _col === 'string' &&  _col.length >= 1) {
+        params.columnApi.applyColumnState({
+          state: [{ colId: _col, sort: _sort }],
+          defaultState: { sort: null },
+        });
+      }
+    }
   }
 
   onGridSizeChanged = (event) => {
@@ -446,7 +457,7 @@ class EditableTableWrapper extends Component {
     const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onGridSizeChanged,
       onCellClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, color, rowHeight, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
-      rowSelection, onCellClicked: onCellClickedCallback, onCellDoubleClicked,
+      rowSelection, onCellClicked: onCellClickedCallback, onCellDoubleClicked, onCellEditingStarted,
       onCellValueChanged, defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged, 
       ...other_props } = this.props;
     const { curPageIndex } = this.state;
@@ -491,6 +502,7 @@ class EditableTableWrapper extends Component {
               deltaRowMode={true}
               //getRowNodeId={data=>data.id} // Bug: make rowHeight flash forever!
               onCellValueChanged={onCellValueChanged}
+              onCellEditingStarted={onCellEditingStarted}
               onCellClicked={onCellClicked}
               onCellDoubleClicked={onCellDoubleClicked}
               rowSelection={rowSelection} >

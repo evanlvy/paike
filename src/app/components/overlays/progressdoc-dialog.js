@@ -20,11 +20,11 @@ import {
     Box,
     Select,
   } from "@chakra-ui/core"
-import { MdEdit } from "react-icons/md"
+import { MdEdit, MdSave } from "react-icons/md"
 
 import { EditableTable } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
-import { actions as progressdocActions, getDocProps, getDocItems, getOpenedDocId } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocProps, getDocItems, getOpenedDocId, peekDocItem } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -36,11 +36,13 @@ class ProgressdocDialog extends Component {
     this.state = {
       isLabItemOpen: false,
       isOpen: false,
+      isSaving: false,
       depSelected: -1,
       editedRowCache: {},
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.tableHeaders = [
+      {name: t("progressdocScreen.items_header_order"), field: "ord", width: 80},
       {name: t("progressdocScreen.items_header_id"), field: "id", width: 80},
       {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", editable: true, width: 80},
       {name: t("progressdocScreen.items_header_chapter_name"), field: "chapter_name", editable: true},
@@ -51,7 +53,7 @@ class ProgressdocDialog extends Component {
       {name: t("progressdocScreen.items_header_labs"), field: "lab_alloc", width: 100, dataType: "lab_list", fn_disable: this.lab_should_disable},
       {name: t("progressdocScreen.items_header_teaching_mode"), field: "teaching_mode", editable: true},
       {name: t("progressdocScreen.items_header_comment"), field: "comment", editable: true},
-      {name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
+      //{name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
     ];
     this.btnRef = React.createRef()
     this.forms = [
@@ -118,7 +120,7 @@ class ProgressdocDialog extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { docId, docProps, docItems } = this.props;
-    const { isOpen, department_id, isLabItemOpen, editedRowCache } = this.state;
+    //const { isOpen, department_id, isLabItemOpen, editedRowCache } = this.state;
     if (nextProps.docProps !== docProps){
       console.log("shouldComponentUpdate, docProps");
       this.setState({
@@ -130,21 +132,26 @@ class ProgressdocDialog extends Component {
       console.log("shouldComponentUpdate, docItems");
       return false;
     }
-    for (let index = 0; index < this.forms.length; index++) {
+    /*for (let index = 0; index < this.forms.length; index++) {
       let form = this.forms[index];
       if (this.state[form.id] !== nextState[form.id]) {
         console.log("shouldComponentUpdate, FORMs diff:"+form.id);
         return true;
       }
-    }
+    }*/
     if (nextProps.docId !== docId) {
       console.log("shouldComponentUpdate, props diff: "+nextProps.docId+" "+docId);
       return true;
-    } else if (nextState.isOpen !== isOpen || nextState.editedRowCache !== editedRowCache
-      || nextState.department_id !== department_id || nextState.isLabItemOpen !== isLabItemOpen) {
+    }
+    if (nextState !== this.state) {
       console.log("shouldComponentUpdate, nextState diff");
       return true;
     }
+    /*if (nextState.isOpen !== isOpen || nextState.editedRowCache !== editedRowCache
+      || nextState.department_id !== department_id || nextState.isLabItemOpen !== isLabItemOpen) {
+      console.log("shouldComponentUpdate, nextState diff");
+      return true;
+    }*/
     return false;
   }
   
@@ -181,24 +188,45 @@ class ProgressdocDialog extends Component {
   }
 
   onCellValueChanged = (params) => {
+    this.gridApi = params.api;
     let dest_col = params.colDef.field;
     console.log("onCellValueChanged: newValue:"+JSON.stringify(params.newValue)+" oldValue:"+params.oldValue);
-    //console.log("onCellValueChanged: cell obj:"+JSON.stringify(params.data[dest_col]));
-    if (params.oldValue && params.newValue.length > 1 && params.newValue === params.oldValue) {
+    if (params.oldValue && params.newValue && params.newValue === params.oldValue) {
       // Compare value with no change
       return;
     }
-    /*let column = params.column.colDef.field;
-    params.column.colDef.cellStyle = { 'background-color': '#FED7E2' };
-    params.api.refreshCells({
-        force: true,
-        columns: [column],
-        rowNodes: [params.node]
-    });*/
-    this.gridApi = params.api;
+    /*if (dest_col in this.props.docItems[params.rowIndex]) {
+      let original_in_state = this.props.peekDocItem(params.data.id, dest_col);
+      if (params.newValue == original_in_state) {
+        console.log("onCellValueChanged: no change found compared with props! Clear from cache!");
+        // Clear the edit cache
+        if (params.rowIndex in this.state.editedRowCache) {
+          this.setState({editedRowCache: {...this.state.editedRowCache, 
+            [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], [dest_col]: undefined }}});
+        }
+        return;
+      }
+    }*/
     this.setState({editedRowCache: {...this.state.editedRowCache, 
       [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.data.id, [dest_col]: params.newValue}}});
     //this.props.setRowChanged(this.props.selectedDataId, params.data["id"], dest_col, params.data[dest_col]);
+  }
+
+  onCellEditingStarted  = (params) => {
+    let dest_col = params.colDef.field;
+    // When theory cells added, check if the lab cells have contents
+    let should_stop_editing = false;
+    let verify_mutex = null;
+    if (dest_col.startsWith("theory_item_")) {
+      verify_mutex = "labitem_";
+    } else if (dest_col.startsWith("labitem_")) {
+      verify_mutex = "theory_item_"
+    }
+    if (verify_mutex != null) {
+      if (params.data[verify_mutex+"content"] && params.data[verify_mutex+"content"].length > 0) should_stop_editing = true;
+      if (params.data[verify_mutex+"hours"] && params.data[verify_mutex+"hours"] > 0) should_stop_editing = true;
+    }
+    if (should_stop_editing) params.api.stopEditing();
   }
 
   onFlashCells = () => {
@@ -221,6 +249,19 @@ class ProgressdocDialog extends Component {
   // Add order to database for progress items display order.
   // Can modify row order
   onSave = () => {
+    // Check doc props
+    let props_diff = {};
+    for (let index = 0; index < this.forms.length; index++) {
+      let form = this.forms[index];
+      if (this.state[form.id] !== this.props.docProps[form.id]) {
+        console.log("onSave: FORMs diff:"+form.id);
+        props_diff[form.id] = this.state[form.id];
+      }
+    }
+    this.props.saveDoc(props_diff, this.state.editedRowCache);
+    this.setState({
+      isSaving: true
+    });
   }
 
   // CellClassRules will be verified (excute this func) before onCellValueChanged called!
@@ -235,9 +276,10 @@ class ProgressdocDialog extends Component {
   };*/
 
   render() {
-    const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache } = this.state;
+    const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, isSaving } = this.state;
     const { t, title, color, btnText, isSaveable, tableTitle, docId, departments, docProps, docItems } = this.props;
-    const { tableHeaders, btnRef, loadDocDetails, onClose, onSave, onFormChanged, onCellDoubleClicked, onLabItemClosed, onCellValueChanged, onFlashCells } = this;
+    const { tableHeaders, btnRef, loadDocDetails, onClose, onSave, onFormChanged, onCellDoubleClicked, 
+      onLabItemClosed, onCellValueChanged, onCellEditingStarted, onFlashCells } = this;
     return (
       <>
         <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={btnRef} onClick={(e) => {
@@ -301,11 +343,13 @@ class ProgressdocDialog extends Component {
                 color={color}
                 headers={tableHeaders}
                 data={docItems}
+                orderbyAsc={'ord'}
                 pagePrevCaption={t("common.previous")}
                 pageNextCaption={t("common.next")}
                 initPageIndex={0}
                 onCellValueChanged={onCellValueChanged}
                 onCellDoubleClicked={onCellDoubleClicked}
+                onCellEditingStarted={onCellEditingStarted}
                 rowSelection="single"
                 //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
                 />
@@ -324,7 +368,7 @@ class ProgressdocDialog extends Component {
             <ModalFooter>
               <Button variantColor="green" mr={3} onClick={onFlashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button>
               { isSaveable && 
-                <Button variantColor="red" mr={3} onClick={onSave}>{t("common.save")}</Button>
+                <Button variantColor="red" mr={3} onClick={onSave} leftIcon={MdSave} isLoading={isSaving} loadingText={t("common.saving")}>{t("common.save")}</Button>
               }
               <Button onClick={onClose}>{t("common.close")}</Button>
             </ModalFooter>
