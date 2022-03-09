@@ -85,6 +85,30 @@ class Api {
     }
   }
 
+  setDoc = async (docId, docDiffDict, itemsDiffDict, itemsDiffCol=null, itemsDiffDataframe=null) => {
+    // $params_required = ['course_name', 'department_id', 'description', 'total_hours', 'theory_hours', 'lab_hours'];
+    // $params_optional = ['short_name', 'flex_hours', 'textbook', 'exam_type', 'comments'];
+    try {
+      const url = this.baseUrl+"/set_progressdoc";
+      console.log("Request url "+url+" with doc_id: "+JSON.stringify(docId));
+      let request_param = {id:docId, attributes:docDiffDict};
+      if (itemsDiffDict != null) {
+        request_param = {...request_param, ...{items: itemsDiffDict}};
+      }
+      else if (itemsDiffCol!=null && itemsDiffDataframe!=null){
+        request_param = {...request_param, ...{items_dfcol: itemsDiffCol, items_dfdata: itemsDiffDataframe}};
+      }
+      let response = await axios.post(url, request_param);
+      const { success, data, message } = response.data;
+      if (!success) {
+        throw new Error(message.message);
+      }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   addDoc = async (props_map) => {
     // $params_required = ['course_name', 'department_id', 'description', 'total_hours', 'theory_hours', 'lab_hours'];
     // $params_optional = ['short_name', 'flex_hours', 'textbook', 'exam_type', 'comments'];

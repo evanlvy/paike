@@ -16,8 +16,8 @@ class SubjectBoard extends Component {
       selectedIndexList: SubjectBoard.getInitialSelectedIdsFromProps(props)
     }
     this.selectAllChecked = false;
-    this.autoTitle = {prefix: "", selected: ""};
-    //this.autoTitle = this.buildAutoTitle(this.state.selectedIndexList);
+    //this.autoTitle = {prefix: "", selected: ""};
+    this.autoTitle = this.buildAutoTitle(props, this.state.selectedIndexList);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -90,15 +90,20 @@ class SubjectBoard extends Component {
       if (props.initSelectAll || selectAll) {
         selections = [...Array(props.subjects.length).keys()];
       } else {
-        if (props.enableMultiSelect && Array.isArray(props.initSelectedIndexList)) {
-          selections = props.initSelectedIndexList;
+        if (Array.isArray(props.initSelectedIndexList)) {
+          if (props.enableMultiSelect) selections = props.initSelectedIndexList;
+          else selections.push(props.initSelectedIndexList[0]);
         } else if (typeof props.initSelectIndex === 'number') {
           selections.push(props.initSelectIndex);
         }
-        if (props.enableMultiSelect && Array.isArray(props.initSelectIds)) {
+        if (Array.isArray(props.initSelectIds)) {
           let idxes = SubjectBoard.getIndexesFromIds(props.initSelectIds, props.subjects);
           if (idxes.length > 0) {
-            selections = selections.concat(idxes);
+            if (props.enableMultiSelect) {
+              selections = selections.concat(idxes);
+            } else {
+              selections.push(idxes[0]);
+            }
           }
         } else if (typeof props.initSelectId === 'number') {
           let idx = SubjectBoard.getIndexesFromIds(props.initSelectId, props.subjects);

@@ -20,6 +20,7 @@ import {
   ResultTable,
 } from '../components';
 
+import { actions as authActions, getDepartmentId } from '../redux/modules/auth';
 import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getColoredJysList } from '../redux/modules/jiaoyanshi';
 import { actions as progressdocActions, getDocList, getSearchedDocList } from '../redux/modules/progressdoc';
@@ -33,15 +34,15 @@ const SEMESTER_HALF_BIAS_WEEK = 6;
 class ProgressdocScreen extends Component {
   constructor(props) {
     super(props);
-    const { t, color, schoolYear } = props;
+    const { t, color, schoolYear, defaultJys } = props;
     this.state = {
       selectStage: schoolYear,
+      defaultTeacherId: -1,
       selectedJysIdList: [],  // Keep the latest selected Id, NOT index!
       selectedDocId: 0,
     };
     this.color = color ? color : DEFAULT_COLOR;
-
-    this.defaultselectedJysIdxList = [0];  //Keep default selected index!
+    this.defaultselectedJysIdList = [defaultJys];  //Keep default selected index!
     this.semesterPages = [];
 
     this.docListHeaders = [
@@ -240,7 +241,7 @@ class ProgressdocScreen extends Component {
         <SubjectBoard t={t} my={4} color={color}
           title={jysTitle}
           subjects={jysList}
-          initSelectedIndexList={this.defaultselectedJysIdxList}
+          initSelectIds={this.defaultselectedJysIdList}
           selectedIdsChanged={onJysIdsChanged}
           enableAutoTitle={true}
           enableSelect />
@@ -285,6 +286,7 @@ const mapStateToProps = (state) => {
     stageList: getStageList(state),
     jysList: getColoredJysList(state),
     docList: getDocList(state),
+    defaultJys: getDepartmentId(state),
   }
 }
 
@@ -293,6 +295,7 @@ const mapDispatchToProps = (dispatch) => {
     ...bindActionCreators(jysActions, dispatch),
     ...bindActionCreators(gradeActions, dispatch),
     ...bindActionCreators(progressdocActions, dispatch),
+    //...bindActionCreators(authActions, dispatch),
   }
 }
 

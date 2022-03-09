@@ -249,19 +249,41 @@ class ProgressdocDialog extends Component {
   // Add order to database for progress items display order.
   // Can modify row order
   onSave = () => {
+    const { docProps } = this.props;
+    const { editedRowCache } = this.state;
     // Check doc props
-    let props_diff = {};
+    let has_diff = false;
+    let props_diff = {id: docProps.id};  // Must have id prop
     for (let index = 0; index < this.forms.length; index++) {
       let form = this.forms[index];
-      if (this.state[form.id] !== this.props.docProps[form.id]) {
+      if (this.state[form.id] !== docProps[form.id]) {
         console.log("onSave: FORMs diff:"+form.id);
         props_diff[form.id] = this.state[form.id];
+        has_diff = true;
       }
     }
-    this.props.saveDoc(props_diff, this.state.editedRowCache);
+    if (!has_diff && editedRowCache.length <= 0) return; // for nothing changed
+    if (editedRowCache.length <= 3) {
+      console.log("onSave: delta_dict"+JSON.stringify(editedRowCache));
+      this.props.saveDoc(this.state['id'], props_diff, editedRowCache);
+    } else {
+      let df_col = this.tableHeaders.map((col) => {
+        return col['field'];
+      });
+      let df_data = [];
+      Object.keys(editedRowCache).forEach((index) => {
+        df_data.push(df_col.map((col)=> {
+          if (col in editedRowCache[index]) return editedRowCache[index][col];
+          else return undefined;
+        }));
+      });
+      console.log("onSave: df_data"+JSON.stringify(df_data));
+      this.props.saveDoc(this.state['id'], props_diff, null, df_col, df_data);
+    }
     this.setState({
       isSaving: true
     });
+    this.props.closeDoc();
   }
 
   // CellClassRules will be verified (excute this func) before onCellValueChanged called!

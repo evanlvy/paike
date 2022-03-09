@@ -10,6 +10,7 @@ export const types = {
     SEARCH_DOC_LIST: "PROGRESSDOC/SEARCH_DOC_LIST",
     FETCH_DOC_LIST: "PROGRESSDOC/FETCH_DOC_LIST",
     FETCH_DOC: "PROGRESSDOC/FETCH_DOC",
+    CLEAR_DOC: "PROGRESSDOC/CLEAR_DOC",
     SET_SELECTED_DEPAETMENT: "PROGRESSDOC/SET_SELECTED_DEPAETMENT",
     SET_SELECTED_SEARCH: "PROGRESSDOC/SET_SELECTED_SEARCH",
     SET_OPENED_DOC_ID: "PROGRESSDOC/SET_OPENED_DOC_ID",
@@ -150,11 +151,27 @@ export const actions = {
         return getChangedRowIds(state);
       }
     },*/
-    saveDoc: (docDiffDict, itemsDiffDict) => {
+    /* params_json_sample = {
+      "id": 1,
+      "attributes": {"id": 1, "course_name": "ssskkk"},
+      "items_dfcol": ["id", "ord"],
+      "items_dfdata": [[1, 9999], [2, 8888]],
+      or
+      "items": {"0": {"id": 1, "ord": 888},
+                "1": {"id": 2, "ord": 999}}
+    }*/
+    saveDoc: (docId, docDiffDict, itemsDiffDict, itemsDiffCol=null, itemsDiffDataframe=null) => {
       // Save progress doc props from form to progress_doc table
-      
+      console.log(`saveDoc: doc_id: ${docId}`);
       return async (dispatch, getState) => {
-        dispatch(searchLabitemSuccess({}));
+        try {
+          dispatch(appActions.startRequest());
+          const data = await progressdocApi.setDoc(docId, docDiffDict, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
+          dispatch(appActions.finishRequest());
+          dispatch(setDocSuccess(docId));
+        } catch (error) {
+          dispatch(appActions.setError(error));
+        }
       }
     },
     saveLabItem: (labItemDiffDict) => {
@@ -257,6 +274,13 @@ const setSelectedLabitem = (id) => {
   })
 }
 
+const setDocSuccess = (id) => {
+  return ({
+    type: types.CLEAR_DOC,
+    id
+  })
+}
+
 // reducers
 const searchedList = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
@@ -284,6 +308,8 @@ const fetchedDoc = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_DOC:
       return state.merge({[""+action.id]: action.data});
+    case types.CLEAR_DOC:
+      return state.removeIn([""+action.id]);
     case types.SET_OPENED_DOC_ID:
       return state.merge({selected: action.id})
     case types.CLR_OPENED_DOC_ID:
