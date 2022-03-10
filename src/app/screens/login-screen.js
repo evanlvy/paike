@@ -81,7 +81,7 @@ class WrappedLoginScreen extends Component {
 
   checkError = () => {
     const { error } = this.props;
-    if (error.errorCode && this.isNewRequest && !this.state.showError) {
+    if (error.message && this.isNewRequest && !this.state.showError) {
       console.log("checkError, error: "+error.message);
       this.setState({
         showError: true

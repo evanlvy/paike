@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, useEffect } from 'react';
 import {
   Switch,
   Route,
@@ -12,6 +12,7 @@ import {
   AlertDialog,
   AlertDialogOverlay,
   Spinner,
+  useToast,
 } from '@chakra-ui/core';
 
 import {
@@ -40,10 +41,20 @@ const AsyncProgressdoc = connectRoute(AsyncComponent(() => import('../screens/pr
 const AsyncCurriculums = connectRoute(AsyncComponent(() => import('../screens/curriculums-screen')));
 const AsyncFrontPage = connectRoute(AsyncComponent(() => import('../screens/frontpage-screen')));
 
+function Toast(props) {
+  const toast = useToast();
+  useEffect(() => {
+    toast(props.params);
+  }, []); // Passing in empty array so this will only get called on mount
+  return null;
+}
 
 class MainNavigatorWrapper extends PureComponent {
   constructor(props) {
     super(props);
+    this.state = {
+      showError: false,
+    };
     this.confirmErrorDialog = React.createRef();
   }
 
@@ -58,6 +69,7 @@ class MainNavigatorWrapper extends PureComponent {
     const { requestError } = this.props;
     if (requestError) {
       this.showConfirmDialog(requestError);
+      this.checkError();
     }
   }
 
@@ -110,8 +122,8 @@ class MainNavigatorWrapper extends PureComponent {
   }
 
   onConfirmError = () => {
-    this.props.removeError();
     this.confirmErrorDialog.current.dismiss();
+    this.props.removeError();
   }
 
   needLogin = () => {
@@ -126,6 +138,23 @@ class MainNavigatorWrapper extends PureComponent {
     else {
       this.props.setStage(stageId);
     }
+  }
+
+  checkError = () => {
+    const { requestError } = this.props;
+    this.isNewRequest = true;
+    if (requestError.message && this.isNewRequest && !this.state.showError) {
+      console.log("checkError, error: "+requestError.message);
+      this.setState({
+        showError: true
+      });
+      this.isNewRequest = false;
+    }
+  }
+  dismissAlert = () => {
+    this.setState({
+      showError: false
+    });
   }
 
   render() {
@@ -167,6 +196,7 @@ class MainNavigatorWrapper extends PureComponent {
             <Route path="/" component={AsyncFrontPage} />
           </Switch>
         </Flex>
+        {/* Spinner */}
         {
           requestsCount > 0 && !requestError &&
           <AlertDialog
@@ -180,9 +210,22 @@ class MainNavigatorWrapper extends PureComponent {
             </AlertDialogOverlay>
           </AlertDialog>
         }
+        {/* Error alert box */}
         <Alert
           ref={this.confirmErrorDialog}
           onResult={onConfirmError} />
+        {/* Info toast */}
+        {
+          this.state.showError && requestError && requestError.message &&
+          <Toast params={{
+            title: "loginScreen.auth_failure",
+            description: requestError.message,
+            status: "error",
+            duration: 3000,
+            isClosable: true,
+          }}>
+          </Toast>
+        }
       </Flex>
     )
   }

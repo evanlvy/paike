@@ -12,6 +12,8 @@ export const types = {
   FINISH_REQUEST: "APP/FINISH_REQUEST",
   SET_ERROR: "APP/SET_ERROR",
   REMOVE_ERROR: "APP/REMOVE_ERROR",
+  SET_TOAST: "APP/SET_TOAST",
+  REMOVE_TOAST: "APP/REMOVE_TOAST",
 }
 
 // Action Creator
@@ -29,6 +31,13 @@ export const actions = {
   removeError: () => ({
     type: types.REMOVE_ERROR
   }),
+  setToast: (toast) => ({
+    type: types.SET_TOAST,
+    toast
+  }),
+  removeToast: () => ({
+    type: types.REMOVE_TOAST
+  }),
 }
 
 // reducer
@@ -42,6 +51,10 @@ const reducer = (state = initialState, action) => {
       return state.merge({ requestsCount: state.get("requestsCount")-1, error: action.error });
     case types.REMOVE_ERROR:
       return state.merge({ error: null });
+    case types.SET_ERROR:
+      return state.merge({ toast: action.toast });
+    case types.REMOVE_ERROR:
+      return state.merge({ toast: null });
     default:
       return state;
   }
@@ -52,6 +65,10 @@ export default reducer;
 // selectors
 export const getError = state => {
   return state.getIn(["app", "error"]);
+};
+
+export const getToast = state => {
+  return state.getIn(["app", "toast"]);
 };
 
 export const getRequestQuantity = state => {

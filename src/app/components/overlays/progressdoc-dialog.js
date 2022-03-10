@@ -264,16 +264,24 @@ class ProgressdocDialog extends Component {
     }
     if (!has_diff && editedRowCache.length <= 0) return; // for nothing changed
     if (editedRowCache.length <= 3) {
+      // when 1 or 2 rows changed, use dict mode directly.
       console.log("onSave: delta_dict"+JSON.stringify(editedRowCache));
       this.props.saveDoc(this.state['id'], props_diff, editedRowCache);
     } else {
+      // When many rows changed, use dataframe mode.
       let df_col = this.tableHeaders.map((col) => {
         return col['field'];
       });
       let df_data = [];
       Object.keys(editedRowCache).forEach((index) => {
         df_data.push(df_col.map((col)=> {
-          if (col in editedRowCache[index]) return editedRowCache[index][col];
+          if (col in editedRowCache[index]){
+            if (col === 'lab_alloc') {
+              return editedRowCache[index]['labitem_id'];
+            } else {
+              return editedRowCache[index][col];
+            }
+          }
           else return undefined;
         }));
       });
