@@ -144,13 +144,6 @@ export const actions = {
     closeDoc: () => ({
       type: types.CLR_OPENED_DOC_ID,
     }),
-    /*getChangedRowIds: () => {
-      // Use thunk to call selector with State ref. In order to peek state value only.
-      return (dispatch, getState) => {
-        const state = getState();
-        return getChangedRowIds(state);
-      }
-    },*/
     /* params_json_sample = {
       "id": 1,
       "attributes": {"id": 1, "course_name": "ssskkk"},
@@ -168,6 +161,7 @@ export const actions = {
           dispatch(appActions.startRequest());
           const data = await progressdocApi.setDoc(docId, docDiffDict, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
           dispatch(appActions.finishRequest());
+          dispatch(appActions.setToast({type:"success", message:"toast.toast_request_save_success"}));
           dispatch(setDocSuccess(docId));
         } catch (error) {
           dispatch(appActions.setError(error));

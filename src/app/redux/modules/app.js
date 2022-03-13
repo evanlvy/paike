@@ -51,9 +51,9 @@ const reducer = (state = initialState, action) => {
       return state.merge({ requestsCount: state.get("requestsCount")-1, error: action.error });
     case types.REMOVE_ERROR:
       return state.merge({ error: null });
-    case types.SET_ERROR:
+    case types.SET_TOAST:
       return state.merge({ toast: action.toast });
-    case types.REMOVE_ERROR:
+    case types.REMOVE_TOAST:
       return state.merge({ toast: null });
     default:
       return state;

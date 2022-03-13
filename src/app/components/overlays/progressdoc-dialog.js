@@ -207,6 +207,7 @@ class ProgressdocDialog extends Component {
         return;
       }
     }*/
+    if (dest_col === 'lab_alloc') dest_col = 'labitem_id';
     this.setState({editedRowCache: {...this.state.editedRowCache, 
       [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.data.id, [dest_col]: params.newValue}}});
     //this.props.setRowChanged(this.props.selectedDataId, params.data["id"], dest_col, params.data[dest_col]);
@@ -270,19 +271,12 @@ class ProgressdocDialog extends Component {
     } else {
       // When many rows changed, use dataframe mode.
       let df_col = this.tableHeaders.map((col) => {
-        return col['field'];
+        return col['field'] === 'lab_alloc'?'labitem_id':col['field'];
       });
       let df_data = [];
       Object.keys(editedRowCache).forEach((index) => {
         df_data.push(df_col.map((col)=> {
-          if (col in editedRowCache[index]){
-            if (col === 'lab_alloc') {
-              return editedRowCache[index]['labitem_id'];
-            } else {
-              return editedRowCache[index][col];
-            }
-          }
-          else return undefined;
+          return (col in editedRowCache[index])?editedRowCache[index][col]:undefined;
         }));
       });
       console.log("onSave: df_data"+JSON.stringify(df_data));
@@ -398,7 +392,7 @@ class ProgressdocDialog extends Component {
             <ModalFooter>
               <Button variantColor="green" mr={3} onClick={onFlashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button>
               { isSaveable && 
-                <Button variantColor="red" mr={3} onClick={onSave} leftIcon={MdSave} isLoading={isSaving} loadingText={t("common.saving")}>{t("common.save")}</Button>
+                <Button variantColor="red" mr={3} onClick={onSave} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("common.save")}</Button>
               }
               <Button onClick={onClose}>{t("common.close")}</Button>
             </ModalFooter>

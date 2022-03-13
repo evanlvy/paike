@@ -24,7 +24,7 @@ import {
 import { actions as authActions, getAccessLevel, getLoggedUser, getStudentInfo } from '../redux/modules/auth';
 import { actions as gradeActions, getGradesOfAllDegrees, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getJiaoyanshiOfAllCenters } from '../redux/modules/jiaoyanshi';
-import { actions as requestActions, getRequestQuantity, getError } from '../redux/modules/app';
+import { actions as requestActions, getRequestQuantity, getError, getToast } from '../redux/modules/app';
 
 import AsyncComponent from '../utils/AsyncComponent';
 import connectRoute from '../utils/connectRoute';
@@ -66,10 +66,12 @@ class MainNavigatorWrapper extends PureComponent {
   }
 
   componentDidUpdate() {
-    const { requestError } = this.props;
+    const { requestError, requestToast } = this.props;
     if (requestError) {
       this.showConfirmDialog(requestError);
-      this.checkError();
+    }
+    if (requestToast) {
+      this.props.removeToast();
     }
   }
 
@@ -140,29 +142,12 @@ class MainNavigatorWrapper extends PureComponent {
     }
   }
 
-  checkError = () => {
-    const { requestError } = this.props;
-    this.isNewRequest = true;
-    if (requestError.message && this.isNewRequest && !this.state.showError) {
-      console.log("checkError, error: "+requestError.message);
-      this.setState({
-        showError: true
-      });
-      this.isNewRequest = false;
-    }
-  }
-  dismissAlert = () => {
-    this.setState({
-      showError: false
-    });
-  }
-
   render() {
     if (this.needLogin()) {
       return <Redirect to="/login" />;
     }
     const { onConfirmError, onStageChanged } = this;
-    const { initStage, stageList, gradeTypes, centers, labBuildings, requestsCount, requestError, user, accessLevel, stuInfo } = this.props;
+    const { t, initStage, stageList, gradeTypes, centers, labBuildings, requestsCount, requestError, requestToast, user, accessLevel, stuInfo } = this.props;
     console.log("Request count: "+requestsCount);
     return (
       <Flex direction="column" justify="center" basis="100%">
@@ -216,11 +201,12 @@ class MainNavigatorWrapper extends PureComponent {
           onResult={onConfirmError} />
         {/* Info toast */}
         {
-          this.state.showError && requestError && requestError.message &&
-          <Toast params={{
-            title: "loginScreen.auth_failure",
-            description: requestError.message,
-            status: "error",
+          requestToast && requestToast.message &&
+          <Toast 
+          params={{
+            title: (requestToast.title)?requestToast.title:t('toast.'+requestToast.type),
+            description: (requestToast.message.startsWith('toast.'))?t(requestToast.message):requestToast.message,
+            status: requestToast.type?requestToast.type:"info",
             duration: 3000,
             isClosable: true,
           }}>
@@ -244,6 +230,7 @@ const mapStateToProps = (state) => {
     centers: getJiaoyanshiOfAllCenters(state),
     requestsCount: getRequestQuantity(state),
     requestError: getError(state),
+    requestToast: getToast(state),
     stuInfo: getStudentInfo(state),
     accessLevel: getAccessLevel(state),
   }

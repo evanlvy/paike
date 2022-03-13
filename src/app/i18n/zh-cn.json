@@ -32,6 +32,13 @@
     "request_failure": "网络请求失败",
     "request_failure_detail": "失败信息: {{error_msg}}"
   },
+  "toast": {
+    "success": "成功",
+    "warning": "警告",
+    "error": "抱歉，发生了一个错误...",
+    "info": "信息",
+    "toast_request_save_success": "您的修改被成功保存!"
+  },
   "grade": {
     "college": "大专",
     "vocational": "高职",
