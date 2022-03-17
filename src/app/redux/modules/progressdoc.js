@@ -9,6 +9,7 @@ import { api as progressdocApi } from '../../services/progressdoc';
 export const types = {
     SEARCH_DOC_LIST: "PROGRESSDOC/SEARCH_DOC_LIST",
     FETCH_DOC_LIST: "PROGRESSDOC/FETCH_DOC_LIST",
+    UPDATE_DOC_LIST: "PROGRESSDOC/UPDATE_DOC_LIST",
     FETCH_DOC: "PROGRESSDOC/FETCH_DOC",
     CLEAR_DOC: "PROGRESSDOC/CLEAR_DOC",
     SET_SELECTED_DEPAETMENT: "PROGRESSDOC/SET_SELECTED_DEPAETMENT",
@@ -163,12 +164,16 @@ export const actions = {
           dispatch(appActions.finishRequest());
           dispatch(appActions.setToast({type:"success", message:"toast.toast_request_save_success"}));
           dispatch(setDocSuccess(docId));
+          // To update doc list table in progressdoc-screen.
+          dispatch(updateDocList(getSelectedDepartment(getState()), docId, docDiffDict));
         } catch (error) {
           dispatch(appActions.setError(error));
         }
       }
     },
-    saveLabItem: (labItemDiffDict) => {
+    reselectLabItem: (progressId, labitemId) => {
+    },
+    saveLabItem: (labitemId, itemDiffDict) => {
       // Add/modify a lab item, return the created/modified labitem_id
     },
 }
@@ -275,6 +280,15 @@ const setDocSuccess = (id) => {
   })
 }
 
+const updateDocList = (selected, id, diff) => {
+  return ({
+    type: types.UPDATE_DOC_LIST,
+    selected,
+    id,
+    diff
+  })
+}
+
 // reducers
 const searchedList = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
@@ -293,6 +307,12 @@ const fetchedList = (state = Immutable.fromJS({}), action) => {
       return state.merge({[action.department_id+"_"+action.stage]: action.data});
     case types.SET_SELECTED_DEPAETMENT:
       return state.merge({selected: action.id+"_"+action.stage});
+    case types.UPDATE_DOC_LIST:
+      return state.mergeDeep({
+        [action.selected]: {
+          [action.id]: {...action.diff, updated_at: "Just now"}
+        }
+      });
     default:
       return state;
   }

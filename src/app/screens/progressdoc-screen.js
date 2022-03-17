@@ -23,7 +23,7 @@ import {
 import { actions as authActions, getDepartmentId } from '../redux/modules/auth';
 import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getColoredJysList } from '../redux/modules/jiaoyanshi';
-import { actions as progressdocActions, getDocList, getSearchedDocList } from '../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocList } from '../redux/modules/progressdoc';
 import PromptDrawer from '../components/overlays/prompt-drawer';
 import ProgressdocDialog from '../components/overlays/progressdoc-dialog';
 
@@ -295,7 +295,7 @@ const mapDispatchToProps = (dispatch) => {
     ...bindActionCreators(jysActions, dispatch),
     ...bindActionCreators(gradeActions, dispatch),
     ...bindActionCreators(progressdocActions, dispatch),
-    //...bindActionCreators(authActions, dispatch),
+    ...bindActionCreators(authActions, dispatch),
   }
 }
 

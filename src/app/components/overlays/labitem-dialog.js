@@ -41,7 +41,7 @@ class LabitemDialog extends Component {
       isOpen: false,
       tabIndex: 0,
       depSelected: -1,
-      selectedId: "",
+      selectedId: -1,
       //doc_labitem_brief: "",
     };
     this.color = color ? color : DEFAULT_COLOR;
@@ -59,7 +59,7 @@ class LabitemDialog extends Component {
   }
 
   static empty_object = {
-    "id": "-1",
+    "id": -1,
     "description": "",
     "name": "",
     "department_id": -1,
@@ -81,9 +81,6 @@ class LabitemDialog extends Component {
     if (!props.context) {
       result = {...result, ...LabitemDialog.empty_context};
     }
-    if (!props.data) {
-      return {...result, ...{original:LabitemDialog.empty_object}};
-    }
     if (props.imported && "id" in props.imported) {
       if (!state.original || props.imported.id !== state.original.id) {
         result["original"] = Object.assign({}, props.imported);  // Never use '=' to assign value here!
@@ -97,10 +94,17 @@ class LabitemDialog extends Component {
       return result;
     }
 
+    let next_labitem_id = (!props.data)?-1:props.data.id;
+    if (props.context && !state.doc_department_id) {
+      // props.data can be empty for empty cell clicked!
+      result = {...result, ...props.context};
+      result["doc_lab_content"] = "";
+    }
     // initialize the state with props by the same name id!
-    if (!state.original || props.data.id !== state.original.id) {
-      result["original"] = Object.assign({}, props.data);
-      if (props.data.items) {
+    if (!state.original || (next_labitem_id !== state.original.id)) {
+      result["original"] = (!props.data)?LabitemDialog.empty_object:props.data;
+      //result["original"] = Object.assign({}, props.data);
+      if (props.data && props.data.items) {
         let short_names = props.data.items.map(function (lab_info) {
           return lab_info.location;
         });
@@ -109,7 +113,7 @@ class LabitemDialog extends Component {
       }
       result = {...result, ...props.context};
       result["doc_lab_content"] = "";
-      result["selectedId"] = "";  // Clear the selection
+      result["selectedId"] = -1;  // Clear the selection
       /*if (props.data.id > 0) {
         result["doc_labitem_brief"] = {[props.data.id]: "<"+props.data.description+">"+props.data.name+" "+(("locations" in result)?result["locations"]:"")}
       } else {
@@ -138,25 +142,32 @@ class LabitemDialog extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { data, searchResult, imported } = this.props;
+    const { data, searchResult, imported, context } = this.props;
     //const { isOpen, department_id, items } = this.state;
+
+    if (nextProps.context !== context && context && nextProps.context.doc_course_name !== context.doc_course_name) {
+      if (!nextProps.imported || !("id" in nextProps.imported)) {
+        console.log("shouldComponentUpdate, clearSearchedLabitem!");
+        this.props.clearSearchedLabitem();
+      }
+      return true;
+    }
+    if (nextProps.data !== data || nextProps.searchResult !== searchResult || nextProps.imported !== imported) {
+      console.log("shouldComponentUpdate, nextProp data diff");
+      return true;
+    }
 
     if (nextState !== this.state/*nextState.isOpen !== isOpen || nextState.items !== items || nextState.department_id !== department_id*/) {
       if (nextState.isSearching !== this.state.isSearching) {
         return false;
       }
       console.log("shouldComponentUpdate, nextState diff");
-      if (nextState.original.id !== this.state.original.id) {
+      /*if (nextState.original.id !== this.state.original.id) {
         if (!nextProps.imported || !("id" in nextProps.imported)) {
           console.log("shouldComponentUpdate, clearSearchedLabitem!");
           this.props.clearSearchedLabitem();
         }
-      }
-      return true;
-    }
-
-    if (nextProps.data !== data || nextProps.searchResult !== searchResult || nextProps.imported !== imported) {
-      console.log("shouldComponentUpdate, nextProp data diff");
+      }*/
       return true;
     }
 
@@ -216,7 +227,7 @@ class LabitemDialog extends Component {
     const { doc_department_id, doc_short_name, doc_course_name, doc_lab_content } = this.state;
     this.setState({
       isSearching: true,
-      selectedId: "",
+      selectedId: -1,
       //doc_labitem_brief: this.props.t("labitemScreen.search_placeholder")
     });
     this.props.searchLabitem(doc_course_name, doc_short_name, doc_lab_content, doc_department_id);
@@ -238,8 +249,11 @@ class LabitemDialog extends Component {
     });
   }
 
-  onSaveSelected = () => {
-    
+  onReSelected = () => {
+    let labitem_id = this.state.selectedId;
+    if (labitem_id > 0) {
+
+    }
   }
   
   onSaveEdited = () => {
@@ -250,7 +264,7 @@ class LabitemDialog extends Component {
     const { isOpen, selectedId, isSearching, tabIndex, original:edit_source,
       doc_department_id, doc_short_name, doc_course_name, doc_lab_content, doc_locs } = this.state;
     const { t, title, color, isSaveable, departments, searchResult, data:labItemProp,  context:docContext } = this.props;
-    const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch, onSearchResultSelected, handleTabsChange, onLoadExisted, onSaveSelected, onSaveEdited } = this;
+    const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch, onSearchResultSelected, handleTabsChange, onLoadExisted, onReSelected, onSaveEdited } = this;
     return (
       <>
         <Modal
@@ -368,9 +382,9 @@ class LabitemDialog extends Component {
                 <Button variantColor="green" mr={3} isDisabled={selectedId.length<=0} onClick={onLoadExisted}>{t("labitemScreen.btn_import_labitem")}</Button>
               }
               { isSaveable && 
-                <Button variantColor="red" mr={3} onClick={tabIndex === 0?onSaveSelected:onSaveEdited}
+                <Button variantColor="red" mr={3} onClick={tabIndex === 0?onReSelected:onSaveEdited}
                 isDisabled={(tabIndex === 0 && selectedId.length <= 0) || (tabIndex === 1 && (edit_source.description.length <= 0 || edit_source.locations.length <= 0 || edit_source.name.length <= 0))} >
-                  {t("common.save")}</Button>
+                  {t(tabIndex === 0?"common.ok":"common.save")}</Button>
               }
               <Button onClick={onClose}>{t("common.close")}</Button>
             </ModalFooter>
