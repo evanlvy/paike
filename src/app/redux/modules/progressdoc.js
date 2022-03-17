@@ -172,6 +172,9 @@ export const actions = {
       }
     },
     reselectLabItem: (progressId, labitemId) => {
+      // When user confirm on selecting another labitem, just change the labitem_id inside states.
+      console.log(`reselectLabItem: progress_id: ${progressId} labitem_id: ${labitemId}`);
+      
     },
     saveLabItem: (labitemId, itemDiffDict) => {
       // Add/modify a lab item, return the created/modified labitem_id

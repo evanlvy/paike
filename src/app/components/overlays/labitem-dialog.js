@@ -133,11 +133,11 @@ class LabitemDialog extends Component {
     }
   }
 
-  onClose = () => {
+  onClose = (params=null) => {
     this.setState({ isOpen: false });
     const { onClose:onCloseCallback } = this.props;
     if (onCloseCallback != null) {
-      onCloseCallback();
+      onCloseCallback(params);
     }
   }
 
@@ -250,9 +250,10 @@ class LabitemDialog extends Component {
   }
 
   onReSelected = () => {
+    const context = this.props.context;
     let labitem_id = this.state.selectedId;
-    if (labitem_id > 0) {
-
+    if (labitem_id > 0 && context) {
+      this.onClose({id:labitem_id, rowIndex:context.rowIndex, progressId:context.progressId});
     }
   }
   

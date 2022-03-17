@@ -24,7 +24,7 @@ import { MdEdit, MdSave } from "react-icons/md"
 
 import { EditableTable } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
-import { actions as progressdocActions, getDocProps, getDocItems, getOpenedDocId, peekDocItem } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocProps, getDocItems, getOpenedDocId } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -181,6 +181,8 @@ class ProgressdocDialog extends Component {
           doc_short_name: this.state.short_name,
           doc_department_id: this.state.department_id,
           doc_lab_content: event.data.labitem_content,
+          rowIndex: event.rowIndex,
+          progressId: event.data.id,
         },
         isLabItemOpen: true,
       });
@@ -240,7 +242,11 @@ class ProgressdocDialog extends Component {
     }, this);
   }
 
-  onLabItemClosed = (event) => {
+  onLabItemClosed = (params) => {
+    if (params && 'id' in params && 'rowIndex' in params) {
+      this.setState({editedRowCache: {...this.state.editedRowCache, 
+        [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.progressId, 'labitem_id': params.id}}});
+    }
     this.setState({
       isLabItemOpen: false
     });
