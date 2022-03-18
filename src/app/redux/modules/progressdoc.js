@@ -1,4 +1,4 @@
-import Immutable, { has } from 'immutable';
+import Immutable, { isImmutable } from 'immutable';
 import { combineReducers } from 'redux-immutable';
 import { createSelector } from 'reselect';
 
@@ -474,3 +474,14 @@ export const getLabitemContent = createSelector(
     return value;
   }
 );
+
+export const parseImmutableLocs = (imm_loc_array) => {
+  let loc_data = imm_loc_array;
+  if (isImmutable(loc_data)) {
+    loc_data =imm_loc_array.toJS();
+  }
+  let short_names = Object.values(loc_data).map(function (lab_info) {
+    return lab_info.location;
+  });
+  return short_names.join(', ');
+};

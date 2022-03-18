@@ -24,7 +24,7 @@ import { MdEdit, MdSave } from "react-icons/md"
 
 import { EditableTable } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
-import { actions as progressdocActions, getDocProps, getDocItems, getOpenedDocId } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocProps, getDocItems, getOpenedDocId, parseImmutableLocs } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -174,8 +174,10 @@ class ProgressdocDialog extends Component {
 
   onCellDoubleClicked = (event) => {
     if (event && event.column.colId === "lab_alloc" && !event.data.theory_item_hours && !event.data.theory_item_content) {
+      let lab_alloc = event.data.lab_alloc;
+      let short_names = parseImmutableLocs(lab_alloc.items);
       this.setState({
-        labs: event.data.lab_alloc,
+        labs: {...lab_alloc, locations:short_names},
         context: {
           doc_course_name: this.state.course_name,
           doc_short_name: this.state.short_name,

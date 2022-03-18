@@ -27,8 +27,7 @@ import {
     TabList,
   } from "@chakra-ui/core"
 import { MdSearch } from "react-icons/md"
-import { actions as progressdocActions, getLabitemContent, getSearchedLabitemBriefs } from '../../redux/modules/progressdoc';
-import { isImmutable } from 'immutable';
+import { actions as progressdocActions, getLabitemContent, getSearchedLabitemBriefs, parseImmutableLocs } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -41,7 +40,7 @@ class LabitemDialog extends Component {
       isOpen: false,
       tabIndex: 0,
       depSelected: -1,
-      selectedId: -1,
+      selectedId: '',
       //doc_labitem_brief: "",
     };
     this.color = color ? color : DEFAULT_COLOR;
@@ -85,10 +84,7 @@ class LabitemDialog extends Component {
       if (!state.original || props.imported.id !== state.original.id) {
         result["original"] = Object.assign({}, props.imported);  // Never use '=' to assign value here!
         if (props.imported.items) {
-          let short_names = props.imported.items.map(function (lab_info) {
-            return lab_info.location;
-          });
-          result["original"]["locations"] = short_names.join(', ');
+          result["original"]["locations"] = parseImmutableLocs(props.imported.items);
         }
       }
       return result;
@@ -102,22 +98,11 @@ class LabitemDialog extends Component {
     }
     // initialize the state with props by the same name id!
     if (!state.original || (next_labitem_id !== state.original.id)) {
-      result["original"] = (!props.data)?LabitemDialog.empty_object:props.data;
+      result["original"] = Object.assign({},(!props.data)?LabitemDialog.empty_object:props.data);
       //result["original"] = Object.assign({}, props.data);
-      if (props.data && props.data.items) {
-        let loc_data = props.data.items;
-        if (isImmutable(loc_data)) {
-          loc_data =props.data.items.toJS();
-        }
-        let short_names = Object.values(loc_data).map(function (lab_info) {
-          return lab_info.location;
-        });
-        result["original"]["locations"] = short_names.join(', ');
-        result["doc_locs"] = short_names.join(', ');
-      }
       result = {...result, ...props.context};
-      result["doc_lab_content"] = "";
-      result["selectedId"] = -1;  // Clear the selection
+      result["doc_lab_content"] = '';
+      result["selectedId"] = '';  // Clear the selection
       /*if (props.data.id > 0) {
         result["doc_labitem_brief"] = {[props.data.id]: "<"+props.data.description+">"+props.data.name+" "+(("locations" in result)?result["locations"]:"")}
       } else {
@@ -231,7 +216,7 @@ class LabitemDialog extends Component {
     const { doc_department_id, doc_short_name, doc_course_name, doc_lab_content } = this.state;
     this.setState({
       isSearching: true,
-      selectedId: -1,
+      selectedId: '',
       //doc_labitem_brief: this.props.t("labitemScreen.search_placeholder")
     });
     this.props.searchLabitem(doc_course_name, doc_short_name, doc_lab_content, doc_department_id);
@@ -245,7 +230,7 @@ class LabitemDialog extends Component {
 
   onLoadExisted = () => {
     let labitem_id = this.state.selectedId;
-    if (labitem_id > 0) {
+    if (labitem_id.length > 0) {
       this.props.fetchLabitem(labitem_id);
     }
     this.setState({
@@ -272,12 +257,13 @@ class LabitemDialog extends Component {
   }
   
   onSaveEdited = () => {
-    
+    // Always create a new labitem!
+
   }
 
   render() {
     const { isOpen, selectedId, isSearching, tabIndex, original:edit_source,
-      doc_department_id, doc_short_name, doc_course_name, doc_lab_content, doc_locs } = this.state;
+      doc_department_id, doc_short_name, doc_course_name, doc_lab_content } = this.state;
     const { t, title, color, isSaveable, departments, searchResult, data:labItemProp,  context:docContext } = this.props;
     const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch, onSearchResultSelected, handleTabsChange, onLoadExisted, onReSelected, onSaveEdited } = this;
     return (
@@ -303,7 +289,7 @@ class LabitemDialog extends Component {
               </Text>
               <Text fontWeight='bold' mb='1rem'>
                 {t("labitemScreen.cap_original_lab_locations")}&#58;&nbsp;
-                {(!doc_locs)?t("labitemScreen.hint_no_lab_locations"):doc_locs}
+                {(!labItemProp || !labItemProp.locations)?t("labitemScreen.hint_no_lab_locations"):labItemProp.locations}
               </Text>
               <Box w='100%' borderWidth='2px' borderRadius='lg'>
               <Tabs isFitted index={tabIndex} onChange={handleTabsChange}>
@@ -399,7 +385,7 @@ class LabitemDialog extends Component {
               { isSaveable && 
                 <Button variantColor="red" mr={3} onClick={tabIndex === 0?onReSelected:onSaveEdited}
                 isDisabled={(tabIndex === 0 && selectedId.length <= 0) || (tabIndex === 1 && (edit_source.description.length <= 0 || edit_source.locations.length <= 0 || edit_source.name.length <= 0))} >
-                  {t(tabIndex === 0?"common.ok":"common.save")}</Button>
+                  {t(tabIndex === 0?"common.ok":"common.new")}</Button>
               }
               <Button onClick={onClose}>{t("common.close")}</Button>
             </ModalFooter>
