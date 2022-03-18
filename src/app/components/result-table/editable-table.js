@@ -8,6 +8,7 @@ import {
   Box,
 } from '@chakra-ui/core';
 import { withTranslation } from 'react-i18next';
+import { isImmutable } from 'immutable';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
@@ -52,7 +53,8 @@ class EditableTableWrapper extends Component {
     const { props, state } = this;
     // console.log("shouldComponentUpdate, orig props "+JSON.stringify(props));
     if (nextProps.data !== props.data) {
-      this.buildData(nextProps);
+      return true;
+      //this.buildData(nextProps);
     }
     if (nextProps.title !== props.title || nextProps.headers !== props.headers || nextProps.defaultColWidth !== props.defaultColWidth
     || nextProps.colLineHeight !== props.colLineHeight) {
@@ -64,6 +66,13 @@ class EditableTableWrapper extends Component {
       return true;
     }
     return false;
+  }
+
+  componentDidUpdate(prevProps) {
+    console.log("LIFECYCLE: componentDidUpdate");
+    if (prevProps.data !== this.props.data) {
+      this.buildData(this.props);
+    }
   }
 
   getCircularReplacer = () => {
@@ -158,7 +167,11 @@ class EditableTableWrapper extends Component {
       // Show flash icon when lab hour > 0
       return (!params.data.theory_item_content && !params.data.theory_item_hours)?"\u26A1":"";
     }
-    let short_names = value.items.map(function (lab_info) {
+    let loc_data = value.items;
+    if (isImmutable(loc_data)) {
+      loc_data = value.items.toJS();
+    }
+    let short_names = Object.values(loc_data).map(function (lab_info) {
       return lab_info.location;
     });
     return short_names.join(', ');

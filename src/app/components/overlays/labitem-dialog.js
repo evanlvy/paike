@@ -28,7 +28,7 @@ import {
   } from "@chakra-ui/core"
 import { MdSearch } from "react-icons/md"
 import { actions as progressdocActions, getLabitemContent, getSearchedLabitemBriefs } from '../../redux/modules/progressdoc';
-import { isThisSecond } from 'date-fns';
+import { isImmutable } from 'immutable';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -105,7 +105,11 @@ class LabitemDialog extends Component {
       result["original"] = (!props.data)?LabitemDialog.empty_object:props.data;
       //result["original"] = Object.assign({}, props.data);
       if (props.data && props.data.items) {
-        let short_names = props.data.items.map(function (lab_info) {
+        let loc_data = props.data.items;
+        if (isImmutable(loc_data)) {
+          loc_data =props.data.items.toJS();
+        }
+        let short_names = Object.values(loc_data).map(function (lab_info) {
           return lab_info.location;
         });
         result["original"]["locations"] = short_names.join(', ');
@@ -250,10 +254,20 @@ class LabitemDialog extends Component {
   }
 
   onReSelected = () => {
-    const context = this.props.context;
+    const { searchResult, context } = this.props;
     let labitem_id = this.state.selectedId;
     if (labitem_id > 0 && context) {
-      this.onClose({id:labitem_id, rowIndex:context.rowIndex, progressId:context.progressId});
+      let param = {id:labitem_id, rowIndex:context.rowIndex, progressId:context.progressId}
+      if (searchResult && labitem_id in searchResult) {
+        let lab_arr = searchResult[labitem_id].split('#');
+        if (lab_arr.length > 1) {
+          let lab_str = lab_arr[lab_arr.length-1];
+          let labs = lab_str.trim().split(" ");
+          param['locations'] = {};
+          labs.forEach((v, i) => param['locations'][i] = {location:v});
+        }
+      }
+      this.onClose(param);
     }
   }
   

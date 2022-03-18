@@ -89,14 +89,14 @@ class ProgressdocDialog extends Component {
   lab_should_disable = (progress_item) => {
     if (!progress_item) {return false;}
     if (!progress_item["theory_item_content"] && !progress_item["theory_item_hours"]) return false;
-    if (progress_item["theory_item_content"].length === 0 && progress_item["theory_item_hours"] <= 0) return false;
+    if ((!progress_item["theory_item_content"] || progress_item["theory_item_content"].length === 0) && progress_item["theory_item_hours"] <= 0) return false;
     return true;
   }
 
   theory_should_disable = (progress_item) => {
     if (!progress_item) {return false;}
     if (!progress_item["labitem_content"] && !progress_item["labitem_hours"]) return false;
-    if (progress_item["labitem_content"].length === 0 && progress_item["labitem_hours"] <= 0) return false;
+    if ((!progress_item["labitem_content"] || progress_item["labitem_content"].length === 0) && progress_item["labitem_hours"] <= 0) return false;
     return true;
   }
 
@@ -130,7 +130,7 @@ class ProgressdocDialog extends Component {
     }
     if (nextProps.docItems != docItems) {
       console.log("shouldComponentUpdate, docItems");
-      return false;
+      return true;
     }
     /*for (let index = 0; index < this.forms.length; index++) {
       let form = this.forms[index];
@@ -216,6 +216,7 @@ class ProgressdocDialog extends Component {
   }
 
   onCellEditingStarted  = (params) => {
+    this.gridApi = params.api;
     let dest_col = params.colDef.field;
     // When theory cells added, check if the lab cells have contents
     let should_stop_editing = false;
@@ -237,20 +238,43 @@ class ProgressdocDialog extends Component {
     Object.keys(this.state.editedRowCache).forEach(function(idx){
       let row = this.gridApi.getDisplayedRowAtIndex(parseInt(idx));
       if (row) {
-        this.gridApi.flashCells({ rowNodes: [row], columns: Object.keys(this.state.editedRowCache[idx]) });
+        let cols = Object.keys(this.state.editedRowCache[idx]);
+        if (cols.includes("labitem_id")) {
+          cols.push("lab_alloc");
+        }
+        this.gridApi.flashCells({ rowNodes: [row], columns: cols });
       }
     }, this);
   }
 
   onLabItemClosed = (params) => {
     if (params && 'id' in params && 'rowIndex' in params) {
+      // Update labitem_id in row cache
       this.setState({editedRowCache: {...this.state.editedRowCache, 
         [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.progressId, 'labitem_id': params.id}}});
+      if ('locations' in params) {
+        // Update the locations on list
+        this.props.updateProgressLabLocation(params.progressId, params.locations);
+        /*if (this.gridApi){
+          let cellparams = {
+            force: true,
+            rowNode: this.gridApi.getDisplayedRowAtIndex(params.rowIndex),
+            //columns: ["lab_alloc"],
+          };
+          this.callRefreshAfterMillis(cellparams, 1000, this.gridApi);
+        }*/
+      }
     }
     this.setState({
       isLabItemOpen: false
     });
   }
+
+  /*callRefreshAfterMillis = (params, millis, gridApi) => {
+    setTimeout(function () {
+      gridApi.redrawRows();
+    }, millis);
+  }*/
 
   // TBD: Add Create-new-line button.
   // Add order to database for progress items display order.

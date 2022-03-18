@@ -12,6 +12,7 @@ export const types = {
     UPDATE_DOC_LIST: "PROGRESSDOC/UPDATE_DOC_LIST",
     FETCH_DOC: "PROGRESSDOC/FETCH_DOC",
     CLEAR_DOC: "PROGRESSDOC/CLEAR_DOC",
+    UPDATE_LAB_LOCATIONS: "PROGRESSDOC/UPDATE_LAB_LOCATIONS",
     SET_SELECTED_DEPAETMENT: "PROGRESSDOC/SET_SELECTED_DEPAETMENT",
     SET_SELECTED_SEARCH: "PROGRESSDOC/SET_SELECTED_SEARCH",
     SET_OPENED_DOC_ID: "PROGRESSDOC/SET_OPENED_DOC_ID",
@@ -171,10 +172,12 @@ export const actions = {
         }
       }
     },
-    reselectLabItem: (progressId, labitemId) => {
-      // When user confirm on selecting another labitem, just change the labitem_id inside states.
-      console.log(`reselectLabItem: progress_id: ${progressId} labitem_id: ${labitemId}`);
-      
+    updateProgressLabLocation: (progressId, locations) => {
+      return async (dispatch, getState) => {
+        // When user confirm on selecting another labitem, just change the labitem_id inside states.
+        console.log(`updateProgressLabLocation: progress_id: ${progressId}`);
+        dispatch(updateProgressLabLocation(getOpenedDocId(getState()), progressId, locations));
+      }
     },
     saveLabItem: (labitemId, itemDiffDict) => {
       // Add/modify a lab item, return the created/modified labitem_id
@@ -283,12 +286,21 @@ const setDocSuccess = (id) => {
   })
 }
 
-const updateDocList = (selected, id, diff) => {
+const updateDocList = (docId, progressId, diff) => {
   return ({
     type: types.UPDATE_DOC_LIST,
-    selected,
-    id,
+    docId,
+    progressId,
     diff
+  })
+}
+
+const updateProgressLabLocation = (docId, progressId, locations) => {
+  return ({
+    type: types.UPDATE_LAB_LOCATIONS,
+    docId,
+    progressId,
+    locations
   })
 }
 
@@ -312,8 +324,8 @@ const fetchedList = (state = Immutable.fromJS({}), action) => {
       return state.merge({selected: action.id+"_"+action.stage});
     case types.UPDATE_DOC_LIST:
       return state.mergeDeep({
-        [action.selected]: {
-          [action.id]: {...action.diff, updated_at: "Just now"}
+        [action.docId]: {
+          [action.progressId]: {...action.diff, updated_at: "Just now"}
         }
       });
     default:
@@ -331,6 +343,21 @@ const fetchedDoc = (state = Immutable.fromJS({}), action) => {
       return state.merge({selected: action.id})
     case types.CLR_OPENED_DOC_ID:
       return state.merge({selected: -1})
+    case types.REMOVE_LAB_LOCATIONS:
+      return state.removeIn([""+action.docId, "items", ""+action.progressId, "lab_alloc", "items"]);
+    case types.UPDATE_LAB_LOCATIONS:
+      let route = [""+action.docId, "items", ""+action.progressId, "lab_alloc", "items"];
+      return state.removeIn(route).mergeIn(route, action.locations);
+      /*return state.mergeDeep({
+        [action.docId]: {
+          "items": {
+            [action.progressId]: {
+              "lab_alloc": {
+                "items": action.locations}
+            }
+          }
+        }
+      });*/
     default:
       return state;
   }
