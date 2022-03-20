@@ -12,7 +12,7 @@ export const types = {
     UPDATE_DOC_LIST: "PROGRESSDOC/UPDATE_DOC_LIST",
     FETCH_DOC: "PROGRESSDOC/FETCH_DOC",
     CLEAR_DOC: "PROGRESSDOC/CLEAR_DOC",
-    UPDATE_LAB_LOCATIONS: "PROGRESSDOC/UPDATE_LAB_LOCATIONS",
+    UPDATE_LAB_ITEM_CACHE: "PROGRESSDOC/UPDATE_LAB_ITEM_CACHE",
     SET_SELECTED_DEPAETMENT: "PROGRESSDOC/SET_SELECTED_DEPAETMENT",
     SET_SELECTED_SEARCH: "PROGRESSDOC/SET_SELECTED_SEARCH",
     SET_OPENED_DOC_ID: "PROGRESSDOC/SET_OPENED_DOC_ID",
@@ -29,8 +29,7 @@ export const types = {
     ADD_LABITEM: "PROGRESSDOC/ADD_LABITEM",
     DEL_LABITEM: "PROGRESSDOC/DEL_LABITEM",
     SET_SELECTED_LABITEM: "PROGRESSDOC/SET_SELECTED_LABITEM",
-    SET_ROW_CHANGED: "PROGRESSDOC/SET_ROW_CHANGED",
-    CLEAR_ROW_CHANGES: "PROGRESSDOC/CLEAR_ROW_CHANGES"
+    SET_CREATED_LABITEM: "PROGRESSDOC/SET_CREATED_LABITEM",
   };
 
 export const buildGroupStageWeekId = (stage, weekIdx, degreeId, gradeId) => {
@@ -91,16 +90,19 @@ export const actions = {
         }
       }
     },
-    fetchLabitem: (id) => {
+    fetchLabitem: (id, updateProgressId=0) => {
       console.log(`fetchLabitem: labitem_id: ${id}`);
       return async (dispatch, getState) => {
         try {
-            if (shouldFetchLabitem(id, getState())) {
+            if (updateProgressId > 0 || shouldFetchLabitem(id, getState())) {
               console.log("shouldFetchLabitem: return yes!");
               dispatch(appActions.startRequest());
               const data = await progressdocApi.getLabItems(id);
               dispatch(appActions.finishRequest());
               dispatch(fetchLabitemSuccess(id, data));
+              if (updateProgressId > 0){
+                dispatch(updateLabItemCache(getOpenedDocId(getState()), updateProgressId, data[id]));
+              }
             }
             dispatch(setSelectedLabitem(id));
         } catch (error) {
@@ -132,19 +134,12 @@ export const actions = {
     setStateProgressItem: (id) => {
 
     },
-    setRowChanged: (selectedDataId, rowId, colId, newVal) => ({
-      type: types.SET_ROW_CHANGED,
-      selectedDataId,
-      rowId,
-      colId,
-      newVal
-    }),
-    clearRowChanges: (selectedDataId) => ({
-      type: types.CLEAR_ROW_CHANGES,
-      selectedDataId
-    }),
     closeDoc: () => ({
       type: types.CLR_OPENED_DOC_ID,
+    }),
+    clearCreatedLabitem: () => ({
+      type: types.SET_CREATED_LABITEM,
+      id:""
     }),
     /* params_json_sample = {
       "id": 1,
@@ -172,15 +167,46 @@ export const actions = {
         }
       }
     },
-    updateProgressLabLocation: (progressId, locations) => {
+    /*updateLabItemInProgressList: (progressId, labItemObj, locArray) => {
       return async (dispatch, getState) => {
         // When user confirm on selecting another labitem, just change the labitem_id inside states.
-        console.log(`updateProgressLabLocation: progress_id: ${progressId}`);
-        dispatch(updateProgressLabLocation(getOpenedDocId(getState()), progressId, locations));
+        let loc_items = {};
+        locArray.forEach((v, i) => loc_items[i] = {location:v});
+        let itemObj = Object.assign(labItemObj, {items:loc_items});
+        console.log(`updateLabItemCache: progress_id: ${progressId}`);
+        dispatch(updateLabItemCache(getOpenedDocId(getState()), progressId, itemObj));
       }
-    },
-    saveLabItem: (labitemId, itemDiffDict) => {
+    },*/
+    saveLabItem: (progressId, labitemId, itemDiffDict) => {
       // Add/modify a lab item, return the created/modified labitem_id
+      console.log(`saveLabItem: labitem_id: ${labitemId}`);
+      return async (dispatch, getState) => {
+        try {
+          dispatch(appActions.startRequest());
+          if (labitemId <= 0) {
+            const new_id = await progressdocApi.addLabItem(itemDiffDict);
+            dispatch(appActions.setToast({type:"success", message:"toast.toast_request_create_success"}));
+            dispatch(setCreatedLabitem(new_id));
+          } else {
+            const data = await progressdocApi.updateLabItem(labitemId, itemDiffDict);
+            dispatch(appActions.setToast({type:"success", message:"toast.toast_request_save_success"}));
+          }
+          dispatch(appActions.finishRequest());
+          // To update doc list table in progressdoc-screen.
+          /*if ('lab_locs' in itemDiffDict) {
+            let loc_items = {};
+            itemDiffDict['lab_locs'].forEach((v, i) => loc_items[i] = {location:v});
+            dispatch(updateLabItemCache(getOpenedDocId(getState()), progressId, loc_items));
+          }*/
+        } catch (error) {
+          if (error.cause && error.cause==="E00000404"){
+            dispatch(appActions.finishRequest());
+            dispatch(appActions.setToast({type:"warning", message:"toast.toast_lab_location_not_found"}));
+          } else {
+            dispatch(appActions.setError(error));
+          }
+        }
+      }
     },
 }
 
@@ -279,6 +305,13 @@ const setSelectedLabitem = (id) => {
   })
 }
 
+const setCreatedLabitem = (id) => {
+  return ({
+    type: types.SET_CREATED_LABITEM,
+    id
+  })
+}
+
 const setDocSuccess = (id) => {
   return ({
     type: types.CLEAR_DOC,
@@ -295,12 +328,12 @@ const updateDocList = (docId, progressId, diff) => {
   })
 }
 
-const updateProgressLabLocation = (docId, progressId, locations) => {
+const updateLabItemCache = (docId, progressId, labItemObj) => {
   return ({
-    type: types.UPDATE_LAB_LOCATIONS,
+    type: types.UPDATE_LAB_ITEM_CACHE,
     docId,
     progressId,
-    locations
+    labItemObj
   })
 }
 
@@ -343,11 +376,11 @@ const fetchedDoc = (state = Immutable.fromJS({}), action) => {
       return state.merge({selected: action.id})
     case types.CLR_OPENED_DOC_ID:
       return state.merge({selected: -1})
-    case types.REMOVE_LAB_LOCATIONS:
-      return state.removeIn([""+action.docId, "items", ""+action.progressId, "lab_alloc", "items"]);
-    case types.UPDATE_LAB_LOCATIONS:
-      let route = [""+action.docId, "items", ""+action.progressId, "lab_alloc", "items"];
-      return state.removeIn(route).mergeIn(route, action.locations);
+    //case types.REMOVE_LAB_LOCATIONS:
+    //  return state.removeIn([""+action.docId, "items", ""+action.progressId, "lab_alloc", "items"]);
+    case types.UPDATE_LAB_ITEM_CACHE:
+      let route = [""+action.docId, "items", ""+action.progressId, "lab_alloc"];
+      return state.removeIn(route).mergeIn([""+action.docId, "items", ""+action.progressId], {lab_alloc:action.labItemObj});
       /*return state.mergeDeep({
         [action.docId]: {
           "items": {
@@ -369,6 +402,8 @@ const fetchedLabitems = (state = Immutable.fromJS({}), action) => {
       return state.merge(action.data);
     case types.SET_SELECTED_LABITEM:
       return state.merge({selected: action.id})
+    case types.SET_CREATED_LABITEM:
+      return state.merge({created: action.id})
     default:
       return state;
   }
@@ -383,25 +418,6 @@ const searchedLabitemBriefs = (state = Immutable.fromJS({}), action) => {
   }
 }
 
-const rowChanged = (state = Immutable.fromJS({}), action) => {
-  switch (action.type) {
-    case types.SET_ROW_CHANGED:
-      //console.log("rowChanged reducer:" + JSON.stringify(state));
-      // How to change deep level state!
-      // Ref: https://stackoverflow.com/questions/36031590/right-way-to-update-state-in-redux-reducers
-      return state.mergeDeep({
-        [action.selectedDataId]: {
-          [action.rowId]: {
-            [action.colId]: action.newVal
-          }
-        }
-      });
-    case types.CLEAR_ROW_CHANGES:
-      return state.remove(action.selectedDataId);  // Should return ImmutableJS object instead of empty obj {} directly!
-    default:
-      return state;
-  }
-}
 
 const reducer = combineReducers({
   searchedList,
@@ -409,7 +425,6 @@ const reducer = combineReducers({
   fetchedDoc,
   fetchedLabitems,
   searchedLabitemBriefs,
-  rowChanged,
 });
 
 export default reducer;
@@ -426,6 +441,7 @@ export const getOpenedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc
 
 export const getLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", ""+getSelectedLabitem(state)]);
 export const getSelectedLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", "selected"]);
+export const getCreatedLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", "created"]);
 export const getCachedLabitems = (state) => state.getIn(["progressdoc", "fetchedLabitems"]);
 export const getSearchedLabitemBriefs = (state) => state.getIn(["progressdoc", "searchedLabitemBriefs"]).toJS();
 

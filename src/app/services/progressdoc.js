@@ -239,7 +239,7 @@ class Api {
       let response = await axios.post(url, props_map);
       const { success, data, message } = response.data;
       if (!success) {
-        throw new Error(message.message);
+        throw new Error(message.message, { cause: message.errorCode });
       }
       return data.id;
     } catch (error) {

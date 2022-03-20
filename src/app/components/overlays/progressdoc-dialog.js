@@ -214,7 +214,6 @@ class ProgressdocDialog extends Component {
     if (dest_col === 'lab_alloc') dest_col = 'labitem_id';
     this.setState({editedRowCache: {...this.state.editedRowCache, 
       [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.data.id, [dest_col]: params.newValue}}});
-    //this.props.setRowChanged(this.props.selectedDataId, params.data["id"], dest_col, params.data[dest_col]);
   }
 
   onCellEditingStarted  = (params) => {
@@ -251,12 +250,14 @@ class ProgressdocDialog extends Component {
 
   onLabItemClosed = (params) => {
     if (params && 'id' in params && 'rowIndex' in params) {
-      // Update labitem_id in row cache
+      // Update labitem_id to row cache
       this.setState({editedRowCache: {...this.state.editedRowCache, 
         [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.progressId, 'labitem_id': params.id}}});
-      if ('locations' in params) {
+      // Update progress list table states
+      this.props.fetchLabitem(params.id, params.progressId);
+      //if ('lab_locs' in params) {
         // Update the locations on list
-        this.props.updateProgressLabLocation(params.progressId, params.locations);
+        //this.props.updateLabItemInProgressList(params.progressId, params.lab_locs);
         /*if (this.gridApi){
           let cellparams = {
             force: true,
@@ -265,7 +266,7 @@ class ProgressdocDialog extends Component {
           };
           this.callRefreshAfterMillis(cellparams, 1000, this.gridApi);
         }*/
-      }
+      //}
     }
     this.setState({
       isLabItemOpen: false

@@ -168,6 +168,9 @@ class EditableTableWrapper extends Component {
       return (!params.data.theory_item_content && !params.data.theory_item_hours)?"\u26A1":"";
     }
     let loc_data = value.items;
+    if (!loc_data) {
+      return "...";
+    }
     if (isImmutable(loc_data)) {
       loc_data = value.items.toJS();
     }

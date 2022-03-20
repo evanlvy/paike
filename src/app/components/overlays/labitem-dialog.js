@@ -25,9 +25,10 @@ import {
     TabPanel,
     Tab,
     TabList,
+    Tooltip,
   } from "@chakra-ui/core"
 import { MdSearch } from "react-icons/md"
-import { actions as progressdocActions, getLabitemContent, getSearchedLabitemBriefs, parseImmutableLocs } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, getLabitemContent, getSearchedLabitemBriefs, getCreatedLabitem, parseImmutableLocs } from '../../redux/modules/progressdoc';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -80,15 +81,6 @@ class LabitemDialog extends Component {
     if (!props.context) {
       result = {...result, ...LabitemDialog.empty_context};
     }
-    if (props.imported && "id" in props.imported) {
-      if (!state.original || props.imported.id !== state.original.id) {
-        result["original"] = Object.assign({}, props.imported);  // Never use '=' to assign value here!
-        if (props.imported.items) {
-          result["original"]["locations"] = parseImmutableLocs(props.imported.items);
-        }
-      }
-      return result;
-    }
 
     let next_labitem_id = (!props.data)?-1:props.data.id;
     if (props.context && !state.doc_department_id) {
@@ -102,23 +94,51 @@ class LabitemDialog extends Component {
       //result["original"] = Object.assign({}, props.data);
       result = {...result, ...props.context};
       result["doc_lab_content"] = '';
-      result["selectedId"] = '';  // Clear the selection
+      result["tabIndex"] = 0;
+      if (props.data && props.searchResult && (props.data.id in props.searchResult)){
+        // Auto select current labitem from search result
+        result["selectedId"] = props.data.id;
+      } else {
+        result["selectedId"] = '';  // Clear the selection
+      }
       /*if (props.data.id > 0) {
         result["doc_labitem_brief"] = {[props.data.id]: "<"+props.data.description+">"+props.data.name+" "+(("locations" in result)?result["locations"]:"")}
       } else {
         result["doc_labitem_brief"] = {}
       }*/
+      return result;
     }
+
+    if (props.imported && "id" in props.imported) {
+      if (!state.original || props.imported.id !== state.original.id) {
+        result["original"] = Object.assign({}, props.imported);  // Never use '=' to assign value here!
+        if (props.imported.items) {
+          result["original"]["locations"] = parseImmutableLocs(props.imported.items);
+        }
+      }
+    }
+
     return result;
   }
 
   componentDidUpdate(prevProps, prevState) {
     console.log("LIFECYCLE: componentDidUpdate");
-    if (prevProps.searchResult !== this.props.searchResult && prevState.isSearching) {
-      // Got the search API result! Change button loading state.
-      this.setState({
-        isSearching: false,
-      });
+    if (prevProps.searchResult !== this.props.searchResult) {
+      if (prevState.isSearching) {
+        // Got the search API result! Change button loading state.
+        this.setState({
+          isSearching: false,
+        });
+      }
+      if (this.props.data && (this.props.data.id in this.props.searchResult)) {
+        this.setState({
+          selectedId: this.props.data.id,
+        });
+      }
+    }
+    if (prevProps.created !== this.props.created && this.props.created > 0) {
+      // New items created successfully
+      this.onLabItemCreated();
     }
   }
 
@@ -134,7 +154,8 @@ class LabitemDialog extends Component {
     const { data, searchResult, imported, context } = this.props;
     //const { isOpen, department_id, items } = this.state;
 
-    if (nextProps.context !== context && context && nextProps.context.doc_course_name !== context.doc_course_name) {
+    if (context && nextProps.context !== context && nextProps.context.doc_course_name !== context.doc_course_name) {
+      // Doc course name changed, clear searched result!
       if (!nextProps.imported || !("id" in nextProps.imported)) {
         console.log("shouldComponentUpdate, clearSearchedLabitem!");
         this.props.clearSearchedLabitem();
@@ -239,26 +260,77 @@ class LabitemDialog extends Component {
   }
 
   onReSelected = () => {
-    const { searchResult, context } = this.props;
+    const { context } = this.props;
     let labitem_id = this.state.selectedId;
     if (labitem_id > 0 && context) {
       let param = {id:labitem_id, rowIndex:context.rowIndex, progressId:context.progressId}
-      if (searchResult && labitem_id in searchResult) {
+      /*if (searchResult && labitem_id in searchResult) {
         let lab_arr = searchResult[labitem_id].split('#');
         if (lab_arr.length > 1) {
+          // Get loc_array from Searchbox item
           let lab_str = lab_arr[lab_arr.length-1];
-          let labs = lab_str.trim().split(" ");
-          param['locations'] = {};
-          labs.forEach((v, i) => param['locations'][i] = {location:v});
+          param['lab_locs'] = lab_str.trim().split(" ");
+          //labs.forEach((v, i) => param['lab_locs'][i] = {location:v});
         }
-      }
+      }*/
       this.onClose(param);
+    }
+  }
+
+  onLabItemCreated = () => {
+    const { context, created } = this.props;
+    const { original } = this.state;  // Reflect value of edit boxes
+    let labitem_id = created;
+    if (labitem_id > 0 && context && original) {
+      let param = {id:labitem_id, rowIndex:context.rowIndex, progressId:context.progressId};
+      /*if (original["locations"].length > 0) {
+        // Get loc_array from lab location edit box
+        param['lab_locs'] = this.parseLocArray(original["locations"]);
+      }*/
+      this.onClose(param);
+    }
+    if (created > 0) {
+      this.props.clearCreatedLabitem();
+      this.onClose();
     }
   }
   
   onSaveEdited = () => {
+    const { data:labItemProp, context } = this.props;
+    const { original } = this.state;
+    this.props.clearCreatedLabitem();
     // Always create a new labitem!
+    let has_diff = false;
+    let props_diff = Object.assign({}, original);  // Must have id prop
+    props_diff['id'] = -1;
+    // Remove props that never changed
+    //let props_diff = {id: -1};
+    for (let index = 0; index < this.edit_form.length; index++) {
+      let form = this.edit_form[index];
+      if (original[form.id] !== labItemProp[form.id]) {
+        console.log("onSave: FORMs diff:"+form.id);
+        //props_diff[form.id] = original[form.id];
+        has_diff = true;
+      }
+    }
+    //console.log(props_diff);
+    if (has_diff) {
+      // Remove lab items that should not be accepted by database.
+      delete props_diff['items'];
+      // Use location array to set to database instead.
+      if ('locations' in props_diff) {
+        props_diff['lab_locs'] = this.parseLocArray(props_diff['locations']);
+        delete props_diff['locations'];
+      }
+      this.props.saveLabItem(context.progressId, -1, props_diff);
+    }
+  }
 
+  parseLocArray = (loc) => {
+    let loc_str = loc;
+    loc_str = loc_str.replace(',', ' ').replace('，', ' ').replace('.', ' ').replace('。', ' ');
+    loc_str = loc_str.replace(/\s+/g, ' ').trim();
+    return loc_str.split(' ');
   }
 
   render() {
@@ -289,7 +361,7 @@ class LabitemDialog extends Component {
               </Text>
               <Text fontWeight='bold' mb='1rem'>
                 {t("labitemScreen.cap_original_lab_locations")}&#58;&nbsp;
-                {(!labItemProp || !labItemProp.locations)?t("labitemScreen.hint_no_lab_locations"):labItemProp.locations}
+                {(!labItemProp || !labItemProp.locations)?t("labitemScreen.hint_no_lab_locations"):(labItemProp.locations+" #"+labItemProp.id)}
               </Text>
               <Box w='100%' borderWidth='2px' borderRadius='lg'>
               <Tabs isFitted index={tabIndex} onChange={handleTabsChange}>
@@ -300,7 +372,7 @@ class LabitemDialog extends Component {
                 <TabPanels>
                   <TabPanel>
                     <Text fontWeight='bold' ml="1rem" mb="2"><Trans>labitemScreen.cap_search_conditions</Trans>&#58;&nbsp;</Text>
-                    <Box w='100%' borderWidth='1px'>
+                    <Box w='100%' borderWidth='1px' bg='yellow.50'>
                       <Text flex="0" fontWeight='bold' mx='1rem' mt="1rem"><Trans>labitemScreen.cap_search_by_course</Trans>&#58;&nbsp;</Text>
                       <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
                         <Input flex="1" id="doc_course_name" value={doc_course_name} onChange={onSearchChanged} isDisabled={isSearching}
@@ -326,8 +398,10 @@ class LabitemDialog extends Component {
                               ))
                             }
                         </Select>
-                        <Button flex="1" leftIcon={MdSearch} variantColor="blue" variant="solid" ml={5} minW="80" isLoading={isSearching} loadingText={t("common.search")} 
-                        onClick={onSearch}>{t("common.search")}</Button>
+                        <Tooltip zIndex="tooltip" hasArrow label={t("labitemScreen.tooltip_search_item")}>
+                          <Button flex="1" leftIcon={MdSearch} variantColor="blue" variant="solid" ml={5} minW="80" isLoading={isSearching} loadingText={t("common.search")} 
+                          onClick={onSearch}>{t("common.search")}</Button>
+                        </Tooltip>
                       </Flex>
                     </Box>
                     <Text fontWeight='bold' mx='1rem' mt='1rem'><Trans>labitemScreen.cap_search_result</Trans>&#58;&nbsp;</Text>
@@ -380,12 +454,16 @@ class LabitemDialog extends Component {
             </ModalBody>
             <ModalFooter>
               { tabIndex === 0 &&
-                <Button variantColor="green" mr={3} isDisabled={selectedId.length<=0} onClick={onLoadExisted}>{t("labitemScreen.btn_import_labitem")}</Button>
+                <Tooltip zIndex="tooltip" hasArrow label={t("labitemScreen.tooltip_import_selection")}>
+                  <Button variantColor="green" mr={3} isDisabled={selectedId.length<=0} onClick={onLoadExisted}>{t("labitemScreen.btn_import_labitem")}</Button>
+                </Tooltip>
               }
               { isSaveable && 
-                <Button variantColor="red" mr={3} onClick={tabIndex === 0?onReSelected:onSaveEdited}
-                isDisabled={(tabIndex === 0 && selectedId.length <= 0) || (tabIndex === 1 && (edit_source.description.length <= 0 || edit_source.locations.length <= 0 || edit_source.name.length <= 0))} >
-                  {t(tabIndex === 0?"common.ok":"common.new")}</Button>
+                <Tooltip zIndex="tooltip" hasArrow label={t(tabIndex === 0?"labitemScreen.tooltip_confirm_selection":"labitemScreen.tooltip_confirm_create")}>
+                  <Button variantColor="red" mr={3} onClick={tabIndex === 0?onReSelected:onSaveEdited}
+                  isDisabled={(tabIndex === 0 && selectedId.length <= 0) || (tabIndex === 1 && (edit_source.description.length <= 0 || edit_source.locations.length <= 0 || edit_source.name.length <= 0))} >
+                    {t(tabIndex === 0?"common.ok":"common.new")}</Button>
+                </Tooltip>
               }
               <Button onClick={onClose}>{t("common.close")}</Button>
             </ModalFooter>
@@ -400,6 +478,7 @@ const mapStateToProps = (state) => {
   return {
     searchResult: getSearchedLabitemBriefs(state),
     imported: getLabitemContent(state),
+    created: getCreatedLabitem(state),
   }
 }
 

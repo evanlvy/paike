@@ -38,7 +38,9 @@
     "warning": "警告",
     "error": "抱歉，发生了一个错误...",
     "info": "信息",
-    "toast_request_save_success": "您的修改被成功保存!"
+    "toast_request_save_success": "您的修改被成功保存!",
+    "toast_request_create_success": "您新建的项目被成功保存!",
+    "toast_lab_location_not_found": "您输入了无效的实验室！若有新实验室需要录入，请联系管理员"
   },
   "grade": {
     "college": "大专",
@@ -77,7 +79,9 @@
     "basic_maintain_title": "基础数据维护",
     "jiaowuchu_kebiao_title": "教务处课表",
     "student_profile_template": "您好！来自{{grade_name}}{{major_name}}{{class_seq}}班的同学",
-    "teacher_profile_template": "您好！{{teacherName}}教授/老师"
+    "teacher_profile_template": "您好！{{teacherName}}教授/老师",
+    "tooltip_department": "您所在的教研室",
+    "tooltip_stage_selector": "仅用于查看历史课表"
   },
   "subjectBoard": {
     "title_prefix_unselected": "请选择",
@@ -346,7 +350,7 @@
     "form_helper_headcount": "不填则默认小组人数30人",
     "form_label_keyword": "课程名",
     "form_label_name": "实验类型",
-    "form_label_labs": "关联实验室",
+    "form_label_labs": "关联实验室(空格或逗号分隔)",
     "form_label_department": "教研室",
     "form_label_max_team_headcount": "分组人数",
     "form_label_teacher_count": "带教老师数",
@@ -354,6 +358,10 @@
     "form_btn_select": "选择已录入类型",
     "form_btn_create": "新建实验/实验室关联",
     "form_btn_edit": "更正关联",
-    "form_btn_delete": "删除实验类型"
+    "form_btn_delete": "删除实验类型",
+    "tooltip_search_item": "查找已录入的实验类型，选择确认后直接使用",
+    "tooltip_confirm_selection": "确认使用下拉框选中的实验类型",
+    "tooltip_confirm_create": "根据您的填写内容新建一个实验类型关联",
+    "tooltip_import_selection": "根据选中的实验类型修改创建新类型"
   }
 }

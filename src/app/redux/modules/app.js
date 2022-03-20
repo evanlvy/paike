@@ -67,6 +67,7 @@ export const getError = state => {
   return state.getIn(["app", "error"]);
 };
 
+// toast type: ['success', 'error', 'warning', 'info']
 export const getToast = state => {
   return state.getIn(["app", "toast"]);
 };
