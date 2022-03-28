@@ -42,7 +42,7 @@ class ProgressdocDialog extends Component {
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.tableHeaders = [
-      {name: t("progressdocScreen.items_header_order"), field: "ord", width: 80},
+      {name: t("progressdocScreen.items_header_order"), field: "ord", rowDrag: true, width: 80},
       {name: t("progressdocScreen.items_header_id"), field: "id", width: 80},
       {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", editable: true, width: 80},
       {name: t("progressdocScreen.items_header_chapter_name"), field: "chapter_name", editable: true},
@@ -128,7 +128,7 @@ class ProgressdocDialog extends Component {
       });
       return true;
     }
-    if (nextProps.docItems != docItems) {
+    if (nextProps.docItems !== docItems) {
       console.log("shouldComponentUpdate, docItems");
       return true;
     }
@@ -401,6 +401,7 @@ class ProgressdocDialog extends Component {
                 headers={tableHeaders}
                 data={docItems}
                 orderbyAsc={'ord'}
+                rowDragManaged={true}
                 pagePrevCaption={t("common.previous")}
                 pageNextCaption={t("common.next")}
                 initPageIndex={0}

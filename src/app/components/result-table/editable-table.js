@@ -200,87 +200,91 @@ class EditableTableWrapper extends Component {
       return;
     }
     for (let i=0; i < headers.length; i++) {
-      if (headers[i].width) {
-        headers[i].minW = undefined;
-        headers[i].maxW = undefined;
-      } else if (!headers[i].minW && !headers[i].maxW) {
-        headers[i].width = defaultColWidth;
+      let { name, width, maxW, minW, dataType, fn_disable, ...defs_generated} = headers[i];
+      if (width) {
+        defs_generated.width = width;
+      } else if (minW) {
+        defs_generated.minWidth = minW;
+      } else if (maxW) {
+        defs_generated.maxWidth = maxW;
+      } else {
+        defs_generated.width = defaultColWidth;
       }
-      columnDefs[i] = {
-        //colId: i,  // Do not set colId because field will not be used in startEditingCell or getColumn.
-        headerName: headers[i].name,
-        field: headers[i].field,
-        width: headers[i].width,
-        minWidth: headers[i].minW,
-        maxWidth: headers[i].maxW,
-        //lineHeight: colLineHeight,
-        cellClassRules: cellClassRules,
-        cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
-        cellRendererParams: {
-          lineHeight : colLineHeight, // pass the field value here
-          fn_disable : headers[i].fn_disable,
-        },
-        editable: headers[i].editable,
-      };
-      if (headers[i].dataType && headers[i].dataType !== null) {
-        if (headers[i].dataType === "course_teacher_combined") {
-          columnDefs[i]["valueGetter"] = this.courseTeacherGetter;
-          columnDefs[i]["valueSetter"] = this.courseTeacherSetter;
-          columnDefs[i]["cellStyle"] = params => { 
-            let course_teacher_combined = params.data[params.colDef.field];
-            if (course_teacher_combined) {
-              if (course_teacher_combined.cid < 0) return { backgroundColor: '#FEB2B2' };
-              if (course_teacher_combined.tid < 0) return { backgroundColor: '#FED7E2' };
-              if (course_teacher_combined.cid == 0) return { backgroundColor: '#00B5D8' };
-            }
-            return;
-          };
-        }
-        else if (headers[i].dataType === "classes_id_name_obj") {
-          columnDefs[i]["valueGetter"] = this.classNamesGetter;
-        }
-        else if (headers[i].dataType === "lab_list") {
-          columnDefs[i]["valueGetter"] = this.labListGetter;
-        }
-        else if (headers[i].dataType === "teacher_obj_array") {
-          columnDefs[i]["valueGetter"] = this.teacherListGetter;
-          columnDefs[i]["valueSetter"] = params => {
-            let newValue = params.newValue;
-            if (typeof newValue != 'string') return false;
-            newValue = newValue.replace('，',' ').replace(',', ' ');
-            let teachers = newValue.split(" ");
-            params.data[params.column.colId] = teachers.map(teacher_name => ({id: -1, name: teacher_name}));
-            return true;
-          }
-        }
-        else if (headers[i].dataType === "departments_selector") {
-          columnDefs[i]["cellEditor"] = "selectorCelleditor";
-          columnDefs[i]["cellEditorParams"] = {
-            values: Object.values(this.props.departments),
-          }
-          columnDefs[i]["valueGetter"] = params => {
-            let data_item = params.data[params.column.colId];
-            if (typeof data_item === 'number') {
-              let dep_name = this.props.departments[data_item+""];
-              return dep_name;
-            } else {
-              return data_item;
-            }
-          }
-          /*columnDefs[i]["valueFormatter"] = params => {  // valueFormatter will not init selector value right
-            if (typeof params.value === 'number') {
-              let dep_name = this.props.departments[params.value+""];
-              return dep_name;
-            } else {
-              return params.value;
-            }
-          }*/
-        }
-      }
-      if (headers[i].width && headers[i].width>=200) {
+      if (width && width>=200) {
         // Use Large text editor for super long text!
-        columnDefs[i]["cellEditor"] = 'agLargeTextCellEditor';
+        defs_generated.cellEditor = 'agLargeTextCellEditor';
       }
+      if (cellClassRules) {
+        defs_generated.cellClassRules = cellClassRules;
+      }
+      if (defs_generated.rowDrag !== true) {
+        defs_generated.cellRenderer = i === 0 ? "arrayDataRenderer" : "commonRenderer";
+        defs_generated.cellRendererParams = {
+          lineHeight : colLineHeight, // pass the field value here
+          fn_disable : fn_disable,
+        };
+      }
+      defs_generated.headerName = name;
+      if (dataType && dataType !== null) {
+        switch(dataType) {
+          case "classes_id_name_obj":
+            defs_generated.valueGetter = this.classNamesGetter;
+            break;
+          case "lab_list":
+            defs_generated.valueGetter = this.labListGetter;
+            break;
+          case "teacher_obj_array":
+            defs_generated.valueGetter = this.teacherListGetter;
+            defs_generated.valueSetter = params => {
+              let newValue = params.newValue;
+              if (typeof newValue !== 'string') return false;
+              newValue = newValue.replace('，',' ').replace(',', ' ');
+              let teachers = newValue.split(" ");
+              params.data[params.column.colId] = teachers.map(teacher_name => ({id: -1, name: teacher_name}));
+              return true;
+            }
+            break;
+          case "course_teacher_combined":
+            defs_generated.valueGetter = this.courseTeacherGetter;
+            defs_generated.valueSetter = this.courseTeacherSetter;
+            defs_generated.cellStyle = params => { 
+              let course_teacher_combined = params.data[params.colDef.field];
+              if (course_teacher_combined) {
+                if (course_teacher_combined.cid < 0) return { backgroundColor: '#FEB2B2' };
+                if (course_teacher_combined.tid < 0) return { backgroundColor: '#FED7E2' };
+                if (course_teacher_combined.cid == 0) return { backgroundColor: '#00B5D8' };
+              }
+              return;
+            };
+            break;
+          case "departments_selector":
+            defs_generated.cellEditor = "selectorCelleditor";
+            defs_generated.cellEditorParams = {
+              values: Object.values(this.props.departments),
+            }
+            defs_generated.valueGetter = params => {
+              let data_item = params.data[params.column.colId];
+              if (typeof data_item === 'number') {
+                let dep_name = this.props.departments[data_item+""];
+                return dep_name;
+              } else {
+                return data_item;
+              }
+            }
+            /*defs_generated["valueFormatter"] = params => {  // valueFormatter will not init selector value right
+              if (typeof params.value === 'number') {
+                let dep_name = this.props.departments[params.value+""];
+                return dep_name;
+              } else {
+                return params.value;
+              }
+            }*/
+            break;
+          default:
+            console.log(`Sorry, Unknown dataType: ${dataType}.`);
+        }
+      }
+      columnDefs[i] = defs_generated;
     }
     this.columnDefs = columnDefs;
   }
@@ -363,15 +367,16 @@ class EditableTableWrapper extends Component {
   }
 
   onGridReady = (params) => {
+    const { rowDragManaged, orderbyAsc, orderbyDesc } = this.props;
     this.gridApi = params.api;
     // Following line to make the currently visible columns fit the screen  
     params.api.sizeColumnsToFit();
     // Following line dymanic set height to row on content
     params.api.resetRowHeights();
-    // Order rows by colId from props
-    if (this.props.orderbyAsc || this.props.orderbyDesc) {
-      let _sort = this.props.orderbyAsc?'asc':'desc';
-      let _col = this.props.orderbyAsc?this.props.orderbyAsc:this.props.orderbyDesc;
+    // Order rows by colId from props---re-order will disable rowDrag!
+    if (!rowDragManaged && (orderbyAsc || orderbyDesc)) {
+      let _sort = orderbyAsc?'asc':'desc';
+      let _col = orderbyAsc?orderbyAsc:orderbyDesc;
       if (typeof _col === 'string' &&  _col.length >= 1) {
         params.columnApi.applyColumnState({
           state: [{ colId: _col, sort: _sort }],
@@ -473,7 +478,7 @@ class EditableTableWrapper extends Component {
     const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onGridSizeChanged,
       onCellClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, color, rowHeight, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
-      rowSelection, onCellClicked: onCellClickedCallback, onCellDoubleClicked, onCellEditingStarted,
+      rowSelection, onCellClicked: onCellClickedCallback, onCellDoubleClicked, onCellEditingStarted, rowDragManaged,
       onCellValueChanged, defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged, 
       ...other_props } = this.props;
     const { curPageIndex } = this.state;
@@ -506,7 +511,9 @@ class EditableTableWrapper extends Component {
         <Box flex={1} width="100%" height="inherit" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
           <div id="editableGrid" className="ag-theme-alpine" style={{width: "100%", height: "inherit"}}>
             <AgGridReact
-              animateRows={false}
+              animateRows={true}
+              rowDragManaged={rowDragManaged}
+              suppressMoveWhenRowDragging={true}
               onGridReady={onGridReady}
               onGridSizeChanged={onGridSizeChanged}
               defaultColDef={defaultColDef}

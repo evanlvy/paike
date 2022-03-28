@@ -114,51 +114,56 @@ class ResultTableWrapper extends Component {
     let columnDefs = [];
     const { t } = this.props;
     for (let i=0; i < headers.length; i++) {
-      if (headers[i].width) {
-        headers[i].minW = undefined;
-        headers[i].maxW = undefined;
-      } else if (!headers[i].minW && !headers[i].maxW) {
-        headers[i].width = defaultColWidth;
+      let { name, width, maxW, minW, dataType, fn_disable, children, ...defs_generated} = headers[i];
+      if (width) {
+        defs_generated.width = width;
+      } else if (minW) {
+        defs_generated.minWidth = minW;
+      } else if (maxW) {
+        defs_generated.maxWidth = maxW;
+      } else {
+        defs_generated.width = defaultColWidth;
       }
-      columnDefs[i] = {
-        //colId: i,  // Do not set colId because field will not be used in startEditingCell or getColumn.
-        headerName: headers[i].name,
-        field: headers[i].field,
-        width: headers[i].width,
-        minWidth: headers[i].minW,
-        maxWidth: headers[i].maxW,
-        sortable: headers[i].sortable ? headers[i].sortable: false,
-        filter: headers[i].filter ? headers[i].filter: false,
-        //lineHeight: colLineHeight,
-        cellRenderer: i === 0 ? "arrayDataRenderer" : "commonRenderer",
-        cellRendererParams: {
-          lineHeight : colLineHeight // pass the field value here
-        },
-        //resizable: headers[i].resizable,
-      };
-      if (headers[i].children && headers[i].children.length > 0) {
-        columnDefs[i]["children"] = this.buildColDefArray(headers[i].children, defaultColWidth/2, colLineHeight);
+      if (width && width>=200) {
+        // Use Large text editor for super long text!
+        defs_generated.cellEditor = 'agLargeTextCellEditor';
       }
-      if (headers[i].dataType && headers[i].dataType !== null) {
-        if (headers[i].dataType === "course_teacher_combined") {
-          columnDefs[i]["valueGetter"] = this.courseTeacherGetter;
-          columnDefs[i]["cellStyle"] = params => { 
-            let course_teacher_combined = params.data[params.colDef.field];
-            if (!course_teacher_combined) return;
-            return course_teacher_combined.cid < 0 ? { backgroundColor: '#FEB2B2' } : (course_teacher_combined.tid < 0? { backgroundColor: '#FED7E2' }:{});
-          };
-        }
-        else if (headers[i].dataType === "classes_id_name_obj") {
-          columnDefs[i]["valueGetter"] = this.classNamesGetter;
-        }
-        else if (headers[i].dataType === "slot_weekday_renderer") {
-          //columnDefs[i]["valueGetter"] = this.slotWeekdayGetter;
-          columnDefs[i]["cellRenderer"] = "conflictsRenderer";
-          columnDefs[i]["cellRendererParams"] = {
-            onItemClicked: this.onItemClicked
-          };
+      if (defs_generated.rowDrag != true) {
+        defs_generated.cellRenderer = i === 0 ? "arrayDataRenderer" : "commonRenderer";
+        defs_generated.cellRendererParams = {
+          lineHeight : colLineHeight, // pass the field value here
+          fn_disable : fn_disable,
+        };
+      }
+      defs_generated.headerName = name;
+      if (children && children.length > 0) {
+        defs_generated.children = this.buildColDefArray(children, defaultColWidth/2, colLineHeight);
+      }
+      if (dataType && dataType !== null) {
+        switch(dataType) {
+          case "classes_id_name_obj":
+            defs_generated.valueGetter = this.classNamesGetter;
+            break;
+          case "slot_weekday_renderer":
+            //columnDefs[i]["valueGetter"] = this.slotWeekdayGetter;
+            defs_generated.cellRenderer = "conflictsRenderer";
+            defs_generated.cellRendererParams = {
+              onItemClicked: this.onItemClicked
+            };
+            break;
+          case "course_teacher_combined":
+            defs_generated.valueGetter = this.courseTeacherGetter;
+            defs_generated.cellStyle = params => { 
+              let course_teacher_combined = params.data[params.colDef.field];
+              if (!course_teacher_combined) return;
+              return course_teacher_combined.cid < 0 ? { backgroundColor: '#FEB2B2' } : (course_teacher_combined.tid < 0? { backgroundColor: '#FED7E2' }:{});
+            };
+            break;
+          default:
+            console.log(`Sorry, Unknown dataType: ${dataType}.`);
         }
       }
+      columnDefs[i] = defs_generated;
     }
     columnDefs[0]["pinned"] = "left";
     return columnDefs;
