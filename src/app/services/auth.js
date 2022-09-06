@@ -20,10 +20,17 @@ class Api {
           password: password
         });
     } catch (error) {
-      response = error.response;
+      if (error.response && error.response.status) {
+        response = { errorCode: error.response.status, message: error.message}
+      } else {
+        response = error.response;
+      }
     }
 
     if (response) {
+      if (!response.data) {
+        return { error: response };
+      }
       const { success, data, message } = response.data;
       if (!success) {
         return { error: message };

@@ -10,7 +10,8 @@ export const types = {
   LOGIN: "AUTH/LOGIN",
   LOGOUT: "AUTH/LOGOUT",
   STUNUM: "AUTH/STUNUM",
-  CLEAR_ERR: "AUTH/CLEARERR"
+  CLEAR_ERR: "AUTH/CLEARERR",
+  TIMESTAMP: "AUTH/TIMESTAMP"
 };
 
 // actions
@@ -27,6 +28,9 @@ export const actions = {
       } catch (error) {
         dispatch(appActions.setError(error))
         dispatch(loginResult({error: {message: error.message}}));
+      } finally {
+        dispatch(appActions.finishRequest());
+        dispatch(rspTimeStamp()); 
       }
     }
   },
@@ -44,11 +48,13 @@ export const actions = {
         dispatch(actions.clearError());
         const result = await authApi.login("test@test.com", "abcdefgh");
         console.log("stuLogin: Got data"+JSON.stringify(result));
-        dispatch(appActions.finishRequest());
         dispatch(loginResult(result));
       } catch (error) {
         dispatch(appActions.setError(error))
         dispatch(loginResult({error: {message: error.message}}));
+      } finally {
+        dispatch(appActions.finishRequest());
+        dispatch(rspTimeStamp());
       }
     }
   },
@@ -157,6 +163,13 @@ const parseStuNumSuccess = (data) => {
   })
 }
 
+const rspTimeStamp = () => {
+  return ({
+    type: types.TIMESTAMP,
+    data: new Date().getTime(),
+  })
+}
+
 // reducers
 const userInfo = (state = Immutable.fromJS({}), action) => {
   switch(action.type) {
@@ -194,10 +207,20 @@ const stuInfo = ( state = Immutable.fromJS({}), action) => {
   }
 }
 
+const timeStamp = ( state = Immutable.fromJS({}), action) => {
+  switch(action.type) {
+    case types.TIMESTAMP:
+      return Immutable.fromJS(action.data);
+    default:
+      return state;
+  }
+}
+
 const reducer = combineReducers({
   userInfo,
   stuInfo,
   error,
+  timeStamp,
 });
 
 export default reducer;
@@ -221,6 +244,10 @@ export const getStudentInfo = state => {
 
 export const getDepartmentId = state => {
   return state.getIn(["auth", "userInfo", "departmentId"]);
+};
+
+export const getRspTimeStamp = state => {
+  return state.getIn(["auth", "timeStamp"]);
 };
 
 export const getAccessLevel = createSelector(

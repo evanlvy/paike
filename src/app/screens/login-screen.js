@@ -21,7 +21,7 @@ import {
 } from 'formik';
 import { Trans, withTranslation } from 'react-i18next';
 
-import { actions as authActions, getLoggedUser, getLoggedError, getAccessLevel, getStudentInfo } from '../redux/modules/auth';
+import { actions as authActions, getLoggedUser, getLoggedError, getAccessLevel, getStudentInfo, getRspTimeStamp } from '../redux/modules/auth';
 import PropTypes from 'prop-types';
 
 function Toast(props) {
@@ -48,10 +48,10 @@ class WrappedLoginScreen extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { user, error, stuInfo } = this.props;
+    const { user, error, stuInfo, timeStamp } = this.props;
     const { showError } = this.state;
 
-    if (nextProps.user !== user || nextProps.stuInfo !== stuInfo || nextProps.error !== error) {
+    if (nextProps.user !== user || nextProps.stuInfo !== stuInfo || nextProps.error !== error || nextProps.timeStamp !== timeStamp) {
       console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.showError !== showError) {
@@ -61,11 +61,12 @@ class WrappedLoginScreen extends Component {
     return false;
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProp, prevState) {
     console.log("componentDidUpdate");
     if (!this.redirectToReferer) {
+      // Not logged in
       this.checkError();
-      if (this.setSubmittingCb) {
+      if (this.setSubmittingCb && prevProp.timeStamp != this.props.timeStamp) {
         this.setSubmittingCb(false);
       }
     }
@@ -268,6 +269,7 @@ const mapStateToProps = (state) => {
     error: getLoggedError(state),
     accessLevel: getAccessLevel(state),
     stuInfo: getStudentInfo(state),
+    timeStamp: getRspTimeStamp(state),
   }
 }
 
