@@ -25,7 +25,8 @@
     "search": "查找",
     "or": "或",
     "no_limitation": "不限",
-    "flash_changed_cells": "高亮我的改动"
+    "flash_changed_cells": "高亮我的改动",
+    "insert_row": "插入新行"
   },
   "alert": {
     "default_title": "警告",

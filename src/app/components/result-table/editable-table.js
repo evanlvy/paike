@@ -193,6 +193,25 @@ class EditableTableWrapper extends Component {
     return value.name;
   };
 
+  increasingValueGetter = (params) => {
+    let value = params.data[params.colDef.field];
+    if (!value) {
+      return "";
+    }
+    if (params.node.rowIndex == 0) {
+      return value;
+    }
+    let indexBefore = params.node.rowIndex;
+    if (params.api == undefined) {
+      return value;
+    }
+    let dataBefore = params.api.getDisplayedRowAtIndex(indexBefore - 1);
+    if (value < dataBefore.data[params.colDef.field]) {
+      return "\u2757"+value;
+    }
+    return value;
+  };
+
   buildColDef = (props) => {
     const { headers, defaultColWidth, colLineHeight, cellClassRules } = props;
     const columnDefs = [];
@@ -279,6 +298,19 @@ class EditableTableWrapper extends Component {
                 return params.value;
               }
             }*/
+            break;
+          case "increasing_value":
+            // To display exclamation sign when the value is smaller than before row.
+            defs_generated.valueGetter = this.increasingValueGetter;
+            defs_generated.valueSetter = params => {
+              let newValue = params.newValue;
+              if (typeof newValue !== 'string') {
+                return false;
+              }
+              // Remove any non-numberic charactors
+              params.data[params.column.colId] = newValue.replace(/[^0-9]/ig, "");
+              return true;
+            }
             break;
           default:
             console.log(`Sorry, Unknown dataType: ${dataType}.`);
@@ -478,7 +510,7 @@ class EditableTableWrapper extends Component {
     const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onGridSizeChanged,
       onCellClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, color, rowHeight, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
-      rowSelection, onCellClicked: onCellClickedCallback, onCellDoubleClicked, onCellEditingStarted, rowDragManaged,
+      rowSelection, onCellClicked: onCellClickedCallback, onCellDoubleClicked, onCellEditingStarted, rowDragManaged, onSelectionChanged,
       onCellValueChanged, defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged, 
       ...other_props } = this.props;
     const { curPageIndex } = this.state;
@@ -528,7 +560,8 @@ class EditableTableWrapper extends Component {
               onCellEditingStarted={onCellEditingStarted}
               onCellClicked={onCellClicked}
               onCellDoubleClicked={onCellDoubleClicked}
-              rowSelection={rowSelection} >
+              rowSelection={rowSelection}
+              onSelectionChanged={onSelectionChanged} >
             </AgGridReact>
           </div>
         </Box>

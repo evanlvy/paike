@@ -20,7 +20,7 @@ import {
     Box,
     Select,
   } from "@chakra-ui/core"
-import { MdEdit, MdSave } from "react-icons/md"
+import { MdEdit, MdNoteAdd, MdSave } from "react-icons/md"
 
 import { EditableTable } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
@@ -37,14 +37,14 @@ class ProgressdocDialog extends Component {
       isLabItemOpen: false,
       isOpen: false,
       isSaving: false,
-      depSelected: -1,
+      rowSelected: -1,
       editedRowCache: {},
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.tableHeaders = [
       {name: t("progressdocScreen.items_header_order"), field: "ord", rowDrag: true, width: 80},
       {name: t("progressdocScreen.items_header_id"), field: "id", width: 80},
-      {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", editable: true, width: 80},
+      {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", editable: true, width: 80, dataType: "increasing_value"},
       {name: t("progressdocScreen.items_header_chapter_name"), field: "chapter_name", editable: true},
       {name: t("progressdocScreen.items_header_theory"), field: "theory_item_content", editable: true, width: 380, fn_disable: this.theory_should_disable},
       {name: t("progressdocScreen.items_header_theoryhours"), field: "theory_item_hours", editable: true, width: 80, fn_disable: this.theory_should_disable},
@@ -81,7 +81,7 @@ class ProgressdocDialog extends Component {
     if (!props.docProps) return result;
     // initialize the state with props by the same name id!
     if (props.docProps.id !== state.id) {
-      result = {result, ...props.docProps, editedRowCache:{}}//props.docDetails["props"];
+      result = {result, ...props.docProps, editedRowCache:{}, rowSelected: -1}//props.docDetails["props"];
     }
     return result;
   }
@@ -130,6 +130,10 @@ class ProgressdocDialog extends Component {
     }
     if (nextProps.docItems !== docItems) {
       console.log("shouldComponentUpdate, docItems");
+      this.setState({
+        rowSelected: -1,
+        editedRowCache: {},
+      });
       return true;
     }
     /*for (let index = 0; index < this.forms.length; index++) {
@@ -234,7 +238,7 @@ class ProgressdocDialog extends Component {
     if (should_stop_editing) params.api.stopEditing();
   }
 
-  onFlashCells = () => {
+  flashCells = () => {
     if (!this.gridApi || !this.state.editedRowCache) return;
     Object.keys(this.state.editedRowCache).forEach(function(idx){
       let row = this.gridApi.getDisplayedRowAtIndex(parseInt(idx));
@@ -321,6 +325,25 @@ class ProgressdocDialog extends Component {
     this.props.closeDoc();
   }
 
+  onSelectionChanged = (params) => {
+    this.gridApi = params.api;
+    if (!this.gridApi) return;
+    const rowCount = this.gridApi.getSelectedNodes().length;
+    this.setState({
+      rowSelected: rowCount
+    });
+  };
+
+  addRow = () => {
+    if (!this.gridApi) return;
+    const rows = this.gridApi.getSelectedNodes();
+    if (!rows || rows.length != 1) return;
+    let idx = rows[0].rowIndex;
+    let row_data = rows[0].data;
+    let newRow = {id: -1, week_idx: row_data.week_idx, chapter_name: row_data.chapter_name, teaching_mode: row_data.teaching_mode};
+    //this.gridApi.addRow(newRow);
+  };
+
   // CellClassRules will be verified (excute this func) before onCellValueChanged called!
   // params.data.isEdited will be aware for the whole row instead of a cell!
   /*
@@ -333,10 +356,10 @@ class ProgressdocDialog extends Component {
   };*/
 
   render() {
-    const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, isSaving } = this.state;
+    const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, isSaving } = this.state;
     const { t, title, color, btnText, isSaveable, tableTitle, docId, departments, docProps, docItems } = this.props;
-    const { tableHeaders, btnRef, loadDocDetails, onClose, onSave, onFormChanged, onCellDoubleClicked, 
-      onLabItemClosed, onCellValueChanged, onCellEditingStarted, onFlashCells } = this;
+    const { tableHeaders, btnRef, loadDocDetails, onClose, onSave, onFormChanged, onCellDoubleClicked, onSelectionChanged,
+      onLabItemClosed, onCellValueChanged, onCellEditingStarted, flashCells, addRow } = this;
     return (
       <>
         <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={btnRef} onClick={(e) => {
@@ -408,7 +431,8 @@ class ProgressdocDialog extends Component {
                 onCellValueChanged={onCellValueChanged}
                 onCellDoubleClicked={onCellDoubleClicked}
                 onCellEditingStarted={onCellEditingStarted}
-                rowSelection="single"
+                rowSelection="multiple"
+                onSelectionChanged={onSelectionChanged}
                 //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
                 />
             }
@@ -424,7 +448,8 @@ class ProgressdocDialog extends Component {
                   isSaveable />
             </ModalBody>
             <ModalFooter>
-              <Button variantColor="green" mr={3} onClick={onFlashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button>
+              <Button variantColor="blue" mr={3} onClick={addRow} leftIcon={MdNoteAdd} isDisabled={rowSelected!=1}>{t("common.insert_row")}</Button>
+              <Button variantColor="green" mr={3} onClick={flashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button>
               { isSaveable && 
                 <Button variantColor="red" mr={3} onClick={onSave} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("common.save")}</Button>
               }
