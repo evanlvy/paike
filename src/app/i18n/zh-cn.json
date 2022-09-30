@@ -297,6 +297,7 @@
     "items_header_teaching_mode": "教学方式",
     "items_header_comment": "备注",
     "items_header_docid": "进度表ID",
+    "items_header_order_in_week": "顺序",
     "form_label_coursename": "课程名",
     "form_label_shortname": "课表简称",
     "form_label_description": "描述",

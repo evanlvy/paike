@@ -159,7 +159,8 @@ class WrappedLoginScreen extends Component {
       if (accessLevel === "PROFESSOR") {
         menu_params =  {jys: {id: user.departmentId, name: user.departmentName}, teacherId: user.id};
         return <Redirect to={{
-          pathname: '/jys',
+          //pathname: '/jys',
+          pathname: '/maintain/progressdoc',
           state: menu_params
         }}/>
       } else if (accessLevel === "STUDENT" && stuInfo) {

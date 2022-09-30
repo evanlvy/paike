@@ -8,12 +8,12 @@ import {
   Box,
 } from '@chakra-ui/core';
 import { withTranslation } from 'react-i18next';
-import { isImmutable } from 'immutable';
 
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 import './table.css';
 
+import { CellConverters } from './cell-converters';
 import { CommonRenderer } from "./common-renderer";
 import { ArrayDataRenderer } from "./arraydata-renderer";
 import { SelectorCelleditor } from "./selector-celleditor";
@@ -32,6 +32,7 @@ class EditableTableWrapper extends Component {
       minWidth: 80,
       resizable: !fixedColWidth,
       wrapText: true,
+      enableCellChangeFlash: true,
     }
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
@@ -75,143 +76,6 @@ class EditableTableWrapper extends Component {
     }
   }
 
-  getCircularReplacer = () => {
-    const seen = new WeakSet();
-    return (key, value) => {
-      if (typeof value === "object" && value !== null) {
-        if (seen.has(value)) {
-          return;
-        }
-        seen.add(value);
-      }
-      return value;
-    };
-  };
-
-  //Cell Edit Ref https://www.ag-grid.com/javascript-grid/cell-editing/?
-  courseTeacherGetter = (params) => {
-    //console.log("courseTeacherGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
-    let value = params.data[params.colDef.field];
-    //console.log("courseTeacherGetter: value:"+JSON.stringify(value));
-    if (!value) {
-      return this.zixi;
-    }
-    let cname = value.course;
-    /*if (value.cid <= 0){
-      cname = (value.cid < 0?"\u274C":"\u2753")+cname;
-    }*/
-    let tname = value.teacher;
-    /*if (value.tid <= 0){
-      tname = (value.tid < 0?"\u274C":"\u2753")+tname;
-    }*/
-    let output = "\u3010" + cname + "\u3011 " + tname;
-    //console.log("courseTeacherGetter: "+output);
-    return output;
-  };
-
-  courseTeacherSetter = (params) => {
-    let dest_col = params.colDef.field;
-    if (!params.newValue || params.newValue.length < 1) {
-      delete params.data[dest_col];
-      return true;
-    }
-    let old_string = "";
-    if (params.oldValue && params.oldValue.length > 0) {
-      //old_string = params.oldValue.replace("\u274C", "").replace("\u2753", "").replace(/\s+/g, "");
-      old_string = params.oldValue.replace("\u3010", "").replace("\u3011", "").replace(/\s+/g, "");
-    }
-    //let input_string = params.newValue.replace("\u274C", "").replace("\u2753", "");
-    let input_string = params.newValue.replace("\u3010", "").replace("\u3011", "");
-    if (old_string.length > 1) {
-      // Compare string after trim
-      let new_trimmed = input_string.replace(/\s+/g, "");
-      if (old_string === new_trimmed) {
-        return false;
-      }
-    }
-    let output = {course: "", cid: 0, teacher: "", tid: 0};
-    let item_splited = input_string.split(' ');
-    if (item_splited.length >= 1) {
-      output.course = item_splited[0];
-      if (output.course === this.zixi) {
-        delete params.data[dest_col];
-        return true;
-      }
-    }
-    if (item_splited.length === 2) {
-      output.teacher = item_splited[1];
-    }
-    if (item_splited.length > 2) {
-      output.teacher = input_string.replace(output.course, "");
-    }
-    //console.log("courseTeacherSetter: "+JSON.stringify(output));
-    params.data[dest_col] = output;
-    return true;
-  };
-
-  classNamesGetter = (params) => {
-    //console.log("courseTeacherGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
-    let value = params.data[params.colDef.field];
-    //console.log("courseTeacherGetter: value:"+JSON.stringify(value));
-    //Data sample: {12: '20全科1', 13:'20全科2'}
-    if (!value) {
-      return "";
-    }
-    let short_names = Object.values(value);
-    return short_names.join(', ');
-  };
-
-  labListGetter = (params) => {
-    let value = params.data[params.colDef.field];
-    if (!value) {
-      // Show flash icon when lab hour > 0
-      return (!params.data.theory_item_content && !params.data.theory_item_hours)?"\u26A1":"";
-    }
-    let loc_data = value.items;
-    if (!loc_data) {
-      return "...";
-    }
-    if (isImmutable(loc_data)) {
-      loc_data = value.items.toJS();
-    }
-    let short_names = Object.values(loc_data).map(function (lab_info) {
-      return lab_info.location;
-    });
-    return short_names.join(', ');
-  };
-
-  teacherListGetter = (params) => {
-    let value = params.data[params.colDef.field];
-    if (!value) {
-      return "";
-    }
-    if (Array.isArray(value)) {
-      return value.map(function (teacher_info) {
-        return teacher_info.name;
-      });
-    }
-    return value.name;
-  };
-
-  increasingValueGetter = (params) => {
-    let value = params.data[params.colDef.field];
-    if (!value) {
-      return "";
-    }
-    if (params.node.rowIndex == 0) {
-      return value;
-    }
-    let indexBefore = params.node.rowIndex;
-    if (params.api == undefined) {
-      return value;
-    }
-    let dataBefore = params.api.getDisplayedRowAtIndex(indexBefore - 1);
-    if (value < dataBefore.data[params.colDef.field]) {
-      return "\u2757"+value;
-    }
-    return value;
-  };
-
   buildColDef = (props) => {
     const { headers, defaultColWidth, colLineHeight, cellClassRules } = props;
     const columnDefs = [];
@@ -247,47 +111,34 @@ class EditableTableWrapper extends Component {
       if (dataType && dataType !== null) {
         switch(dataType) {
           case "classes_id_name_obj":
-            defs_generated.valueGetter = this.classNamesGetter;
+            defs_generated.valueGetter = CellConverters.classNamesGetter;
             break;
           case "lab_list":
-            defs_generated.valueGetter = this.labListGetter;
+            defs_generated.valueGetter = CellConverters.labListGetter;
             break;
           case "teacher_obj_array":
-            defs_generated.valueGetter = this.teacherListGetter;
-            defs_generated.valueSetter = params => {
-              let newValue = params.newValue;
-              if (typeof newValue !== 'string') return false;
-              newValue = newValue.replace('，',' ').replace(',', ' ');
-              let teachers = newValue.split(" ");
-              params.data[params.column.colId] = teachers.map(teacher_name => ({id: -1, name: teacher_name}));
-              return true;
-            }
+            defs_generated.valueGetter = CellConverters.teacherListGetter;
+            defs_generated.valueSetter = CellConverters.teacherListSetter;
             break;
           case "course_teacher_combined":
-            defs_generated.valueGetter = this.courseTeacherGetter;
-            defs_generated.valueSetter = this.courseTeacherSetter;
-            defs_generated.cellStyle = params => { 
-              let course_teacher_combined = params.data[params.colDef.field];
-              if (course_teacher_combined) {
-                if (course_teacher_combined.cid < 0) return { backgroundColor: '#FEB2B2' };
-                if (course_teacher_combined.tid < 0) return { backgroundColor: '#FED7E2' };
-                if (course_teacher_combined.cid == 0) return { backgroundColor: '#00B5D8' };
-              }
-              return;
-            };
+            defs_generated.valueGetter = CellConverters.courseTeacherGetter;
+            defs_generated.valueSetter = CellConverters.courseTeacherSetter;
+            defs_generated.cellStyle = CellConverters.courseTeacherCellStyle;
             break;
           case "departments_selector":
-            defs_generated.cellEditor = "selectorCelleditor";
-            defs_generated.cellEditorParams = {
-              values: Object.values(this.props.departments),
-            }
-            defs_generated.valueGetter = params => {
-              let data_item = params.data[params.column.colId];
-              if (typeof data_item === 'number') {
-                let dep_name = this.props.departments[data_item+""];
-                return dep_name;
-              } else {
-                return data_item;
+            if (this.props.departments) {
+              defs_generated.cellEditor = "selectorCelleditor";
+              defs_generated.cellEditorParams = {
+                values: Object.values(this.props.departments),
+              }
+              defs_generated.valueGetter = params => {
+                let data_item = params.data[params.column.colId];
+                if (typeof data_item === 'number') {
+                  let dep_name = this.props.departments[data_item+""];
+                  return dep_name;
+                } else {
+                  return data_item;
+                }
               }
             }
             /*defs_generated["valueFormatter"] = params => {  // valueFormatter will not init selector value right
@@ -299,18 +150,13 @@ class EditableTableWrapper extends Component {
               }
             }*/
             break;
-          case "increasing_value":
+          case "grouped_increasing_week":
             // To display exclamation sign when the value is smaller than before row.
-            defs_generated.valueGetter = this.increasingValueGetter;
-            defs_generated.valueSetter = params => {
-              let newValue = params.newValue;
-              if (typeof newValue !== 'string') {
-                return false;
-              }
-              // Remove any non-numberic charactors
-              params.data[params.column.colId] = newValue.replace(/[^0-9]/ig, "");
-              return true;
-            }
+            //defs_generated.valueGetter = this.increasingValueGetter;
+            defs_generated.valueSetter = CellConverters.numbersOnlyValueSetter;
+            // NO BREAK HERE! SHARING CODE!
+          case "grouped_color_as_week":
+            defs_generated.cellStyle = CellConverters.groupColoredWeekCellStyle;
             break;
           default:
             console.log(`Sorry, Unknown dataType: ${dataType}.`);
@@ -511,12 +357,13 @@ class EditableTableWrapper extends Component {
       onCellClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, color, rowHeight, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
       rowSelection, onCellClicked: onCellClickedCallback, onCellDoubleClicked, onCellEditingStarted, rowDragManaged, onSelectionChanged,
-      onCellValueChanged, defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged, 
+      onCellValueChanged, defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged, getRowId,
+      undoRedoCellEditing, undoRedoCellEditingLimit, enableCellChangeFlash,
       ...other_props } = this.props;
     const { curPageIndex } = this.state;
     //console.log("RowData: "+JSON.stringify(rowData));
     return (
-      <Flex direction="column" width={width ? width : "100%"} height="inherit" {...other_props}>
+      <Flex direction="column" width={width ? width : "100%"} height="inherit">
         {
           (title || pageNames) &&
           <Box display="flex" flexDirection="row" bg={color+".400"} minH={titleHeight} px={4} alignItems="center"
@@ -554,14 +401,19 @@ class EditableTableWrapper extends Component {
               rowData={rowData}
               rowHeight={rowHeight}
               stopEditingWhenCellsLoseFocus={true}
-              deltaRowMode={true}
+              //deltaRowMode={true}
+              getRowId={getRowId}
               //getRowNodeId={data=>data.id} // Bug: make rowHeight flash forever!
               onCellValueChanged={onCellValueChanged}
               onCellEditingStarted={onCellEditingStarted}
               onCellClicked={onCellClicked}
               onCellDoubleClicked={onCellDoubleClicked}
               rowSelection={rowSelection}
-              onSelectionChanged={onSelectionChanged} >
+              onSelectionChanged={onSelectionChanged}
+              undoRedoCellEditing={undoRedoCellEditing}
+              undoRedoCellEditingLimit={undoRedoCellEditingLimit}
+              enableCellChangeFlash={enableCellChangeFlash} 
+              {...other_props}>
             </AgGridReact>
           </div>
         </Box>

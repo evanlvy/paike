@@ -42,10 +42,11 @@ class ProgressdocDialog extends Component {
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.tableHeaders = [
-      {name: t("progressdocScreen.items_header_order"), field: "ord", rowDrag: true, width: 80},
-      {name: t("progressdocScreen.items_header_id"), field: "id", width: 80},
-      {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", editable: true, width: 80, dataType: "increasing_value"},
-      {name: t("progressdocScreen.items_header_chapter_name"), field: "chapter_name", editable: true},
+      //{name: t("progressdocScreen.items_header_order"), field: "ord", rowDrag: true, width: 80, dataType: "grouped_color_as_week"},
+      //{name: t("progressdocScreen.items_header_id"), field: "id", width: 80, dataType: "grouped_color_as_week"},
+      {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", rowDrag: true, editable: true, width: 80, dataType: "grouped_increasing_week"},
+      {name: t("progressdocScreen.items_header_order_in_week"), field: "order_in_week", width: 80, dataType: "grouped_color_as_week"},
+      {name: t("progressdocScreen.items_header_chapter_name"), field: "chapter_name", editable: true, width: 120},
       {name: t("progressdocScreen.items_header_theory"), field: "theory_item_content", editable: true, width: 380, fn_disable: this.theory_should_disable},
       {name: t("progressdocScreen.items_header_theoryhours"), field: "theory_item_hours", editable: true, width: 80, fn_disable: this.theory_should_disable},
       {name: t("progressdocScreen.items_header_labitem"), field: "labitem_content", editable: true, width: 380, fn_disable: this.lab_should_disable},
@@ -334,6 +335,35 @@ class ProgressdocDialog extends Component {
     });
   };
 
+  onRowDragEnd = (event) => {
+    console.log("onRowDragEnd");
+    let on_week_idx = event.overNode.data.week_idx;
+    let direction = event.vDirection;
+    let dest_week_idx = on_week_idx;
+    let over_row_idx = event.overIndex;
+    // Find the index of the 1st row of this week.
+    let start_row_idx = 0;
+    for (let idx = over_row_idx; idx >= 0; idx --) {
+      let node = event.api.getDisplayedRowAtIndex(idx);
+      if (node.data.week_idx !== dest_week_idx) {
+        start_row_idx = idx;
+        break;
+      }
+    }
+    // Reset cell order_in_week of rows for this week.
+    let total_rows = event.api.getDisplayedRowCount();
+    for (let idx = start_row_idx; idx < total_rows; idx++ ) {
+      let node = event.api.getDisplayedRowAtIndex(idx);
+      if (node.data.week_idx !== dest_week_idx) {
+        break;
+      }
+      node.setDataValue("order_in_week", idx - start_row_idx);
+      console.log("onRowDragEnd:set order_in_week to"+(idx-start_row_idx));
+    }
+    // Set drag item week index
+    event.node.setDataValue("week_idx", dest_week_idx);
+  };
+
   addRow = () => {
     if (!this.gridApi) return;
     const rows = this.gridApi.getSelectedNodes();
@@ -423,7 +453,7 @@ class ProgressdocDialog extends Component {
                 color={color}
                 headers={tableHeaders}
                 data={docItems}
-                orderbyAsc={'ord'}
+                //orderbyAsc={'ord'}
                 rowDragManaged={true}
                 pagePrevCaption={t("common.previous")}
                 pageNextCaption={t("common.next")}
@@ -433,6 +463,8 @@ class ProgressdocDialog extends Component {
                 onCellEditingStarted={onCellEditingStarted}
                 rowSelection="multiple"
                 onSelectionChanged={onSelectionChanged}
+                getRowId={params => params.data.id}
+                onRowDragEnd={this.onRowDragEnd}
                 //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
                 />
             }
@@ -476,4 +508,4 @@ const mapDispatchToProps = (dispatch) => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(ProgressdocDialog));
+export default connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(withTranslation()(ProgressdocDialog));
