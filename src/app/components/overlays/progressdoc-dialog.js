@@ -17,10 +17,9 @@ import {
     FormHelperText,
     Flex,
     Input,
-    Box,
     Select,
   } from "@chakra-ui/core"
-import { MdEdit, MdNoteAdd, MdSave } from "react-icons/md"
+import { MdEdit, MdNoteAdd, MdSave, MdDelete } from "react-icons/md"
 
 import { EditableTable } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
@@ -71,6 +70,7 @@ class ProgressdocDialog extends Component {
       {id: "comments", label: t("progressdocScreen.form_label_comments"), minW: 280, isRequired: false},
     ];
     this.gridApi = null;
+    this.insertDbId = -1;
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -254,12 +254,12 @@ class ProgressdocDialog extends Component {
   }
 
   onLabItemClosed = (params) => {
-    if (params && 'id' in params && 'rowIndex' in params) {
+    if (this.gridApi && params && 'progressId' in params /*&& 'rowIndex' in params*/) {
       // Update labitem_id to row cache
-      this.setState({editedRowCache: {...this.state.editedRowCache, 
-        [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.progressId, 'labitem_id': params.id}}});
+      //this.setState({editedRowCache: {...this.state.editedRowCache, 
+      //  [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.progressId, 'labitem_id': params.id}}});
       // Update progress list table states
-      this.props.fetchLabitem(params.id, params.progressId);
+      //this.props.fetchLabitem(params.id, params.progressId);
       //if ('lab_locs' in params) {
         // Update the locations on list
         //this.props.updateLabItemInProgressList(params.progressId, params.lab_locs);
@@ -272,6 +272,14 @@ class ProgressdocDialog extends Component {
           this.callRefreshAfterMillis(cellparams, 1000, this.gridApi);
         }*/
       //}
+      let newItem = { ...this.gridApi.getRowNode(""+params.progressId)};
+      //TBD: why always get {}???!!!
+      if ('lab_alloc' in params && params.lab_alloc) {
+        newItem.lab_alloc = params.lab_alloc;
+      } else {
+        delete newItem.lab_alloc;
+      }
+      this.gridApi.applyTransaction({ update: [newItem] });
     }
     this.setState({
       isLabItemOpen: false
@@ -287,7 +295,7 @@ class ProgressdocDialog extends Component {
   // TBD: Add Create-new-line button.
   // Add order to database for progress items display order.
   // Can modify row order
-  onSave = () => {
+  /*onSave = () => {
     const { docProps } = this.props;
     const { editedRowCache } = this.state;
     // Check doc props
@@ -324,7 +332,10 @@ class ProgressdocDialog extends Component {
       isSaving: true
     });
     this.props.closeDoc();
-  }
+  }*/
+  onSave = (params) => {
+    const { docProps, docItems } = this.props;
+  };
 
   onSelectionChanged = (params) => {
     this.gridApi = params.api;
@@ -337,16 +348,18 @@ class ProgressdocDialog extends Component {
 
   onRowDragEnd = (event) => {
     console.log("onRowDragEnd");
-    let on_week_idx = event.overNode.data.week_idx;
-    let direction = event.vDirection;
-    let dest_week_idx = on_week_idx;
-    let over_row_idx = event.overIndex;
+    // Check if over the dragging row itself
+    if (event.overIndex < 0 || event.node === event.overNode) return;
+
+    let dest_week_idx = event.overNode.data.week_idx;
+    let dest_row_idx = event.node.rowIndex;  // Dropped index result
+    let dragged_id = event.node.id;
     // Find the index of the 1st row of this week.
     let start_row_idx = 0;
-    for (let idx = over_row_idx; idx >= 0; idx --) {
+    for (let idx = dest_row_idx - 1; idx >= 0; idx --) {
       let node = event.api.getDisplayedRowAtIndex(idx);
       if (node.data.week_idx !== dest_week_idx) {
-        start_row_idx = idx;
+        start_row_idx = idx + 1;
         break;
       }
     }
@@ -354,10 +367,10 @@ class ProgressdocDialog extends Component {
     let total_rows = event.api.getDisplayedRowCount();
     for (let idx = start_row_idx; idx < total_rows; idx++ ) {
       let node = event.api.getDisplayedRowAtIndex(idx);
-      if (node.data.week_idx !== dest_week_idx) {
+      if (node.data.week_idx !== dest_week_idx && dragged_id !== node.id) {
         break;
       }
-      node.setDataValue("order_in_week", idx - start_row_idx);
+      node.setDataValue("order_in_week", idx - start_row_idx + 1);
       console.log("onRowDragEnd:set order_in_week to"+(idx-start_row_idx));
     }
     // Set drag item week index
@@ -370,9 +383,21 @@ class ProgressdocDialog extends Component {
     if (!rows || rows.length != 1) return;
     let idx = rows[0].rowIndex;
     let row_data = rows[0].data;
-    let newRow = {id: -1, week_idx: row_data.week_idx, chapter_name: row_data.chapter_name, teaching_mode: row_data.teaching_mode};
-    //this.gridApi.addRow(newRow);
+    let newRow = {id: this.insertDbId--, week_idx: row_data.week_idx, chapter_name: row_data.chapter_name, teaching_mode: row_data.teaching_mode};
+    this.gridApi.applyTransaction({ addIndex: idx+1, add: [newRow] });  // Insert after selected row.
   };
+
+  delRow = () => {
+    if (!this.gridApi) return;
+    const nodes = this.gridApi.getSelectedNodes();
+    if (!nodes || nodes.length < 1) return;
+    this.gridApi.applyTransaction({ remove: nodes.map(node => (node.data)) });
+  };
+
+  getRowId = (params) => {
+    // TBD: never called???
+    return params.data.id;
+  }
 
   // CellClassRules will be verified (excute this func) before onCellValueChanged called!
   // params.data.isEdited will be aware for the whole row instead of a cell!
@@ -463,7 +488,7 @@ class ProgressdocDialog extends Component {
                 onCellEditingStarted={onCellEditingStarted}
                 rowSelection="multiple"
                 onSelectionChanged={onSelectionChanged}
-                getRowId={params => params.data.id}
+                getRowId={this.getRowId}//{params => params.data.id}
                 onRowDragEnd={this.onRowDragEnd}
                 //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
                 />
@@ -480,7 +505,8 @@ class ProgressdocDialog extends Component {
                   isSaveable />
             </ModalBody>
             <ModalFooter>
-              <Button variantColor="blue" mr={3} onClick={addRow} leftIcon={MdNoteAdd} isDisabled={rowSelected!=1}>{t("common.insert_row")}</Button>
+              <Button variantColor="blue" mr={3} onClick={addRow} leftIcon={MdNoteAdd} isDisabled={rowSelected!==1}>{t("common.insert_row")}</Button>
+              <Button variantColor="red" mr={3} onClick={this.delRow} leftIcon={MdDelete} isDisabled={rowSelected<1}>{t("common.remove_row")}</Button>
               <Button variantColor="green" mr={3} onClick={flashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button>
               { isSaveable && 
                 <Button variantColor="red" mr={3} onClick={onSave} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("common.save")}</Button>

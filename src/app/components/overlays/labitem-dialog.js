@@ -89,9 +89,9 @@ class LabitemDialog extends Component {
       result["doc_lab_content"] = "";
     }
     // initialize the state with props by the same name id!
-    if (!state.original || (next_labitem_id !== state.original.id)) {
-      result["original"] = Object.assign({},(!props.data)?LabitemDialog.empty_object:props.data);
-      //result["original"] = Object.assign({}, props.data);
+    if (!state.formValues || (next_labitem_id !== state.formValues.id)) {
+      result["formValues"] = Object.assign({},(!props.data)?LabitemDialog.empty_object:props.data);
+      //result["formValues"] = Object.assign({}, props.data);
       result = {...result, ...props.context};
       result["doc_lab_content"] = '';
       result["tabIndex"] = 0;
@@ -110,10 +110,10 @@ class LabitemDialog extends Component {
     }
 
     if (props.imported && "id" in props.imported) {
-      if (!state.original || props.imported.id !== state.original.id) {
-        result["original"] = Object.assign({}, props.imported);  // Never use '=' to assign value here!
+      if (!state.formValues || props.imported.id !== state.formValues.id) {
+        result["formValues"] = Object.assign({}, props.imported);  // Never use '=' to assign value here!
         if (props.imported.items) {
-          result["original"]["locations"] = parseImmutableLocs(props.imported.items);
+          result["formValues"]["locations"] = parseImmutableLocs(props.imported.items);
         }
       }
     }
@@ -172,7 +172,7 @@ class LabitemDialog extends Component {
         return false;
       }
       console.log("shouldComponentUpdate, nextState diff");
-      /*if (nextState.original.id !== this.state.original.id) {
+      /*if (nextState.formValues.id !== this.state.formValues.id) {
         if (!nextProps.imported || !("id" in nextProps.imported)) {
           console.log("shouldComponentUpdate, clearSearchedLabitem!");
           this.props.clearSearchedLabitem();
@@ -203,10 +203,10 @@ class LabitemDialog extends Component {
       newVal = newVal.trim();
     }
     // Must keep the state id same with the form input id
-    let original = this.state.original;
-    original[event.target.id] = newVal;
+    let formValues = this.state.formValues;
+    formValues[event.target.id] = newVal;
     this.setState({
-      original,
+      formValues,
     });
   }
   
@@ -260,10 +260,12 @@ class LabitemDialog extends Component {
   }
 
   onReSelected = () => {
-    const { context } = this.props;
+    const { context, searchResult } = this.props;
     let labitem_id = this.state.selectedId;
     if (labitem_id > 0 && context) {
-      let param = {id:labitem_id, rowIndex:context.rowIndex, progressId:context.progressId}
+      let lab_alloc = {id: labitem_id};
+      lab_alloc.items = this.parseLocStrToObject(searchResult[labitem_id]);
+      let param = {progressId:context.progressId, lab_alloc:lab_alloc}
       /*if (searchResult && labitem_id in searchResult) {
         let lab_arr = searchResult[labitem_id].split('#');
         if (lab_arr.length > 1) {
@@ -279,15 +281,17 @@ class LabitemDialog extends Component {
 
   onLabItemCreated = () => {
     const { context, created } = this.props;
-    const { original } = this.state;  // Reflect value of edit boxes
+    const { formValues } = this.state;  // Reflect value of edit boxes
     let labitem_id = created;
-    if (labitem_id > 0 && context && original) {
-      let param = {id:labitem_id, rowIndex:context.rowIndex, progressId:context.progressId};
-      /*if (original["locations"].length > 0) {
+    if (labitem_id > 0 && context && formValues) {
+      let lab_alloc = {...formValues};
+      lab_alloc.id = labitem_id;
+      if (lab_alloc.locations.length > 0) {
         // Get loc_array from lab location edit box
-        param['lab_locs'] = this.parseLocArray(original["locations"]);
-      }*/
-      this.onClose(param);
+        lab_alloc.items = this.parseLocStrToObject(formValues.locations);
+        delete lab_alloc.locations;
+      }
+      this.onClose({progressId:context.progressId, lab_alloc:lab_alloc});
     }
     if (created > 0) {
       this.props.clearCreatedLabitem();
@@ -297,19 +301,19 @@ class LabitemDialog extends Component {
   
   onSaveEdited = () => {
     const { data:labItemProp, context } = this.props;
-    const { original } = this.state;
+    const { formValues } = this.state;
     this.props.clearCreatedLabitem();
     // Always create a new labitem!
     let has_diff = false;
-    let props_diff = Object.assign({}, original);  // Must have id prop
+    let props_diff = Object.assign({}, formValues);  // Must have id prop
     props_diff['id'] = -1;
     // Remove props that never changed
     //let props_diff = {id: -1};
     for (let index = 0; index < this.edit_form.length; index++) {
       let form = this.edit_form[index];
-      if (original[form.id] !== labItemProp[form.id]) {
+      if (formValues[form.id] !== labItemProp[form.id]) {
         console.log("onSave: FORMs diff:"+form.id);
-        //props_diff[form.id] = original[form.id];
+        //props_diff[form.id] = formValues[form.id];
         has_diff = true;
       }
     }
@@ -328,13 +332,29 @@ class LabitemDialog extends Component {
 
   parseLocArray = (loc) => {
     let loc_str = loc;
+    if (loc_str.indexOf('#') >= 0) {
+      // Is brief search result aaa # A101 A102
+      let brief_array = loc_str.split('#');
+      loc_str = brief_array[brief_array.length-1];
+    }
     loc_str = loc_str.replace(',', ' ').replace('，', ' ').replace('.', ' ').replace('。', ' ');
     loc_str = loc_str.replace(/\s+/g, ' ').trim();
     return loc_str.split(' ');
   }
 
+  parseLocStrToObject = (loc) => {
+    let loc_array = this.parseLocArray(loc);
+    if (loc_array.length <= 0) return null;
+    let loc_obj = {};
+    let fake_loc_id = 1;
+    loc_array.forEach(element => {
+      loc_obj[""+fake_loc_id++] = {location: element};
+    });
+    return loc_obj;
+  }
+
   render() {
-    const { isOpen, selectedId, isSearching, tabIndex, original:edit_source,
+    const { isOpen, selectedId, isSearching, tabIndex, formValues:edit_source,
       doc_department_id, doc_short_name, doc_course_name, doc_lab_content } = this.state;
     const { t, title, color, isSaveable, departments, searchResult, data:labItemProp,  context:docContext } = this.props;
     const { btnRef, onClose, onFormChanged, onSearchChanged, onSearch, onSearchResultSelected, handleTabsChange, onLoadExisted, onReSelected, onSaveEdited } = this;
