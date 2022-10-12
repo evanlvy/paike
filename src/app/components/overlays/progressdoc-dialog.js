@@ -178,6 +178,7 @@ class ProgressdocDialog extends Component {
   }
 
   onCellDoubleClicked = (event) => {
+    // Process lab_alloc column only
     if (event && event.column.colId === "lab_alloc" && !event.data.theory_item_hours && !event.data.theory_item_content) {
       let lab_alloc = event.data.lab_alloc;
       let short_names = parseImmutableLocs(lab_alloc.items);
@@ -187,8 +188,9 @@ class ProgressdocDialog extends Component {
           doc_course_name: this.state.course_name,
           doc_short_name: this.state.short_name,
           doc_department_id: this.state.department_id,
-          doc_lab_content: event.data.labitem_content,
-          rowIndex: event.rowIndex,
+          // Progress item lab content may not be the same with lab item name
+          doc_lab_content: event.data.lab_alloc.name, //event.data.labitem_content,
+          //rowIndex: event.rowIndex,
           progressId: event.data.id,
         },
         isLabItemOpen: true,
@@ -204,21 +206,9 @@ class ProgressdocDialog extends Component {
       // Compare value with no change
       return;
     }
-    /*if (dest_col in this.props.docItems[params.rowIndex]) {
-      let original_in_state = this.props.peekDocItem(params.data.id, dest_col);
-      if (params.newValue == original_in_state) {
-        console.log("onCellValueChanged: no change found compared with props! Clear from cache!");
-        // Clear the edit cache
-        if (params.rowIndex in this.state.editedRowCache) {
-          this.setState({editedRowCache: {...this.state.editedRowCache, 
-            [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], [dest_col]: undefined }}});
-        }
-        return;
-      }
-    }*/
     if (dest_col === 'lab_alloc') dest_col = 'labitem_id';
     this.setState({editedRowCache: {...this.state.editedRowCache, 
-      [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.data.id, [dest_col]: params.newValue}}});
+      [params.node.id]: {...this.state.editedRowCache[params.node.id], [dest_col]: params.newValue}}});
   }
 
   onCellEditingStarted  = (params) => {
@@ -241,14 +231,15 @@ class ProgressdocDialog extends Component {
 
   flashCells = () => {
     if (!this.gridApi || !this.state.editedRowCache) return;
-    Object.keys(this.state.editedRowCache).forEach(function(idx){
-      let row = this.gridApi.getDisplayedRowAtIndex(parseInt(idx));
-      if (row) {
-        let cols = Object.keys(this.state.editedRowCache[idx]);
+    Object.keys(this.state.editedRowCache).forEach(function(nodeId){
+      //let row = this.gridApi.getDisplayedRowAtIndex(parseInt(idx));
+      let rowNode = this.gridApi.getRowNode(nodeId);
+      if (rowNode) {
+        let cols = Object.keys(this.state.editedRowCache[nodeId]);
         if (cols.includes("labitem_id")) {
           cols.push("lab_alloc");
         }
-        this.gridApi.flashCells({ rowNodes: [row], columns: cols });
+        this.gridApi.flashCells({ rowNodes: [rowNode], columns: cols });
       }
     }, this);
   }
@@ -256,41 +247,24 @@ class ProgressdocDialog extends Component {
   onLabItemClosed = (params) => {
     if (this.gridApi && params && 'progressId' in params /*&& 'rowIndex' in params*/) {
       // Update labitem_id to row cache
-      //this.setState({editedRowCache: {...this.state.editedRowCache, 
-      //  [params.rowIndex]: {...this.state.editedRowCache[params.rowIndex], id: params.progressId, 'labitem_id': params.id}}});
-      // Update progress list table states
-      //this.props.fetchLabitem(params.id, params.progressId);
-      //if ('lab_locs' in params) {
-        // Update the locations on list
-        //this.props.updateLabItemInProgressList(params.progressId, params.lab_locs);
-        /*if (this.gridApi){
-          let cellparams = {
-            force: true,
-            rowNode: this.gridApi.getDisplayedRowAtIndex(params.rowIndex),
-            //columns: ["lab_alloc"],
-          };
-          this.callRefreshAfterMillis(cellparams, 1000, this.gridApi);
-        }*/
-      //}
-      let newItem = { ...this.gridApi.getRowNode(""+params.progressId)};
-      //TBD: why always get {}???!!!
-      if ('lab_alloc' in params && params.lab_alloc) {
-        newItem.lab_alloc = params.lab_alloc;
-      } else {
-        delete newItem.lab_alloc;
+      let previous_row_data = this.gridApi.getRowNode(params.progressId).data;
+      if (previous_row_data.lab_alloc && previous_row_data.lab_alloc.id != params.lab_alloc.id) {
+        let newItem = { ...previous_row_data};
+        if ('lab_alloc' in params && params.lab_alloc) {
+          newItem.lab_alloc = params.lab_alloc;
+        } else {
+          delete newItem.lab_alloc;
+        }
+        this.gridApi.applyTransaction({ update: [newItem] });
+        // Update lab_alloc colume to edited-row-cache
+        this.setState({editedRowCache: {...this.state.editedRowCache, 
+          [params.progressId]: {...this.state.editedRowCache[params.progressId], lab_alloc: params.lab_alloc}}});
       }
-      this.gridApi.applyTransaction({ update: [newItem] });
     }
     this.setState({
       isLabItemOpen: false
     });
   }
-
-  /*callRefreshAfterMillis = (params, millis, gridApi) => {
-    setTimeout(function () {
-      gridApi.redrawRows();
-    }, millis);
-  }*/
 
   // TBD: Add Create-new-line button.
   // Add order to database for progress items display order.
@@ -333,8 +307,23 @@ class ProgressdocDialog extends Component {
     });
     this.props.closeDoc();
   }*/
-  onSave = (params) => {
-    const { docProps, docItems } = this.props;
+  onSave = () => {
+    const { userInfo, accessLevel, docProps, docItems } = this.props;
+    if (!docProps || !docItems) return;
+    if (accessLevel > "PROFESSOR" ) {
+      // Not enouth access right!
+      return;
+    }
+    let should_copy_doc = true;
+    // Check doc owner
+    if (userInfo.id === docProps.user_id || accessLevel > "PROFESSOR") {
+      // Ask user if we should copy to a new doc
+    }
+    if (should_copy_doc){
+      // Copy a new set of doc & items!
+    } else {
+      // Change current doc directly
+    }
   };
 
   onSelectionChanged = (params) => {
@@ -394,11 +383,6 @@ class ProgressdocDialog extends Component {
     this.gridApi.applyTransaction({ remove: nodes.map(node => (node.data)) });
   };
 
-  getRowId = (params) => {
-    // TBD: never called???
-    return params.data.id;
-  }
-
   // CellClassRules will be verified (excute this func) before onCellValueChanged called!
   // params.data.isEdited will be aware for the whole row instead of a cell!
   /*
@@ -413,18 +397,16 @@ class ProgressdocDialog extends Component {
   render() {
     const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, isSaving } = this.state;
     const { t, title, color, btnText, isSaveable, tableTitle, docId, departments, docProps, docItems } = this.props;
-    const { tableHeaders, btnRef, loadDocDetails, onClose, onSave, onFormChanged, onCellDoubleClicked, onSelectionChanged,
-      onLabItemClosed, onCellValueChanged, onCellEditingStarted, flashCells, addRow } = this;
     return (
       <>
-        <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={btnRef} onClick={(e) => {
-          loadDocDetails(docId);
+        <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={this.btnRef} onClick={(e) => {
+          this.loadDocDetails(docId);
         }}>
           {btnText}
         </Button>
         <Modal
-          onClose={onClose}
-          finalFocusRef={btnRef}
+          onClose={this.onClose}
+          finalFocusRef={this.btnRef}
           isOpen={isOpen}
           scrollBehavior="inside"
           closeOnOverlayClick={false}
@@ -443,7 +425,7 @@ class ProgressdocDialog extends Component {
                   this.forms.map((form, index) => (
                     <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
                       <FormLabel><b>{form.label}</b></FormLabel>
-                      <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={onFormChanged}
+                      <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={this.onFormChanged}
                         borderColor={(docProps && this.state[form.id]===docProps[form.id])?"gray.200":"blue.500"}/>
                     </FormControl>
                   ))
@@ -452,7 +434,7 @@ class ProgressdocDialog extends Component {
                 departments &&
                 <FormControl key="department_id" isRequired minW={280} m={2}>
                   <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
-                  <Select id="department_id" variant="outline" value={department_id} onChange={onFormChanged}
+                  <Select id="department_id" variant="outline" value={department_id} onChange={this.onFormChanged}
                     borderColor={(docProps && department_id===docProps.department_id)?"gray.200":"blue.500"}>
                   {
                     departments.map((dep) => (
@@ -476,19 +458,20 @@ class ProgressdocDialog extends Component {
                 defaultColWidth={180}
                 title={tableTitle}
                 color={color}
-                headers={tableHeaders}
+                headers={this.tableHeaders}
                 data={docItems}
                 //orderbyAsc={'ord'}
                 rowDragManaged={true}
                 pagePrevCaption={t("common.previous")}
                 pageNextCaption={t("common.next")}
                 initPageIndex={0}
-                onCellValueChanged={onCellValueChanged}
-                onCellDoubleClicked={onCellDoubleClicked}
-                onCellEditingStarted={onCellEditingStarted}
+                onCellValueChanged={this.onCellValueChanged}
+                onCellDoubleClicked={this.onCellDoubleClicked}
+                onCellEditingStarted={this.onCellEditingStarted}
                 rowSelection="multiple"
-                onSelectionChanged={onSelectionChanged}
-                getRowId={this.getRowId}//{params => params.data.id}
+                onSelectionChanged={this.onSelectionChanged}
+                //getRowId={params => params.data.id} // NO USE, NEVER CALLED!
+                getRowNodeId={data => data.id}
                 onRowDragEnd={this.onRowDragEnd}
                 //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
                 />
@@ -499,19 +482,19 @@ class ProgressdocDialog extends Component {
                   data={labItem}
                   context={docContext}
                   isOpen={isLabItemOpen}
-                  onClose={onLabItemClosed}
+                  onClose={this.onLabItemClosed}
                   departments={departments}
                   title={t("labitemScreen.title")}
                   isSaveable />
             </ModalBody>
             <ModalFooter>
-              <Button variantColor="blue" mr={3} onClick={addRow} leftIcon={MdNoteAdd} isDisabled={rowSelected!==1}>{t("common.insert_row")}</Button>
+              <Button variantColor="blue" mr={3} onClick={this.addRow} leftIcon={MdNoteAdd} isDisabled={rowSelected!==1}>{t("common.insert_row")}</Button>
               <Button variantColor="red" mr={3} onClick={this.delRow} leftIcon={MdDelete} isDisabled={rowSelected<1}>{t("common.remove_row")}</Button>
-              <Button variantColor="green" mr={3} onClick={flashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button>
+              <Button variantColor="green" mr={3} onClick={this.flashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button>
               { isSaveable && 
-                <Button variantColor="red" mr={3} onClick={onSave} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("common.save")}</Button>
+                <Button variantColor="red" mr={3} onClick={this.onSave} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("common.save")}</Button>
               }
-              <Button onClick={onClose}>{t("common.close")}</Button>
+              <Button onClick={this.onClose}>{t("common.close")}</Button>
             </ModalFooter>
           </ModalContent>
         </Modal>

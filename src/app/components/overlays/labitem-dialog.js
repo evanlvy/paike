@@ -381,7 +381,7 @@ class LabitemDialog extends Component {
               </Text>
               <Text fontWeight='bold' mb='1rem'>
                 {t("labitemScreen.cap_original_lab_locations")}&#58;&nbsp;
-                {(!labItemProp || !labItemProp.locations)?t("labitemScreen.hint_no_lab_locations"):(labItemProp.locations+" #"+labItemProp.id)}
+                {(!labItemProp || !labItemProp.locations)?t("labitemScreen.hint_no_lab_locations"):(labItemProp.locations+" [DBID:"+labItemProp.id)+"]"}
               </Text>
               <Box w='100%' borderWidth='2px' borderRadius='lg'>
               <Tabs isFitted index={tabIndex} onChange={handleTabsChange}>

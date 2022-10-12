@@ -20,7 +20,8 @@ import {
   ResultTable,
 } from '../components';
 
-import { actions as authActions, getDepartmentId } from '../redux/modules/auth';
+import { actions as authActions, getLoggedUser, getAccessLevel } from '../redux/modules/auth';
+//import { actions as authActions, getDepartmentId } from '../redux/modules/auth';
 import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getColoredJysList } from '../redux/modules/jiaoyanshi';
 import { actions as progressdocActions, getDocList } from '../redux/modules/progressdoc';
@@ -34,7 +35,7 @@ const SEMESTER_HALF_BIAS_WEEK = 6;
 class ProgressdocScreen extends Component {
   constructor(props) {
     super(props);
-    const { t, color, schoolYear, defaultJys } = props;
+    const { t, color, schoolYear, userInfo } = props;
     this.state = {
       selectStage: schoolYear,
       defaultTeacherId: -1,
@@ -42,7 +43,7 @@ class ProgressdocScreen extends Component {
       selectedDocId: 0,
     };
     this.color = color ? color : DEFAULT_COLOR;
-    this.defaultselectedJysIdList = [defaultJys];  //Keep default selected index!
+    this.defaultselectedJysIdList = [userInfo.departmentId];  //Keep default selected index!
     this.semesterPages = [];
 
     this.docListHeaders = [
@@ -209,7 +210,7 @@ class ProgressdocScreen extends Component {
   }
 
   render() {
-    const { t, jysList, docList } = this.props;
+    const { t, jysList, docList, userInfo, accessLevel } = this.props;
     const { selectStage, selectedDocId } = this.state;
     const { color, jysTitle, titleSelected, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, onRowDoubleClicked } = this;
     let tableTitle = "";
@@ -274,6 +275,8 @@ class ProgressdocScreen extends Component {
           departments={jysList}
           title={t("progressdocScreen.doc_detail_title")}
           btnText={t("common.open")}
+          userInfo={userInfo}
+          accessLevel={accessLevel}
           isSaveable />
       </Flex>
     );
@@ -286,7 +289,9 @@ const mapStateToProps = (state) => {
     stageList: getStageList(state),
     jysList: getColoredJysList(state),
     docList: getDocList(state),
-    defaultJys: getDepartmentId(state),
+    userInfo: getLoggedUser(state),
+    accessLevel: getAccessLevel(state),
+    //defaultJys: getDepartmentId(state),
   }
 }
 

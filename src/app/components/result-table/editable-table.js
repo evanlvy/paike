@@ -353,11 +353,9 @@ class EditableTableWrapper extends Component {
   };
 
   render() {
-    const { columnDefs, rowData, defaultColDef, frameworkComponents, onGridReady, onGridSizeChanged,
-      onCellClicked, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, color, rowHeight, titleHeight, pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
-      rowSelection, onCellClicked: onCellClickedCallback, onCellDoubleClicked, onCellEditingStarted, rowDragManaged, onSelectionChanged,
-      onCellValueChanged, defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged, getRowId,
+      rowSelection, onCellDoubleClicked, onCellEditingStarted, rowDragManaged, onSelectionChanged,
+      onCellValueChanged, defaultColWidth, cellClassRules, headers, data, onResultPageIndexChanged,
       undoRedoCellEditing, undoRedoCellEditingLimit, enableCellChangeFlash,
       ...other_props } = this.props;
     const { curPageIndex } = this.state;
@@ -376,13 +374,13 @@ class EditableTableWrapper extends Component {
                   pageInputCaption &&
                   <Flex direction="row" alignItems="center">
                     <Text ml={2} whiteSpace="nowrap">{pageInputCaption[0]}</Text>
-                    <Input width="3rem" px="4px" textAlign="center" mx={2} size="md" value={curPageIndex+1} onChange={onEditPageNum} />
+                    <Input width="3rem" px="4px" textAlign="center" mx={2} size="md" value={curPageIndex+1} onChange={this.onEditPageNum} />
                     <Text mr={2} whiteSpace="nowrap">{pageInputCaption[1]}</Text>
                   </Flex>
                 }
-                <Button mr={2} variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
+                <Button mr={2} variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={this.onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
                 { !pageInputCaption && <Text whiteSpace="nowrap" mx={2}>{pageNames[curPageIndex].name}</Text> }
-                <Button ml={2} variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
+                <Button ml={2} variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={this.onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
               </Flex>
             }
           </Box>
@@ -393,20 +391,20 @@ class EditableTableWrapper extends Component {
               animateRows={true}
               rowDragManaged={rowDragManaged}
               suppressMoveWhenRowDragging={true}
-              onGridReady={onGridReady}
-              onGridSizeChanged={onGridSizeChanged}
-              defaultColDef={defaultColDef}
-              frameworkComponents={frameworkComponents}
-              columnDefs={columnDefs}
-              rowData={rowData}
+              onGridReady={this.onGridReady}
+              onGridSizeChanged={this.onGridSizeChanged}
+              defaultColDef={this.defaultColDef}
+              frameworkComponents={this.frameworkComponents}
+              columnDefs={this.columnDefs}
+              rowData={this.rowData}
               rowHeight={rowHeight}
               stopEditingWhenCellsLoseFocus={true}
               //deltaRowMode={true}
-              getRowId={getRowId}
+              //getRowId={} // NO USE!!! Never called!
               //getRowNodeId={data=>data.id} // Bug: make rowHeight flash forever!
               onCellValueChanged={onCellValueChanged}
               onCellEditingStarted={onCellEditingStarted}
-              onCellClicked={onCellClicked}
+              onCellClicked={this.onCellClicked}
               onCellDoubleClicked={onCellDoubleClicked}
               rowSelection={rowSelection}
               onSelectionChanged={onSelectionChanged}
