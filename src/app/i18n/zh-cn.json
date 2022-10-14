@@ -40,6 +40,7 @@
     "warning": "警告",
     "error": "抱歉，发生了一个错误...",
     "info": "信息",
+    "access_denied": "抱歉，无法为您提供该操作，请联系管理员[错误:无权限]",
     "toast_request_save_success": "您的修改被成功保存!",
     "toast_request_create_success": "您新建的项目被成功保存!",
     "toast_lab_location_not_found": "您输入了无效的实验室！若有新实验室需要录入，请联系管理员"
@@ -310,7 +311,10 @@
     "form_label_textbook": "教材",
     "form_label_examtype": "考试形式",
     "form_label_comments": "备注",
-    "form_helper_departmentid": "仅当发现进度表不属于本教研室时修改！"
+    "form_helper_departmentid": "仅当发现进度表不属于本教研室时修改!",
+    "selector_save_dialog_title": "请选择 继续按下列方式保存该进度表",
+    "selector_save_doc_as_copy": "另存为: 新的进度表", 
+    "selector_save_original_doc": "保存: 修改本进度表 (引用该进度表的所有 {{count}} 个课程进度都将被修改，您将需要重新排课!)"
   },
   "curriculumsScreen": {
     "table_title": "教研室教学任务",

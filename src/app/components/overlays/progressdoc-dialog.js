@@ -18,12 +18,20 @@ import {
     Flex,
     Input,
     Select,
+    Text,
+    RadioGroup,
+    Radio,
   } from "@chakra-ui/core"
 import { MdEdit, MdNoteAdd, MdSave, MdDelete } from "react-icons/md"
+
+import {
+  CommonModal
+} from '../modal/common-modal';
 
 import { EditableTable } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
 import { actions as progressdocActions, getDocProps, getDocItems, getOpenedDocId, parseImmutableLocs } from '../../redux/modules/progressdoc';
+import { actions as appActions } from '../../redux/modules/app';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -38,6 +46,7 @@ class ProgressdocDialog extends Component {
       isSaving: false,
       rowSelected: -1,
       editedRowCache: {},
+      saveOption: '1',
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.tableHeaders = [
@@ -56,6 +65,7 @@ class ProgressdocDialog extends Component {
       //{name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
     ];
     this.btnRef = React.createRef()
+    this.commonModalRef = React.createRef();
     this.forms = [
       {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, isRequired: true},
       {id: "short_name", label: t("progressdocScreen.form_label_shortname"), minW: 280, isRequired: true},
@@ -71,6 +81,7 @@ class ProgressdocDialog extends Component {
     ];
     this.gridApi = null;
     this.insertDbId = -1;
+    this.choices = [t("progressdocScreen.selector_save_doc_as_copy"), t("progressdocScreen.selector_save_original_doc", {count: 5})];
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -256,7 +267,7 @@ class ProgressdocDialog extends Component {
           delete newItem.lab_alloc;
         }
         this.gridApi.applyTransaction({ update: [newItem] });
-        // Update lab_alloc colume to edited-row-cache
+        // Update lab_alloc column to edited-row-cache
         this.setState({editedRowCache: {...this.state.editedRowCache, 
           [params.progressId]: {...this.state.editedRowCache[params.progressId], lab_alloc: params.lab_alloc}}});
       }
@@ -310,21 +321,41 @@ class ProgressdocDialog extends Component {
   onSave = () => {
     const { userInfo, accessLevel, docProps, docItems } = this.props;
     if (!docProps || !docItems) return;
-    if (accessLevel > "PROFESSOR" ) {
+    if (accessLevel >= "PROFESSOR" ) {
       // Not enouth access right!
+      this.props.setToast({type:"success", message:"toast.access_denied"})
       return;
     }
-    let should_copy_doc = true;
-    // Check doc owner
-    if (userInfo.id === docProps.user_id || accessLevel > "PROFESSOR") {
-      // Ask user if we should copy to a new doc
-    }
-    if (should_copy_doc){
-      // Copy a new set of doc & items!
-    } else {
-      // Change current doc directly
-    }
+    // Ask user if we should copy to a new doc
+    this.commonModalRef.current.show();
   };
+
+  onSaveDialogResult = (isOk) => {
+    if (!isOk || !this.gridApi) return true;
+    const { userInfo, accessLevel, docProps, docItems } = this.props;
+    if (this.state.saveOption === '2'){
+      // Save current doc directly
+      this.gridApi.forEachNode((rowNode, row_index) => {
+        // Compare edited node with original row data
+        let original_row = docItems[rowNode.id];
+        this.tableHeaders.forEach((column, col_index) => {
+          if (rowNode.data[column.field] === original_row[column.field]) {
+            
+          }
+        });
+      });
+    } else {
+      // Copy a new set of doc & items!
+
+    }
+    return true;
+  }
+
+  onSaveOptionChanged = (event) => {
+    this.setState({
+      saveOption: event.target.value
+    });
+  }
 
   onSelectionChanged = (params) => {
     this.gridApi = params.api;
@@ -395,8 +426,8 @@ class ProgressdocDialog extends Component {
   };*/
 
   render() {
-    const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, isSaving } = this.state;
-    const { t, title, color, btnText, isSaveable, tableTitle, docId, departments, docProps, docItems } = this.props;
+    const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, isSaving, saveOption } = this.state;
+    const { t, title, color, btnText, isSaveable, tableTitle, docId, departments, docProps, docItems, userInfo, accessLevel } = this.props;
     return (
       <>
         <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={this.btnRef} onClick={(e) => {
@@ -498,6 +529,25 @@ class ProgressdocDialog extends Component {
             </ModalFooter>
           </ModalContent>
         </Modal>
+
+        <CommonModal
+          withCancel
+          okColor={saveOption==='1'?'green':'red'}
+          ref={this.commonModalRef}
+          title={t("common.save")}
+          titleBgColor={"white"}
+          onResult={this.onSaveDialogResult}>
+          <Text><b>{t("progressdocScreen.selector_save_dialog_title")}</b></Text>
+          <br/>
+          <RadioGroup onChange={this.onSaveOptionChanged} defaultValue='1' value={saveOption}>
+            <Radio value='1' variantColor='green'>
+              {t("progressdocScreen.selector_save_doc_as_copy")}
+            </Radio>
+            <Radio value='2' variantColor='red' isDisabled={docProps && userInfo && userInfo.id !== docProps.user_id && accessLevel >= "PROFESSOR"}>
+              {t("progressdocScreen.selector_save_original_doc", {count: 5})}
+            </Radio>
+          </RadioGroup>
+        </CommonModal>
       </>
     );
   }
@@ -514,6 +564,7 @@ const mapStateToProps = (state) => {
 const mapDispatchToProps = (dispatch) => {
   return {
     ...bindActionCreators(progressdocActions, dispatch),
+    ...bindActionCreators(appActions, dispatch),
   }
 }
 

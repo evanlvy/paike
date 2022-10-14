@@ -88,10 +88,10 @@ class CommonModalWrapped extends PureComponent {
   render() {
     const { isOpen, navItemIndex } = this.state;
     const { t, title, titleBgColor, loading, children, withCancel, disableCancel, disableOK,
-      onResult, minWidth, navItemsInfo, ...other_props } = this.props;
+      onResult, minWidth, navItemsInfo, okColor, ...other_props } = this.props;
     const { onNavPrev, onNavNext } = this;
     return (
-      <Modal isOpen={isOpen} onClose={this.onClose} closeOnOverlayClick={false} {...other_props}>
+      <Modal isCentered isOpen={isOpen} onClose={this.onClose} closeOnOverlayClick={false} {...other_props}>
         <ModalOverlay />
         <ModalContent minWidth={minWidth}>
           <ModalHeader display="flex" flexDirection="row" alignItems="center" backgroundColor={titleBgColor}>
@@ -122,7 +122,7 @@ class CommonModalWrapped extends PureComponent {
                 <Flex my="2" alignItems="center">
                   <Flex flex="1" />
                   { withCancel && <Button disabled={disableCancel} onClick={this.onCancelBtnClicked} mr="5" variantColor="gray" width="100px" height="44px">{t("common.cancel")}</Button> }
-                  <Button disabled={disableOK} onClick={this.onOKBtnClicked} variantColor="green" width="100px" height="44px">{t("common.ok")}</Button>
+                  <Button disabled={disableOK} onClick={this.onOKBtnClicked} variantColor={(!okColor)?"green":okColor} width="100px" height="44px">{t("common.ok")}</Button>
                 </Flex>
               </Flex>
           </ModalBody>
