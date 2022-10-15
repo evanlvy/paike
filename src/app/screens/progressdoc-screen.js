@@ -10,9 +10,11 @@ import {
   Box,
   Select,
   Icon,
+  Button,
 } from '@chakra-ui/core';
 import {
   MdTune,
+  MdEdit,
 } from 'react-icons/md';
 
 import {
@@ -41,6 +43,7 @@ class ProgressdocScreen extends Component {
       defaultTeacherId: -1,
       selectedJysIdList: [],  // Keep the latest selected Id, NOT index!
       selectedDocId: 0,
+      isProgressDocOpen: false,
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.defaultselectedJysIdList = [userInfo.departmentId];  //Keep default selected index!
@@ -85,7 +88,7 @@ class ProgressdocScreen extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, jysList, stageList, docList } = this.props;
-    const { selectedJysIdList, selectedDocId } = this.state;
+    const { selectedJysIdList, selectedDocId, isProgressDocOpen } = this.state;
     if (nextProps.schoolYear !== schoolYear || nextProps.jysList !== jysList || nextProps.docList !== docList) {
       console.log("shouldComponentUpdate, props diff");
       return true;
@@ -99,8 +102,20 @@ class ProgressdocScreen extends Component {
     } else if (nextState.selectedDocId != selectedDocId) {
       console.log("shouldComponentUpdate, selectedDocId diff");
       return true;
+    } else if (nextState.isProgressDocOpen != isProgressDocOpen) {
+      return true;
     }
     return false;
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    console.log("LIFECYCLE: componentDidMount");
+    // Disable Open button when changing department then lost row selection
+    if (prevState.selectedJysIdList !== this.state.selectedJysIdList) {
+      this.setState({
+        selectedDocId: -1,
+      });
+    }
   }
 
   loadData = () => {
@@ -114,12 +129,6 @@ class ProgressdocScreen extends Component {
       this.loadDocList(this.state.selectedJysIdList);
     }
   }
-
-  //buildData = () => {
-    //this.buildSemester();
-    //this.buildjysData();
-  //}
-
   
   buildSemester = () => {
     if (Object.keys(this.semesterPages).length <= 0) {
@@ -132,26 +141,6 @@ class ProgressdocScreen extends Component {
     console.log("loadjysData");
     this.props.fetchJiaoyanshi();
   }
-
-  /*buildjysData = () => {
-    const { jysList } = this.props;
-    console.log("JYS List: "+JSON.stringify(jysList));
-    if (jysList && jysList.length > 0) {
-      // Change default index list to jysId list
-      // setState will trigger react renderer. So change the value directly.
-      this.state.selectedJysIdList = jysList.map(jys => jys.id);
-    }
-  }*/
-
-  /*updateTitles = () => {
-    const { t, jysMap } = this.props;
-    const { selectedJysIdList } = this.state;
-    let jysName = t("subjectBoard.title_no_jys_template");
-    if (selectedJysIdList && selectedJysIdList.length > 0) {
-      jysName =  jysMap.get(""+selectedJysIdList[0]).name;
-    }
-    this.tableTitle = t("progressdocScreen.doclist_table_title_template", {jys_name: jysName});    
-  }*/
   
   loadDocList = (jysIdList, stage_id=0) => {
     if (!jysIdList || jysIdList.length < 1) {
@@ -203,15 +192,27 @@ class ProgressdocScreen extends Component {
 
   onRowDoubleClicked = (rowId, docId) => {
     console.log(`onRowDoubleClicked: rowId=${rowId} docId=${docId}`);
-    this.setState({
-      selectedDocId: docId
-    });
+    this.openProgressDocDialog(docId);
+  }
+
+  openProgressDocDialog = (docId) => {
     this.props.fetchDoc(docId);
+    this.setState({
+      selectedDocId: docId,
+      isProgressDocOpen: true,
+    });
+  }
+
+  onProgressDocClose = () => {
+    this.props.closeDoc();
+    this.setState({
+      isProgressDocOpen: false
+    });
   }
 
   render() {
     const { t, jysList, docList, userInfo, accessLevel } = this.props;
-    const { selectStage, selectedDocId } = this.state;
+    const { selectStage, selectedDocId, isProgressDocOpen } = this.state;
     const { color, jysTitle, titleSelected, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, onRowDoubleClicked } = this;
     let tableTitle = "";
     if (titleSelected && titleSelected.length > 0) {
@@ -268,10 +269,16 @@ class ProgressdocScreen extends Component {
             //initPageIndex={initSemesterPageIdx}
           />
         }
+        <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3} isDisabled={selectedDocId<=0} onClick={(e) => { //ref={this.btnRef}
+          this.openProgressDocDialog(selectedDocId);
+        }}>
+          {t("common.open")}
+        </Button>
         <ProgressdocDialog
           t={t}
           color={color}
-          docId={selectedDocId}
+          isOpen={isProgressDocOpen}
+          onClose={this.onProgressDocClose}
           departments={jysList}
           title={t("progressdocScreen.doc_detail_title")}
           btnText={t("common.open")}

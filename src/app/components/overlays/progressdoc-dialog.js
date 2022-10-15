@@ -21,8 +21,9 @@ import {
     Text,
     RadioGroup,
     Radio,
+    CircularProgress,
   } from "@chakra-ui/core"
-import { MdEdit, MdNoteAdd, MdSave, MdDelete } from "react-icons/md"
+import { MdNoteAdd, MdSave, MdDelete } from "react-icons/md"
 
 import {
   CommonModal
@@ -42,10 +43,11 @@ class ProgressdocDialog extends Component {
     const { t, color } = props;
     this.state = {
       isLabItemOpen: false,
-      isOpen: false,
+      //isOpen: false,
       isSaving: false,
       rowSelected: -1,
       editedRowCache: {},
+      removedNodeIds: [],
       saveOption: '1',
     };
     this.color = color ? color : DEFAULT_COLOR;
@@ -64,7 +66,7 @@ class ProgressdocDialog extends Component {
       {name: t("progressdocScreen.items_header_comment"), field: "comment", editable: true},
       //{name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
     ];
-    this.btnRef = React.createRef()
+    //this.btnRef = React.createRef()
     this.commonModalRef = React.createRef();
     this.forms = [
       {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, isRequired: true},
@@ -86,9 +88,13 @@ class ProgressdocDialog extends Component {
 
   static getDerivedStateFromProps(props, state) {
     let result = {};
-    if (props.prevDocId) {
-      if (props.prevDocId >= 0 && !state.isOpen) result = {isOpen: true};
-      else if (props.prevDocId < 0 && state.isOpen) result = {isOpen: false};
+    /*if (props.openedDocId) {
+      if (props.openedDocId >= 0 && !state.isOpen) result = {isOpen: true};
+      else if (props.openedDocId < 0 && state.isOpen) result = {isOpen: false};
+    }*/
+    if (props.openedDocId < 0) {
+      // Closed or create new doc
+      
     }
     if (!props.docProps) return result;
     // initialize the state with props by the same name id!
@@ -112,42 +118,28 @@ class ProgressdocDialog extends Component {
     return true;
   }
 
-  onClose = () => {
-    this.props.closeDoc();
-    //this.setState({ isOpen: false });
-  }
-
-  loadDocDetails = (docId) => {
-    console.log("loadDocDetails: "+docId);
-    if (!docId || docId < 1) {
-      return;
-    }
-    this.props.fetchDoc(docId);
-    if (this.props.prevDocId === docId) {
-      this.setState({
-        isOpen: true,
-      });
-    }
-  }
-
   shouldComponentUpdate(nextProps, nextState) {
     const { docId, docProps, docItems } = this.props;
     //const { isOpen, department_id, isLabItemOpen, editedRowCache } = this.state;
-    if (nextProps.docProps !== docProps){
-      console.log("shouldComponentUpdate, docProps");
+    //if (nextState.isOpen === this.state.isOpen) {
+      // No need to update if dialog is closed
+    //  if (!nextState.isOpen) return false;
+    //}
+    /*if (nextProps.docProps !== docProps){
+      console.log("shouldComponentUpdate, docProps diff");
       this.setState({
         isOpen: true,
       });
       return true;
-    }
-    if (nextProps.docItems !== docItems) {
+    }*/
+    /*if (nextProps.docItems !== docItems) {
       console.log("shouldComponentUpdate, docItems");
       this.setState({
         rowSelected: -1,
         editedRowCache: {},
       });
       return true;
-    }
+    }*/
     /*for (let index = 0; index < this.forms.length; index++) {
       let form = this.forms[index];
       if (this.state[form.id] !== nextState[form.id]) {
@@ -155,10 +147,6 @@ class ProgressdocDialog extends Component {
         return true;
       }
     }*/
-    if (nextProps.docId !== docId) {
-      console.log("shouldComponentUpdate, props diff: "+nextProps.docId+" "+docId);
-      return true;
-    }
     if (nextState !== this.state) {
       console.log("shouldComponentUpdate, nextState diff");
       return true;
@@ -169,6 +157,18 @@ class ProgressdocDialog extends Component {
       return true;
     }*/
     return false;
+  }
+
+  componentDidUpdate(prevProps) {
+    console.log("LIFECYCLE: componentDidMount");
+    const { docItems, openedDocId } = this.props;
+    if (!docItems) return;
+    if (prevProps.openedDocId != openedDocId) {
+      this.doc_items_obj = {};
+      docItems.forEach(item => {
+        this.doc_items_obj[item.id] = {...item};
+      });
+    }
   }
   
   onFormChanged = (event) => {
@@ -321,9 +321,9 @@ class ProgressdocDialog extends Component {
   onSave = () => {
     const { userInfo, accessLevel, docProps, docItems } = this.props;
     if (!docProps || !docItems) return;
-    if (accessLevel >= "PROFESSOR" ) {
+    if (accessLevel > "PROFESSOR" ) {
       // Not enouth access right!
-      this.props.setToast({type:"success", message:"toast.access_denied"})
+      this.props.setToast({type:"error", message:"toast.access_denied"})
       return;
     }
     // Ask user if we should copy to a new doc
@@ -334,16 +334,46 @@ class ProgressdocDialog extends Component {
     if (!isOk || !this.gridApi) return true;
     const { userInfo, accessLevel, docProps, docItems } = this.props;
     if (this.state.saveOption === '2'){
-      // Save current doc directly
+      // Save current doc directly:
+      // Compose a delta rows object to send to server for updating existing doc
+      let delta_rows = {};
       this.gridApi.forEachNode((rowNode, row_index) => {
+        if (rowNode.id in delta_rows) {
+          this.props.setToast({type:"error", message:"NodeId already exist in Delta array!"})
+          return false; // Break for error
+        }
         // Compare edited node with original row data
-        let original_row = docItems[rowNode.id];
-        this.tableHeaders.forEach((column, col_index) => {
-          if (rowNode.data[column.field] === original_row[column.field]) {
-            
+        let original_row = this.doc_items_obj[rowNode.id];
+        if (!original_row) {
+          // Create new row
+          if (rowNode.id.startsWith('-')) {
+            // New row for real
+            delta_rows[rowNode.id] = rowNode.data;
+            return true;  // Continue for next row
+          } else {
+            this.props.setToast({type:"error", message:"New rowNode Id should use negaitive number!"})
+            return false; // Break for error
+          }
+        }
+        // Enum each column checking changes
+        let delta_row = {};
+        this.tableHeaders.forEach(column => {
+          if (rowNode.data[column.field] !== original_row[column.field]) {
+            delta_row = {...delta_row, [""+column.field]: rowNode.data[column.field]};
           }
         });
+        delta_rows[rowNode.id] = delta_row;
       });
+      // Traversal removed items
+      this.state.removedNodeIds.forEach((removed_id) => {
+        // Remove single row
+        if (removed_id in delta_rows) {
+          return true; // Continue
+        } else {
+          delta_rows[removed_id] = null;
+        }
+      });
+      console.log(delta_rows);
     } else {
       // Copy a new set of doc & items!
 
@@ -412,6 +442,8 @@ class ProgressdocDialog extends Component {
     const nodes = this.gridApi.getSelectedNodes();
     if (!nodes || nodes.length < 1) return;
     this.gridApi.applyTransaction({ remove: nodes.map(node => (node.data)) });
+    // Remembet NodeIds of removed rows for quick saving
+    this.setState({removedNodeIds: [...this.state.removedNodeIds, ...nodes.map(node => (node.id))]});
   };
 
   // CellClassRules will be verified (excute this func) before onCellValueChanged called!
@@ -426,18 +458,13 @@ class ProgressdocDialog extends Component {
   };*/
 
   render() {
-    const { isOpen, id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, isSaving, saveOption } = this.state;
-    const { t, title, color, btnText, isSaveable, tableTitle, docId, departments, docProps, docItems, userInfo, accessLevel } = this.props;
+    const { id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, isSaving, saveOption } = this.state;
+    const { t, title, color, isOpen, onClose, openedDocId, isSaveable, tableTitle, departments, docProps, docItems, userInfo, accessLevel } = this.props;
     return (
       <>
-        <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3}  ref={this.btnRef} onClick={(e) => {
-          this.loadDocDetails(docId);
-        }}>
-          {btnText}
-        </Button>
         <Modal
-          onClose={this.onClose}
-          finalFocusRef={this.btnRef}
+          onClose={onClose}
+          //finalFocusRef={this.btnRef}
           isOpen={isOpen}
           scrollBehavior="inside"
           closeOnOverlayClick={false}
@@ -450,7 +477,7 @@ class ProgressdocDialog extends Component {
             <ModalCloseButton />
             <ModalBody>
             {
-              id &&
+              openedDocId>=0 &&
               <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
                 {
                   this.forms.map((form, index) => (
@@ -477,6 +504,10 @@ class ProgressdocDialog extends Component {
                 </FormControl>
                 }
               </Flex>
+            }
+            {
+              !docItems &&
+                <CircularProgress isIndeterminate color="blue" size="120px" width="100%"></CircularProgress>
             }
             {
               docItems &&
@@ -507,16 +538,16 @@ class ProgressdocDialog extends Component {
                 //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
                 />
             }
-              <LabitemDialog
-                  t={t}
-                  color={color}
-                  data={labItem}
-                  context={docContext}
-                  isOpen={isLabItemOpen}
-                  onClose={this.onLabItemClosed}
-                  departments={departments}
-                  title={t("labitemScreen.title")}
-                  isSaveable />
+            <LabitemDialog
+              t={t}
+              color={color}
+              data={labItem}
+              context={docContext}
+              isOpen={isLabItemOpen}
+              onClose={this.onLabItemClosed}
+              departments={departments}
+              title={t("labitemScreen.title")}
+              isSaveable />
             </ModalBody>
             <ModalFooter>
               <Button variantColor="blue" mr={3} onClick={this.addRow} leftIcon={MdNoteAdd} isDisabled={rowSelected!==1}>{t("common.insert_row")}</Button>
@@ -525,7 +556,7 @@ class ProgressdocDialog extends Component {
               { isSaveable && 
                 <Button variantColor="red" mr={3} onClick={this.onSave} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("common.save")}</Button>
               }
-              <Button onClick={this.onClose}>{t("common.close")}</Button>
+              <Button onClick={onClose}>{t("common.close")}</Button>
             </ModalFooter>
           </ModalContent>
         </Modal>
@@ -540,13 +571,14 @@ class ProgressdocDialog extends Component {
           <Text><b>{t("progressdocScreen.selector_save_dialog_title")}</b></Text>
           <br/>
           <RadioGroup onChange={this.onSaveOptionChanged} defaultValue='1' value={saveOption}>
-            <Radio value='1' variantColor='green'>
+            <Radio value='1' variantColor='green' size='lg'>
               {t("progressdocScreen.selector_save_doc_as_copy")}
             </Radio>
-            <Radio value='2' variantColor='red' isDisabled={docProps && userInfo && userInfo.id !== docProps.user_id && accessLevel >= "PROFESSOR"}>
+            <Radio value='2' variantColor='red' size='lg' isDisabled={docProps && userInfo && userInfo.id !== docProps.user_id && accessLevel >= "PROFESSOR"}>
               {t("progressdocScreen.selector_save_original_doc", {count: 5})}
             </Radio>
           </RadioGroup>
+          <br/>
         </CommonModal>
       </>
     );
@@ -557,7 +589,7 @@ const mapStateToProps = (state) => {
   return {
     docProps: getDocProps(state),
     docItems: getDocItems(state),
-    prevDocId: getOpenedDocId(state),
+    openedDocId: getOpenedDocId(state),
   }
 }
 

@@ -207,7 +207,7 @@ class MainNavigatorWrapper extends PureComponent {
             title: (requestToast.title)?requestToast.title:t('toast.'+requestToast.type),
             description: (requestToast.message.startsWith('toast.'))?t(requestToast.message):requestToast.message,
             status: requestToast.type?requestToast.type:"info",
-            duration: 3000,
+            duration: (requestToast.type && requestToast.type==='error')?10000:3000,
             isClosable: true,
           }}>
           </Toast>

@@ -40,7 +40,7 @@
     "warning": "警告",
     "error": "抱歉，发生了一个错误...",
     "info": "信息",
-    "access_denied": "抱歉，无法为您提供该操作，请联系管理员[错误:无权限]",
+    "access_denied": "抱歉，无法为您提供该操作，请联系管理员[原因:无权限]",
     "toast_request_save_success": "您的修改被成功保存!",
     "toast_request_create_success": "您新建的项目被成功保存!",
     "toast_lab_location_not_found": "您输入了无效的实验室！若有新实验室需要录入，请联系管理员"

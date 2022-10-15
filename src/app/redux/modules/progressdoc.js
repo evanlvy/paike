@@ -462,9 +462,9 @@ export const getSearchedDocList = createSelector(
 );
 
 export const getDocProps = createSelector(
-  getDoc,
-  (value) => {
-    if (!value || value.length <= 0) {
+  [getDoc, getOpenedDocId],
+  (value, openedId) => {
+    if (openedId <= 0 || !value || value.length <= 0) {
       return null;
     }
     //console.log("getDocContents: "+JSON.stringify(value));
@@ -473,9 +473,9 @@ export const getDocProps = createSelector(
 );
 
 export const getDocItems = createSelector(
-  getDoc, 
-  (value) => {
-    if (!value || value.length <= 0) {
+  [getDoc, getOpenedDocId],
+  (value, openedId) => {
+    if (openedId <= 0 || !value || value.length <= 0) {
       return null;
     }
     //console.log("ReSelector: rows="+JSON.stringify(rows));
