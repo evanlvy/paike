@@ -69,6 +69,7 @@ class ProgressdocDialog extends Component {
     //this.btnRef = React.createRef()
     this.commonModalRef = React.createRef();
     this.forms = [
+      {id: "user_id", label: t("progressdocScreen.form_label_docowner"), minW: 280, isRequired: true},
       {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, isRequired: true},
       {id: "short_name", label: t("progressdocScreen.form_label_shortname"), minW: 280, isRequired: true},
       {id: "description", label: t("progressdocScreen.form_label_description"), minW: 280, isRequired: false},
@@ -334,12 +335,21 @@ class ProgressdocDialog extends Component {
     if (!isOk || !this.gridApi) return true;
     const { userInfo, accessLevel, docProps, docItems } = this.props;
     if (this.state.saveOption === '2'){
-      // Save current doc directly:
-      // Compose a delta rows object to send to server for updating existing doc
-      let delta_rows = {};
-      this.gridApi.forEachNode((rowNode, row_index) => {
-        if (rowNode.id in delta_rows) {
-          this.props.setToast({type:"error", message:"NodeId already exist in Delta array!"})
+      // Overwrite current doc directly:
+      // 1. Doc Propertises: Check each prop change
+      let props_diff = {};
+      if (docProps) {
+        Object.keys(docProps).forEach(key => {
+          if (this.state[key]!==docProps[key]) {
+            props_diff[key] = this.state[key];
+          }
+        });
+      }
+      // 2. Progress items: Compose a rows_diff object to send to server for updating existing doc
+      let rows_diff = {};
+      this.gridApi.forEachNode((rowNode) => {
+        if (rowNode.id in rows_diff) {
+          this.props.setToast({type:"error", message:"NodeId already exist in diff array!"})
           return false; // Break for error
         }
         // Compare edited node with original row data
@@ -348,7 +358,7 @@ class ProgressdocDialog extends Component {
           // Create new row
           if (rowNode.id.startsWith('-')) {
             // New row for real
-            delta_rows[rowNode.id] = rowNode.data;
+            rows_diff[rowNode.id] = rowNode.data;
             return true;  // Continue for next row
           } else {
             this.props.setToast({type:"error", message:"New rowNode Id should use negaitive number!"})
@@ -356,27 +366,48 @@ class ProgressdocDialog extends Component {
           }
         }
         // Enum each column checking changes
-        let delta_row = {};
+        let row_diff = {};
         this.tableHeaders.forEach(column => {
           if (rowNode.data[column.field] !== original_row[column.field]) {
-            delta_row = {...delta_row, [""+column.field]: rowNode.data[column.field]};
+            row_diff = {...row_diff, [""+column.field]: rowNode.data[column.field]};
           }
         });
-        delta_rows[rowNode.id] = delta_row;
+        // Add cell changes of the row to table-level changes array
+        if (Object.keys(row_diff).length > 0) {
+          rows_diff[rowNode.id] = row_diff;
+        }
       });
       // Traversal removed items
       this.state.removedNodeIds.forEach((removed_id) => {
         // Remove single row
-        if (removed_id in delta_rows) {
+        if (removed_id in rows_diff) {
           return true; // Continue
         } else {
-          delta_rows[removed_id] = null;
+          rows_diff[removed_id] = {};  // Means delete this progress item
         }
       });
-      console.log(delta_rows);
+      console.log(rows_diff);
+      // Call Server backend API
+      this.props.saveDoc(this.state['id'], props_diff, rows_diff);
     } else {
-      // Copy a new set of doc & items!
-
+      // Copy a new set of doc & items! Change user_id to current user!
+      // Send data as dataframe to save traffic
+      let new_props = {}
+      this.forms.forEach((form) => {
+        new_props[form.id] = this.state[form.id];
+      });
+      // When many rows changed, use dataframe mode.
+      let df_col = this.tableHeaders.map((col) => {
+        return col['field'] === 'lab_alloc'?'labitem_id':col['field'];
+      });
+      let df_data = [];
+      this.gridApi.forEachNode((rowNode) => {
+        df_data.push(df_col.map((col)=> {
+          return (col in rowNode.data)?rowNode.data[col]:undefined;
+        }));
+      });
+      console.log("onSave: df_data"+JSON.stringify(df_data));
+      this.props.saveDoc(this.state['id'], new_props, null, df_col, df_data);
     }
     return true;
   }
@@ -601,3 +632,5 @@ const mapDispatchToProps = (dispatch) => {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(withTranslation()(ProgressdocDialog));
+
+// TODO: 增加API获取此doc关联的课程数，用来决定保存是否使用另存为。 2. 增加创建新doc 3. 删除doc 4. 插入新行时指定周内序号  5. 载入时排序按week_idx+order_in_week两个
