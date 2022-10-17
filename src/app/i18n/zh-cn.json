@@ -19,11 +19,13 @@
     "help": "帮助",
     "save": "保存",
     "new": "新建",
+    "delete": "删除",
     "saving": "保存中...",
     "close": "关闭",
     "open": "打开",
     "search": "查找",
     "or": "或",
+    "pls_confirm": "请确认",
     "no_limitation": "不限",
     "flash_changed_cells": "高亮我的改动",
     "insert_row": "插入新行",
@@ -43,7 +45,8 @@
     "access_denied": "抱歉，无法为您提供该操作，请联系管理员[原因:无权限]",
     "toast_request_save_success": "您的修改被成功保存!",
     "toast_request_create_success": "您新建的项目被成功保存!",
-    "toast_lab_location_not_found": "您输入了无效的实验室！若有新实验室需要录入，请联系管理员"
+    "toast_lab_location_not_found": "您输入了无效的实验室！若有新实验室需要录入，请联系管理员",
+    "warn_no_row_selected": "请先选择要操作的行!"
   },
   "grade": {
     "college": "大专",
@@ -315,7 +318,8 @@
     "form_helper_departmentid": "仅当发现进度表不属于本教研室时修改!",
     "selector_save_dialog_title": "请选择 继续按下列方式保存该进度表",
     "selector_save_doc_as_copy": "另存为: 新的进度表", 
-    "selector_save_original_doc": "保存: 修改本进度表 (引用该进度表的所有 {{count}} 个课程进度都将被修改，您将需要重新排课!)"
+    "selector_save_original_doc": "保存: 修改本进度表 (引用该进度表的所有 {{count}} 个课程进度都将被修改，您将需要重新排课!)",
+    "warning_delete_doc": "警告：删除进度表将清空所有与该进度表关联的课程进度，或导致无法排课；且被删除的进度表无法恢复；请再次确认!"
   },
   "curriculumsScreen": {
     "table_title": "教研室教学任务",

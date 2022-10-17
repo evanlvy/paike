@@ -11,10 +11,13 @@ import {
   Select,
   Icon,
   Button,
+  ButtonGroup,
 } from '@chakra-ui/core';
 import {
   MdTune,
   MdEdit,
+  MdAdd,
+  MdDelete,
 } from 'react-icons/md';
 
 import {
@@ -27,8 +30,10 @@ import { actions as authActions, getLoggedUser, getAccessLevel } from '../redux/
 import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getColoredJysList } from '../redux/modules/jiaoyanshi';
 import { actions as progressdocActions, getDocList } from '../redux/modules/progressdoc';
+import { actions as appActions } from '../redux/modules/app';
 import PromptDrawer from '../components/overlays/prompt-drawer';
 import ProgressdocDialog from '../components/overlays/progressdoc-dialog';
+import ButtonConfirmPopover from '../components/modal/button-confirm-popover';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -210,6 +215,20 @@ class ProgressdocScreen extends Component {
     });
   }
 
+  onCreateDoc = (event) => {
+    const { selectedDocId } = this.state;
+
+  }
+
+  onDeleteDoc = (event) => {
+    const { selectedDocId } = this.state;
+    if (selectedDocId <= 0) {
+      this.props.setToast({type:"warning", message:"toast.warn_no_row_selected"});
+      return;
+    }
+    this.props.setToast({type:"warning", message:"toast.warn_no_row_selected"});
+  }
+
   render() {
     const { t, jysList, docList, userInfo, accessLevel } = this.props;
     const { selectStage, selectedDocId, isProgressDocOpen } = this.state;
@@ -250,7 +269,7 @@ class ProgressdocScreen extends Component {
         {
           docList && 
           <ResultTable
-            minHeight={docList.length>3?800:180}
+            //minHeight={docList.length>3?800:180}
             autoShrinkDomHeight
             titleHeight={50}
             colLineHeight={20}
@@ -262,18 +281,20 @@ class ProgressdocScreen extends Component {
             rowSelection="single"
             onRowSelected={onRowSelected}
             onRowDoubleClicked={onRowDoubleClicked}
-            //pageNames={semesterPages}
-            //pagePrevCaption={t("common.previous")}
-            //pageNextCaption={t("common.next")}
-            //onResultPageIndexChanged={onSemesterPageChanged}
-            //initPageIndex={initSemesterPageIdx}
           />
         }
-        <Button leftIcon={MdEdit} variantColor="red" variant="solid" mt={3} isDisabled={selectedDocId<=0} onClick={(e) => { //ref={this.btnRef}
-          this.openProgressDocDialog(selectedDocId);
-        }}>
-          {t("common.open")}
-        </Button>
+        <ButtonGroup size="lg">
+          <Button leftIcon={MdEdit} variantColor="blue" variant="solid" mt={3} isDisabled={selectedDocId<=0} 
+            onClick={e => this.openProgressDocDialog(selectedDocId)}>
+            {t("common.open")}
+          </Button>
+          <Button leftIcon={MdAdd} variantColor="green" variant="solid" mt={3} 
+            onClick={this.onCreateDoc}>
+            {t("common.new")}
+          </Button>
+          <ButtonConfirmPopover t={t} leftIcon={MdDelete} variantColor="red" variant="solid" mt={3} isDisabled={selectedDocId<=0} 
+            onConfirm={this.onDeleteDoc} btnTitle={t("common.delete")} popText={t("progressdocScreen.warning_delete_doc")}/>
+        </ButtonGroup>
         <ProgressdocDialog
           t={t}
           color={color}
@@ -308,6 +329,7 @@ const mapDispatchToProps = (dispatch) => {
     ...bindActionCreators(gradeActions, dispatch),
     ...bindActionCreators(progressdocActions, dispatch),
     ...bindActionCreators(authActions, dispatch),
+    ...bindActionCreators(appActions, dispatch),
   }
 }
 
