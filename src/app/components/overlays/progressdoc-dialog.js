@@ -46,6 +46,7 @@ class ProgressdocDialog extends Component {
       //isOpen: false,
       isSaving: false,
       rowSelected: -1,
+      createdItems: [{id:-1, week_idx: 1, chapter_name: "第一章", teaching_mode: "课堂讲授/演示，实验操作讲解"}, {id:-2, week_idx: 2, chapter_name: "第二章", teaching_mode: "课堂讲授/演示，实验操作讲解"}],
       editedRowCache: {},
       removedNodeIds: [],
       saveOption: '1',
@@ -93,14 +94,15 @@ class ProgressdocDialog extends Component {
       if (props.openedDocId >= 0 && !state.isOpen) result = {isOpen: true};
       else if (props.openedDocId < 0 && state.isOpen) result = {isOpen: false};
     }*/
-    if (props.openedDocId < 0) {
+    if (props.openedDocId < 0 || props.isNewDoc) {
       // Closed or create new doc
-      
+      // Clear doc props
+      result = {...result, id: 0, user_id:props.userInfo.id, course_name:"", short_name:"", description:"",total_hours:0, theory_hours:0, lab_hours:0, flex_hours:0, textbook:"", exam_tyoe:"", comments:"" };
     }
     if (!props.docProps) return result;
     // initialize the state with props by the same name id!
     if (props.docProps.id !== state.id) {
-      result = {result, ...props.docProps, editedRowCache:{}, rowSelected: -1}//props.docDetails["props"];
+      result = {...result, ...props.docProps, editedRowCache:{}, rowSelected: -1}//props.docDetails["props"];
     }
     return result;
   }
@@ -320,7 +322,7 @@ class ProgressdocDialog extends Component {
     this.props.closeDoc();
   }*/
   onSave = () => {
-    const { userInfo, accessLevel, docProps, docItems } = this.props;
+    const { accessLevel, docProps, docItems } = this.props;
     if (!docProps || !docItems) return;
     if (accessLevel > "PROFESSOR" ) {
       // Not enouth access right!
@@ -333,7 +335,7 @@ class ProgressdocDialog extends Component {
 
   onSaveDialogResult = (isOk) => {
     if (!isOk || !this.gridApi) return true;
-    const { userInfo, accessLevel, docProps, docItems } = this.props;
+    const { docProps } = this.props;
     if (this.state.saveOption === '2'){
       // Overwrite current doc directly:
       // 1. Doc Propertises: Check each prop change
@@ -489,8 +491,8 @@ class ProgressdocDialog extends Component {
   };*/
 
   render() {
-    const { id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, isSaving, saveOption } = this.state;
-    const { t, title, color, isOpen, onClose, openedDocId, isSaveable, tableTitle, departments, docProps, docItems, userInfo, accessLevel } = this.props;
+    const { id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, isSaving, saveOption, createdItems } = this.state;
+    const { t, title, color, isOpen, onClose, openedDocId, isSaveable, tableTitle, departments, docProps, docItems, userInfo, accessLevel, isNewDoc } = this.props;
     return (
       <>
         <Modal
@@ -508,7 +510,7 @@ class ProgressdocDialog extends Component {
             <ModalCloseButton />
             <ModalBody>
             {
-              openedDocId>=0 &&
+              (openedDocId>=0 || isNewDoc) &&
               <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
                 {
                   this.forms.map((form, index) => (
@@ -537,11 +539,11 @@ class ProgressdocDialog extends Component {
               </Flex>
             }
             {
-              !docItems &&
+              !docItems && !isNewDoc &&
                 <CircularProgress isIndeterminate color="blue" size="120px" width="100%"></CircularProgress>
             }
             {
-              docItems &&
+              (docItems || isNewDoc) &&
               <EditableTable 
                 flex={1}
                 autoShrinkDomHeight
@@ -552,7 +554,7 @@ class ProgressdocDialog extends Component {
                 title={tableTitle}
                 color={color}
                 headers={this.tableHeaders}
-                data={docItems}
+                data={isNewDoc?createdItems:docItems}
                 //orderbyAsc={'ord'}
                 rowDragManaged={true}
                 pagePrevCaption={t("common.previous")}

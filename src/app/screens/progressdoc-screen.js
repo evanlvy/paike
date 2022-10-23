@@ -211,13 +211,16 @@ class ProgressdocScreen extends Component {
   onProgressDocClose = () => {
     this.props.closeDoc();
     this.setState({
-      isProgressDocOpen: false
+      isProgressDocOpen: false,
+      isNewDoc: false,
     });
   }
 
   onCreateDoc = (event) => {
-    const { selectedDocId } = this.state;
-
+    this.setState({
+      isNewDoc: true,
+      isProgressDocOpen: true,
+    });
   }
 
   onDeleteDoc = (event) => {
@@ -231,7 +234,7 @@ class ProgressdocScreen extends Component {
 
   render() {
     const { t, jysList, docList, userInfo, accessLevel } = this.props;
-    const { selectStage, selectedDocId, isProgressDocOpen } = this.state;
+    const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc } = this.state;
     const { color, jysTitle, titleSelected, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, onRowDoubleClicked } = this;
     let tableTitle = "";
     if (titleSelected && titleSelected.length > 0) {
@@ -305,6 +308,7 @@ class ProgressdocScreen extends Component {
           btnText={t("common.open")}
           userInfo={userInfo}
           accessLevel={accessLevel}
+          isNewDoc={isNewDoc}
           isSaveable />
       </Flex>
     );
