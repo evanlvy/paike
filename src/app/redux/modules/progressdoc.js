@@ -5,6 +5,25 @@ import { createSelector } from 'reselect';
 import { actions as appActions } from './app';
 import { api as progressdocApi } from '../../services/progressdoc';
 
+export const tableFields = {
+  // doc list table fields
+  USER_ID: "user_id",
+  DEPARTMENT_ID: "department_id",
+
+  // progress_item details table fields
+  WEEK_IDX: "week_idx",
+  ORDER_IN_WEEK: "order_in_week",
+  CHAPTER_NAME: "chapter_name",
+  THEORY_ITEM_CONTENT: "theory_item_content",
+  THEORY_ITEM_HOURS: "theory_item_hours",
+  LABITEM_CONTENT: "labitem_content",
+  LABITEM_HOURS: "labitem_hours",
+  LAB_ALLOC: "lab_alloc",
+  LABITEM_ID: "labitem_id",
+  TEACHING_MODE: "teaching_mode",
+  COMMENT: "comment",
+}
+
 // action types
 export const types = {
     SEARCH_DOC_LIST: "PROGRESSDOC/SEARCH_DOC_LIST",

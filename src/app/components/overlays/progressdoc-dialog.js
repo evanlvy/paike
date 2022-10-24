@@ -29,10 +29,11 @@ import {
   CommonModal
 } from '../modal/common-modal';
 
-import { EditableTable } from '../result-table/editable-table';
+import { EditableTable, DATATYPE_WEEK, DATATYPE_COLOR_AS_WEEK } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
-import { actions as progressdocActions, getDocProps, getDocItems, getOpenedDocId, parseImmutableLocs } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, tableFields, getDocProps, getDocItems, getOpenedDocId, parseImmutableLocs } from '../../redux/modules/progressdoc';
 import { actions as appActions } from '../../redux/modules/app';
+import role from '../../redux/modules/auth';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -54,17 +55,17 @@ class ProgressdocDialog extends Component {
     this.color = color ? color : DEFAULT_COLOR;
     this.tableHeaders = [
       //{name: t("progressdocScreen.items_header_order"), field: "ord", rowDrag: true, width: 80, dataType: "grouped_color_as_week"},
-      //{name: t("progressdocScreen.items_header_id"), field: "id", width: 80, dataType: "grouped_color_as_week"},
-      {name: t("progressdocScreen.items_header_weekidx"), field: "week_idx", rowDrag: true, editable: true, width: 80, dataType: "grouped_increasing_week"},
-      {name: t("progressdocScreen.items_header_order_in_week"), field: "order_in_week", width: 80, dataType: "grouped_color_as_week"},
-      {name: t("progressdocScreen.items_header_chapter_name"), field: "chapter_name", editable: true, width: 120},
-      {name: t("progressdocScreen.items_header_theory"), field: "theory_item_content", editable: true, width: 380, fn_disable: this.theory_should_disable},
-      {name: t("progressdocScreen.items_header_theoryhours"), field: "theory_item_hours", editable: true, width: 80, fn_disable: this.theory_should_disable},
-      {name: t("progressdocScreen.items_header_labitem"), field: "labitem_content", editable: true, width: 380, fn_disable: this.lab_should_disable},
-      {name: t("progressdocScreen.items_header_labhours"), field: "labitem_hours", editable: true, width: 80, fn_disable: this.lab_should_disable},
-      {name: t("progressdocScreen.items_header_labs"), field: "lab_alloc", width: 100, dataType: "lab_list", fn_disable: this.lab_should_disable},
-      {name: t("progressdocScreen.items_header_teaching_mode"), field: "teaching_mode", editable: true},
-      {name: t("progressdocScreen.items_header_comment"), field: "comment", editable: true},
+      {name: t("progressdocScreen.items_header_id"), field: "id", width: 80, dataType: DATATYPE_COLOR_AS_WEEK},
+      {name: t("progressdocScreen.items_header_weekidx"), field: tableFields.WEEK_IDX, rowDrag: true, editable: true, width: 80, dataType: DATATYPE_WEEK},
+      {name: t("progressdocScreen.items_header_order_in_week"), field: tableFields.ORDER_IN_WEEK, width: 80, dataType: DATATYPE_COLOR_AS_WEEK},
+      {name: t("progressdocScreen.items_header_chapter_name"), field: tableFields.CHAPTER_NAME, editable: true, width: 120},
+      {name: t("progressdocScreen.items_header_theory"), field: tableFields.THEORY_ITEM_CONTENT, editable: true, width: 380, fn_disable: this.theory_should_disable},
+      {name: t("progressdocScreen.items_header_theoryhours"), field: tableFields.THEORY_ITEM_HOURS, editable: true, width: 80, fn_disable: this.theory_should_disable},
+      {name: t("progressdocScreen.items_header_labitem"), field: tableFields.LABITEM_CONTENT, editable: true, width: 380, fn_disable: this.lab_should_disable},
+      {name: t("progressdocScreen.items_header_labhours"), field: tableFields.LABITEM_HOURS, editable: true, width: 80, fn_disable: this.lab_should_disable},
+      {name: t("progressdocScreen.items_header_labs"), field: tableFields.LAB_ALLOC, width: 100, dataType: "lab_list", fn_disable: this.lab_should_disable},
+      {name: t("progressdocScreen.items_header_teaching_mode"), field: tableFields.TEACHING_MODE, editable: true},
+      {name: t("progressdocScreen.items_header_comment"), field: tableFields.COMMENT, editable: true},
       //{name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
     ];
     //this.btnRef = React.createRef()
@@ -109,15 +110,15 @@ class ProgressdocDialog extends Component {
 
   lab_should_disable = (progress_item) => {
     if (!progress_item) {return false;}
-    if (!progress_item["theory_item_content"] && !progress_item["theory_item_hours"]) return false;
-    if ((!progress_item["theory_item_content"] || progress_item["theory_item_content"].length === 0) && progress_item["theory_item_hours"] <= 0) return false;
+    if (!progress_item[tableFields.THEORY_ITEM_CONTENT] && !progress_item[tableFields.THEORY_ITEM_HOURS]) return false;
+    if ((!progress_item[tableFields.THEORY_ITEM_CONTENT] || progress_item[tableFields.THEORY_ITEM_CONTENT].length === 0) && progress_item[tableFields.THEORY_ITEM_HOURS] <= 0) return false;
     return true;
   }
 
   theory_should_disable = (progress_item) => {
     if (!progress_item) {return false;}
-    if (!progress_item["labitem_content"] && !progress_item["labitem_hours"]) return false;
-    if ((!progress_item["labitem_content"] || progress_item["labitem_content"].length === 0) && progress_item["labitem_hours"] <= 0) return false;
+    if (!progress_item[tableFields.LABITEM_CONTENT] && !progress_item[tableFields.LABITEM_HOURS]) return false;
+    if ((!progress_item[tableFields.LABITEM_CONTENT] || progress_item[tableFields.LABITEM_CONTENT].length === 0) && progress_item[tableFields.LABITEM_HOURS] <= 0) return false;
     return true;
   }
 
@@ -193,7 +194,7 @@ class ProgressdocDialog extends Component {
 
   onCellDoubleClicked = (event) => {
     // Process lab_alloc column only
-    if (event && event.column.colId === "lab_alloc" && !event.data.theory_item_hours && !event.data.theory_item_content) {
+    if (event && event.column.colId === tableFields.LAB_ALLOC && !event.data.theory_item_hours && !event.data.theory_item_content) {
       let lab_alloc = event.data.lab_alloc;
       let short_names = parseImmutableLocs(lab_alloc.items);
       this.setState({
@@ -220,7 +221,7 @@ class ProgressdocDialog extends Component {
       // Compare value with no change
       return;
     }
-    if (dest_col === 'lab_alloc') dest_col = 'labitem_id';
+    if (dest_col === tableFields.LAB_ALLOC) dest_col = tableFields.LABITEM_ID;
     this.setState({editedRowCache: {...this.state.editedRowCache, 
       [params.node.id]: {...this.state.editedRowCache[params.node.id], [dest_col]: params.newValue}}});
   }
@@ -250,8 +251,8 @@ class ProgressdocDialog extends Component {
       let rowNode = this.gridApi.getRowNode(nodeId);
       if (rowNode) {
         let cols = Object.keys(this.state.editedRowCache[nodeId]);
-        if (cols.includes("labitem_id")) {
-          cols.push("lab_alloc");
+        if (cols.includes(tableFields.LABITEM_ID)) {
+          cols.push(tableFields.LAB_ALLOC);
         }
         this.gridApi.flashCells({ rowNodes: [rowNode], columns: cols });
       }
@@ -264,7 +265,7 @@ class ProgressdocDialog extends Component {
       let previous_row_data = this.gridApi.getRowNode(params.progressId).data;
       if (previous_row_data.lab_alloc && previous_row_data.lab_alloc.id != params.lab_alloc.id) {
         let newItem = { ...previous_row_data};
-        if ('lab_alloc' in params && params.lab_alloc) {
+        if (tableFields.LAB_ALLOC in params && params.lab_alloc) {
           newItem.lab_alloc = params.lab_alloc;
         } else {
           delete newItem.lab_alloc;
@@ -324,7 +325,7 @@ class ProgressdocDialog extends Component {
   onSave = () => {
     const { accessLevel, docProps, docItems } = this.props;
     if (!docProps || !docItems) return;
-    if (accessLevel > "PROFESSOR" ) {
+    if (accessLevel > role.PROFESSOR ) {
       // Not enouth access right!
       this.props.setToast({type:"error", message:"toast.access_denied"})
       return;
@@ -400,7 +401,7 @@ class ProgressdocDialog extends Component {
       });
       // When many rows changed, use dataframe mode.
       let df_col = this.tableHeaders.map((col) => {
-        return col['field'] === 'lab_alloc'?'labitem_id':col['field'];
+        return col['field'] === tableFields.LAB_ALLOC?tableFields.LABITEM_ID:col['field'];
       });
       let df_data = [];
       this.gridApi.forEachNode((rowNode) => {
@@ -434,6 +435,47 @@ class ProgressdocDialog extends Component {
     // Check if over the dragging row itself
     if (event.overIndex < 0 || event.node === event.overNode) return;
 
+    let from_week_idx = event.node.data.week_idx;
+    let to_week_idx = event.overNode.data.week_idx;
+    let max_week_idx = Math.max(from_week_idx, to_week_idx);
+    let total_rows = event.api.getDisplayedRowCount();
+    let from_week_node_ids = [], to_week_node_ids = [];
+    // Set drag item week index
+    // Will NOT take effect inside this function call
+    event.node.setDataValue(tableFields.WEEK_IDX, to_week_idx);
+    // Go through all notes, collecting ids of from_week and to_week.
+    for (let idx = 0; idx < total_rows; idx++ ) {
+      let node = event.api.getDisplayedRowAtIndex(idx);
+      if (node.data.week_idx > max_week_idx) break;
+      console.log("onDragEnd: go through rows: node id="+node.id);
+      if (node.id === event.node.id) {
+        to_week_node_ids.push(node.id);
+      } else if (node.data.week_idx === from_week_idx) {
+        from_week_node_ids.push(node.id);
+      } else if (node.data.week_idx === to_week_idx) {
+        to_week_node_ids.push(node.id);
+      }
+    }
+    // Check from_week ids array, clear order_in_week cell if this week have only one row
+    if (from_week_node_ids.length === 1) {
+      event.api.getRowNode(from_week_node_ids[0]).setDataValue(tableFields.ORDER_IN_WEEK, null);
+    } else {
+      for (let idx = 0; idx < from_week_node_ids.length; idx++ ) {
+        let node = event.api.getRowNode(from_week_node_ids[idx]);
+        node.setDataValue(tableFields.ORDER_IN_WEEK, idx + 1);  // Start from 1
+      }
+    }
+    // Check to_weeks ids array
+    if (to_week_node_ids.length === 1) {
+      event.api.getRowNode(to_week_node_ids[0]).setDataValue(tableFields.ORDER_IN_WEEK, null);
+    } else {
+      for (let idx = 0; idx < to_week_node_ids.length; idx++ ) {
+        let node = event.api.getRowNode(to_week_node_ids[idx]);
+        node.setDataValue(tableFields.ORDER_IN_WEEK, idx + 1);  // Start from 1
+      }
+    }
+
+    /*
     let dest_week_idx = event.overNode.data.week_idx;
     let dest_row_idx = event.node.rowIndex;  // Dropped index result
     let dragged_id = event.node.id;
@@ -457,7 +499,7 @@ class ProgressdocDialog extends Component {
       console.log("onRowDragEnd:set order_in_week to"+(idx-start_row_idx));
     }
     // Set drag item week index
-    event.node.setDataValue("week_idx", dest_week_idx);
+    event.node.setDataValue("week_idx", dest_week_idx);*/
   };
 
   addRow = () => {
@@ -523,9 +565,9 @@ class ProgressdocDialog extends Component {
                 }
                 {
                 departments &&
-                <FormControl key="department_id" isRequired minW={280} m={2}>
+                <FormControl key={tableFields.DEPARTMENT_ID} isRequired minW={280} m={2}>
                   <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
-                  <Select id="department_id" variant="outline" value={department_id} onChange={this.onFormChanged}
+                  <Select id={tableFields.DEPARTMENT_ID} variant="outline" value={department_id} onChange={this.onFormChanged}
                     borderColor={(docProps && department_id===docProps.department_id)?"gray.200":"blue.500"}>
                   {
                     departments.map((dep) => (
@@ -607,7 +649,7 @@ class ProgressdocDialog extends Component {
             <Radio value='1' variantColor='green' size='lg'>
               {t("progressdocScreen.selector_save_doc_as_copy")}
             </Radio>
-            <Radio value='2' variantColor='red' size='lg' isDisabled={docProps && userInfo && userInfo.id !== docProps.user_id && accessLevel >= "PROFESSOR"}>
+            <Radio value='2' variantColor='red' size='lg' isDisabled={docProps && userInfo && userInfo.id !== docProps.user_id && accessLevel >= role.PROFESSOR}>
               {t("progressdocScreen.selector_save_original_doc", {count: 5})}
             </Radio>
           </RadioGroup>
@@ -636,3 +678,4 @@ const mapDispatchToProps = (dispatch) => {
 export default connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(withTranslation()(ProgressdocDialog));
 
 // TODO: 增加API获取此doc关联的课程数，用来决定保存是否使用另存为。 2. 增加创建新doc 3. 删除doc 4. 插入新行时指定周内序号  5. 载入时排序按week_idx+order_in_week两个
+// 没拖动一行，就重新计算赋值from和to两周的order_in_week，简化当前算法！

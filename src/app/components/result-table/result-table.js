@@ -60,6 +60,8 @@ class ResultTableWrapper extends Component {
     this.gridApi = null;
     this.prevWidth = 0;
     this.prevHeight = 0;
+    this.overlayNoRowsTemplate = '<span class="ag-overlay-loading-center">...空空如也...</span>';
+    this.overlayLoadingTemplate = '<span class="ag-overlay-loading-center">...加载中...</span>';
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -464,6 +466,8 @@ class ResultTableWrapper extends Component {
           <div id="myGrid" className="ag-theme-alpine" style={{width: "100%", height: "inherit"}}>
             <AgGridReact
               //domLayout={autoShrinkDomHeight?'autoHeight':'normal'}
+              overlayNoRowsTemplate={this.overlayNoRowsTemplate}
+              overlayLoadingTemplate={this.overlayLoadingTemplate}
               animateRows={false}
               onGridReady={onGridReady}
               onGridSizeChanged={onGridSizeChanged}

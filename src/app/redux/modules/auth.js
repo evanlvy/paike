@@ -5,6 +5,14 @@ import { actions as appActions } from './app';
 
 import { api as authApi } from '../../services/auth';
 
+export const role = {
+  NONE: "ZERO",
+  STU: "STUDENT",
+  PROFESSOR: "PROFESSOR",
+  OFFICER: "OFFICER",
+  ADMIN: "ADMIN",
+};
+
 // types
 export const types = {
   LOGIN: "AUTH/LOGIN",

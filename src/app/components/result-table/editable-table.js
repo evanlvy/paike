@@ -18,6 +18,9 @@ import { CommonRenderer } from "./common-renderer";
 import { ArrayDataRenderer } from "./arraydata-renderer";
 import { SelectorCelleditor } from "./selector-celleditor";
 
+export const DATATYPE_WEEK = "grouped_increasing_week";
+export const DATATYPE_COLOR_AS_WEEK = "grouped_color_as_week";
+
 class EditableTableWrapper extends Component {
   constructor(props) {
     super(props);
@@ -150,12 +153,12 @@ class EditableTableWrapper extends Component {
               }
             }*/
             break;
-          case "grouped_increasing_week":
+          case DATATYPE_WEEK:
             // To display exclamation sign when the value is smaller than before row.
             //defs_generated.valueGetter = this.increasingValueGetter;
             defs_generated.valueSetter = CellConverters.numbersOnlyValueSetter;
             // NO BREAK HERE! SHARING CODE!
-          case "grouped_color_as_week":
+          case DATATYPE_COLOR_AS_WEEK:
             defs_generated.cellStyle = CellConverters.groupColoredWeekCellStyle;
             break;
           default:

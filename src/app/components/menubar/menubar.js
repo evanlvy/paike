@@ -37,6 +37,7 @@ import { Trans, withTranslation } from 'react-i18next';
 import { LabType } from '../../models/lab';
 import { LabsMenu, GroupMenu } from './';
 import PromptDrawer from '../../components/overlays/prompt-drawer';
+import role from '../../redux/modules/auth';
 
 function withMenu(WrappedMenuList) {
   class withMenuComponent extends Component {
@@ -287,12 +288,12 @@ class MenuBarWrapped extends Component {
       { type: MenuType.SHIXUN, title: "menuBar.shixunkebiao_title", icon: AiTwotoneExperiment, bgColor: "green", onClick: this.onDepartmentLabsSummaryClicked,
               menu_ref: this.shixunMenuRef, access_level: "ZERO" },
       { list_type: MenuListType.LAB, type: MenuType.SHIYANSHI, title: "menuBar.shiyanshi_anpai_title", icon: FaBuilding, bgColor: "blue",
-              menuListProps: {labCenters: lab_centers, labBuildings: lab_buildings, onLabChange: this.onLabChanged}, menu_ref: this.labMenuRef, access_level: "PROFESSOR" },
+              menuListProps: {labCenters: lab_centers, labBuildings: lab_buildings, onLabChange: this.onLabChanged}, menu_ref: this.labMenuRef, access_level: role.PROFESSOR },
       { list_type: MenuListType.GROUP, type: MenuType.JIAOYANSHI, title: "menuBar.jiaoyanshi_kebiao_title", icon: MdCollectionsBookmark, bgColor: "red",
-              menuListProps: {menuGroups: jiaoyanshi_centers, onGroupMenuSelected: this.onJiaoYanShiChange, height: 500}, menu_ref: this.jysMenuRef, access_level: "PROFESSOR" },
-      { type: MenuType.PAIKE, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink", onClick: this.onJiaoShiPaiKeClicked, access_level: "PROFESSOR"},
+              menuListProps: {menuGroups: jiaoyanshi_centers, onGroupMenuSelected: this.onJiaoYanShiChange, height: 500}, menu_ref: this.jysMenuRef, access_level: role.PROFESSOR },
+      { type: MenuType.PAIKE, title: "menuBar.jiaoshi_paike_title", icon: FaCalculator, bgColor: "pink", onClick: this.onJiaoShiPaiKeClicked, access_level: role.PROFESSOR},
       { list_type: MenuListType.GROUP, type: MenuType.BASIC_MAINTAIN, title: "menuBar.basic_maintain_title", icon: FaUserCog, bgColor: "purple",
-              menuListProps: {menuGroups: maintain_menus, onGroupMenuSelected: this.onMaintainMenuSelected, height: 500}, access_level: "PROFESSOR"},
+              menuListProps: {menuGroups: maintain_menus, onGroupMenuSelected: this.onMaintainMenuSelected, height: 500}, access_level: role.PROFESSOR},
     ];
     const { t, accessLevel, userInfo, stuInfo } = this.props;
     const { selectStage } = this.state;
@@ -351,14 +352,14 @@ class MenuBarWrapped extends Component {
             <Badge borderRadius="full" mx="5" px="4" colorScheme="blue" fontWeight="semibold"
               letterSpacing="wide"
               fontSize="l">
-              {((typeof(departmentName)=='string' && departmentName != "")?departmentName:labdivisionName)}
+              {((typeof(departmentName)==='string' && departmentName !== "")?departmentName:labdivisionName)}
             </Badge>
             <Text flex-basis="60px" flex-grow="2" fontSize="xl">{stuInfo.major_name?
               t("menuBar.student_profile_template",{grade_name: grade_name, major_name: major_name, class_seq: class_seq})
               :t("menuBar.teacher_profile_template",{teacherName: name})}
             </Text>
             {
-              accessLevel <= "OFFICER" && (semesterPages && Object.keys(semesterPages).length > 0) &&
+              accessLevel <= role.OFFICER && (semesterPages && Object.keys(semesterPages).length > 0) &&
               <Flex width="25em" alignItems="center">
               <Icon as={MdTune} color={color+".200"} size={8} />
               <Text width="5em" mx={2} whiteSpace="break-spaces">{t("editRawplanScreen.hint_stageselector")}</Text>
