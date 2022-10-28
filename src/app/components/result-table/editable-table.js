@@ -248,13 +248,18 @@ class EditableTableWrapper extends Component {
   }
 
   onGridReady = (params) => {
-    const { rowDragManaged, orderbyAsc, orderbyDesc } = this.props;
     this.gridApi = params.api;
     // Following line to make the currently visible columns fit the screen  
     params.api.sizeColumnsToFit();
     // Following line dymanic set height to row on content
     params.api.resetRowHeights();
+    const { additionalColumnState } = this.props;
+    if (additionalColumnState) {
+      params.columnApi.applyColumnState(additionalColumnState);
+    }
+    /*
     // Order rows by colId from props---re-order will disable rowDrag!
+    const { rowDragManaged, orderbyAsc, orderbyDesc } = this.props;
     if (!rowDragManaged && (orderbyAsc || orderbyDesc)) {
       let _sort = orderbyAsc?'asc':'desc';
       let _col = orderbyAsc?orderbyAsc:orderbyDesc;
@@ -264,7 +269,7 @@ class EditableTableWrapper extends Component {
           defaultState: { sort: null },
         });
       }
-    }
+    }*/
   }
 
   onGridSizeChanged = (event) => {
@@ -391,7 +396,7 @@ class EditableTableWrapper extends Component {
         <Box flex={1} width="100%" height="inherit" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
           <div id="editableGrid" className="ag-theme-alpine" style={{width: "100%", height: "inherit"}}>
             <AgGridReact
-              animateRows={true}
+              //animateRows={true}
               rowDragManaged={rowDragManaged}
               suppressMoveWhenRowDragging={true}
               onGridReady={this.onGridReady}

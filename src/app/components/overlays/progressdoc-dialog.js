@@ -87,6 +87,7 @@ class ProgressdocDialog extends Component {
     this.gridApi = null;
     this.insertDbId = -1;
     this.choices = [t("progressdocScreen.selector_save_doc_as_copy"), t("progressdocScreen.selector_save_original_doc", {count: 5})];
+    this.lastHighlightedRow = null;
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -217,9 +218,21 @@ class ProgressdocDialog extends Component {
     this.gridApi = params.api;
     let dest_col = params.colDef.field;
     console.log("onCellValueChanged: newValue:"+JSON.stringify(params.newValue)+" oldValue:"+params.oldValue);
-    if (params.oldValue && params.newValue && params.newValue === params.oldValue) {
+    if (params.oldValue && params.newValue && params.newValue == params.oldValue) {
       // Compare value with no change
       return;
+    }
+    if (dest_col === tableFields.WEEK_IDX) {
+      const data = params.data;
+      let num = parseInt(params.newValue);
+      let bad_num = false;
+      if (!num) {
+        num = params.oldValue;
+        bad_num = true;
+      }
+      data[tableFields.WEEK_IDX] = num;
+      params.api.applyTransaction({ update: [data] });
+      if (bad_num) return;  // Do not record to changed value because we recover it!
     }
     if (dest_col === tableFields.LAB_ALLOC) dest_col = tableFields.LABITEM_ID;
     this.setState({editedRowCache: {...this.state.editedRowCache, 
@@ -430,50 +443,107 @@ class ProgressdocDialog extends Component {
     });
   };
 
+  onRowDragMove = (event) => {
+    const { rowTop, rowHeight } = event.overNode;
+    if (this.lastHighlightedRow) {
+      this.lastHighlightedRow.setHighlighted(null);
+    }
+    // RowHighlightPosition.Above : 0, RowHighlightPosition.Below : 1
+    let pos = ((event.y - rowTop) < rowHeight / 2) ?0:1;
+    event.overNode.setHighlighted(pos);
+    this.lastHighlightedRow = event.overNode;
+  };
+
+  pushNodes = (dest_nodes, nodes, week_idx, start_order) => {
+    let counter = 0;
+    for (let idx = 0; idx < nodes.length; idx++) {
+      const node = nodes[idx];
+      node.data[tableFields.ORDER_IN_WEEK] = start_order?(start_order + idx):null;
+      if (week_idx) {
+        node.data[tableFields.WEEK_IDX] = week_idx;
+      }
+      dest_nodes.push(node.data);
+      counter+=1;
+    }
+    return counter + start_order;
+  }
+
   onRowDragEnd = (event) => {
-    console.log("onRowDragEnd");
+    if (this.lastHighlightedRow) {
+      this.lastHighlightedRow.setHighlighted(null);
+      this.lastHighlightedRow = null;
+    }
+    //console.log("onRowDragEnd");
+    const { rowTop, rowHeight } = event.overNode;
     // Check if over the dragging row itself
     if (event.overIndex < 0 || event.node === event.overNode) return;
-
     let from_week_idx = event.node.data.week_idx;
     let to_week_idx = event.overNode.data.week_idx;
     let max_week_idx = Math.max(from_week_idx, to_week_idx);
     let total_rows = event.api.getDisplayedRowCount();
     let from_week_node_ids = [], to_week_node_ids = [];
+    let pos = ((event.y - rowTop) < rowHeight / 2) ?0:1;
+    let dragged_nodes = event.nodes?event.nodes:[event.node];
+    const dragged_ids = dragged_nodes.map(node => node.id);
     // Set drag item week index
     // Will NOT take effect inside this function call
-    event.node.setDataValue(tableFields.WEEK_IDX, to_week_idx);
+    //event.node.setDataValue(tableFields.WEEK_IDX, to_week_idx);
     // Go through all notes, collecting ids of from_week and to_week.
     for (let idx = 0; idx < total_rows; idx++ ) {
       let node = event.api.getDisplayedRowAtIndex(idx);
       if (node.data.week_idx > max_week_idx) break;
-      console.log("onDragEnd: go through rows: node id="+node.id);
-      if (node.id === event.node.id) {
+      //console.log("onDragEnd: go through rows: node id="+node.id+" @week="+node.data.week_idx);
+      if (dragged_ids.includes(node.id)) { //} === event.node.id) {
+        //to_week_node_ids.push(node.id);
+      } else if (node.data.week_idx == to_week_idx) {
+        // In case from_week == to_week, we put all of them to to_week array!
+        // So put to_week condition behind from_week condition
         to_week_node_ids.push(node.id);
-      } else if (node.data.week_idx === from_week_idx) {
+      } else if (node.data.week_idx == from_week_idx) {
+        // Use == instead of === because cell value was string
         from_week_node_ids.push(node.id);
-      } else if (node.data.week_idx === to_week_idx) {
-        to_week_node_ids.push(node.id);
       }
     }
+    //console.log("From week "+from_week_idx+" to week "+to_week_idx);
+    //console.log("From nodes: "+from_week_node_ids+" to nodes: "+to_week_node_ids);
     // Check from_week ids array, clear order_in_week cell if this week have only one row
+    const itemsToUpdate = [];
     if (from_week_node_ids.length === 1) {
-      event.api.getRowNode(from_week_node_ids[0]).setDataValue(tableFields.ORDER_IN_WEEK, null);
+      //event.api.getRowNode(from_week_node_ids[0]).setDataValue(tableFields.ORDER_IN_WEEK, null);
+      const node = event.api.getRowNode(from_week_node_ids[0]);
+      this.pushNodes(itemsToUpdate, [node], null, null);  // Clear order
     } else {
       for (let idx = 0; idx < from_week_node_ids.length; idx++ ) {
-        let node = event.api.getRowNode(from_week_node_ids[idx]);
-        node.setDataValue(tableFields.ORDER_IN_WEEK, idx + 1);  // Start from 1
+        const node = event.api.getRowNode(from_week_node_ids[idx]);
+        this.pushNodes(itemsToUpdate, [node], from_week_idx, idx+1);
       }
     }
     // Check to_weeks ids array
-    if (to_week_node_ids.length === 1) {
-      event.api.getRowNode(to_week_node_ids[0]).setDataValue(tableFields.ORDER_IN_WEEK, null);
+    if (to_week_node_ids.length < 1) {
+      let node = event.api.getDisplayedRowAtIndex(total_rows-1);
+      to_week_idx = node.data.week_idx+1;
+      this.pushNodes(itemsToUpdate, [node], to_week_idx, 1);
     } else {
+      let dest_order = 1;
       for (let idx = 0; idx < to_week_node_ids.length; idx++ ) {
-        let node = event.api.getRowNode(to_week_node_ids[idx]);
-        node.setDataValue(tableFields.ORDER_IN_WEEK, idx + 1);  // Start from 1
+        const node = event.api.getRowNode(to_week_node_ids[idx]);
+        if (node === event.overNode) {
+          // Check position to determine the order of pushing row data
+          if (pos === 0) {
+            // Above
+            dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
+            dest_order = this.pushNodes(itemsToUpdate, [node], null, dest_order);
+          } else {
+            // Below
+            dest_order = this.pushNodes(itemsToUpdate, [node], null, dest_order);
+            dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
+          }
+        } else {
+          dest_order = this.pushNodes(itemsToUpdate, [node], null, dest_order);
+        }
       }
     }
+    event.api.applyTransaction({ update: itemsToUpdate });
 
     /*
     let dest_week_idx = event.overNode.data.week_idx;
@@ -597,8 +667,6 @@ class ProgressdocDialog extends Component {
                 color={color}
                 headers={this.tableHeaders}
                 data={isNewDoc?createdItems:docItems}
-                //orderbyAsc={'ord'}
-                rowDragManaged={true}
                 pagePrevCaption={t("common.previous")}
                 pageNextCaption={t("common.next")}
                 initPageIndex={0}
@@ -610,6 +678,18 @@ class ProgressdocDialog extends Component {
                 //getRowId={params => params.data.id} // NO USE, NEVER CALLED!
                 getRowNodeId={data => data.id}
                 onRowDragEnd={this.onRowDragEnd}
+                // Sort by week and order-in-week, enable dragging by setting rowDragManaged to false
+                onRowDragMove={this.onRowDragMove}
+                rowDragManaged={false}
+                additionalColumnState={{
+                  state: [
+                    { colId: tableFields.WEEK_IDX, sort: 'asc', sortIndex: 0 },
+                    { colId: tableFields.ORDER_IN_WEEK, sort: 'asc', sortIndex: 1 },
+                  ],
+                  defaultState: {
+                    sort: null
+                  }
+                }}
                 //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
                 />
             }

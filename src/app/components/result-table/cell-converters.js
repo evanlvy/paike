@@ -158,11 +158,11 @@ export class CellConverters {
     if (!value) {
       return "";
     }
-    if (params.node.rowIndex == 0) {
+    if (params.node.rowIndex === 0) {
       return value;
     }
     let indexBefore = params.node.rowIndex;
-    if (params.api == undefined) {
+    if (!params.api) {
       return value;
     }
     let dataBefore = params.api.getDisplayedRowAtIndex(indexBefore - 1);
@@ -190,6 +190,8 @@ export class CellConverters {
         return { backgroundColor: '#FF7043' };
       case 3:
         return { backgroundColor: '#FFB74D' };
+      default:
+        return {};
       }
     /*
     if (!params.api) {
