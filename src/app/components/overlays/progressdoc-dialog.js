@@ -223,16 +223,19 @@ class ProgressdocDialog extends Component {
       return;
     }
     if (dest_col === tableFields.WEEK_IDX) {
-      const data = params.data;
       let num = parseInt(params.newValue);
       let bad_num = false;
       if (!num) {
         num = params.oldValue;
         bad_num = true;
       }
-      data[tableFields.WEEK_IDX] = num;
-      params.api.applyTransaction({ update: [data] });
-      if (bad_num) return;  // Do not record to changed value because we recover it!
+      if (bad_num) {
+        const data = params.data;
+        data[tableFields.WEEK_IDX] = num;
+        params.api.applyTransaction({ update: [data] });
+        return;  // Do not record to changed value because we recover it!
+      }
+      this.arrangeOrder(params.api, [params.node], null, (params.oldValue < params.newValue)?0:1, params.oldValue, params.newValue);
     }
     if (dest_col === tableFields.LAB_ALLOC) dest_col = tableFields.LABITEM_ID;
     this.setState({editedRowCache: {...this.state.editedRowCache, 
@@ -443,10 +446,18 @@ class ProgressdocDialog extends Component {
     });
   };
 
+  onRowDragEnter = (event) => {
+    // No multiple-rows dragging allowed.
+    event.api.deselectAll();
+    event.node.setSelected(true);
+  }
+
   onRowDragMove = (event) => {
     const { rowTop, rowHeight } = event.overNode;
-    if (this.lastHighlightedRow) {
+    if (this.lastHighlightedRow && this.lastHighlightedRow !== event.overNode) {
+      this.lastHighlightedRow.onMouseLeave();
       this.lastHighlightedRow.setHighlighted(null);
+      event.overNode.onMouseEnter();
     }
     // RowHighlightPosition.Above : 0, RowHighlightPosition.Below : 1
     let pos = ((event.y - rowTop) < rowHeight / 2) ?0:1;
@@ -468,29 +479,17 @@ class ProgressdocDialog extends Component {
     return counter + start_order;
   }
 
-  onRowDragEnd = (event) => {
-    if (this.lastHighlightedRow) {
-      this.lastHighlightedRow.setHighlighted(null);
-      this.lastHighlightedRow = null;
-    }
-    //console.log("onRowDragEnd");
-    const { rowTop, rowHeight } = event.overNode;
-    // Check if over the dragging row itself
-    if (event.overIndex < 0 || event.node === event.overNode) return;
-    let from_week_idx = event.node.data.week_idx;
-    let to_week_idx = event.overNode.data.week_idx;
-    let max_week_idx = Math.max(from_week_idx, to_week_idx);
-    let total_rows = event.api.getDisplayedRowCount();
-    let from_week_node_ids = [], to_week_node_ids = [];
-    let pos = ((event.y - rowTop) < rowHeight / 2) ?0:1;
-    let dragged_nodes = event.nodes?event.nodes:[event.node];
+  arrangeOrder = (api, dragged_nodes, overNode, pos, _from, _to) => {
+    let from_week_idx = parseInt(_from);
+    let to_week_idx = parseInt(_to);
+    if (!from_week_idx || !to_week_idx) return;
     const dragged_ids = dragged_nodes.map(node => node.id);
-    // Set drag item week index
-    // Will NOT take effect inside this function call
-    //event.node.setDataValue(tableFields.WEEK_IDX, to_week_idx);
+    let max_week_idx = Math.max(from_week_idx, to_week_idx);
+    let total_rows = api.getDisplayedRowCount();
     // Go through all notes, collecting ids of from_week and to_week.
+    let from_week_node_ids = [], to_week_node_ids = [];
     for (let idx = 0; idx < total_rows; idx++ ) {
-      let node = event.api.getDisplayedRowAtIndex(idx);
+      let node = api.getDisplayedRowAtIndex(idx);
       if (node.data.week_idx > max_week_idx) break;
       //console.log("onDragEnd: go through rows: node id="+node.id+" @week="+node.data.week_idx);
       if (dragged_ids.includes(node.id)) { //} === event.node.id) {
@@ -510,24 +509,27 @@ class ProgressdocDialog extends Component {
     const itemsToUpdate = [];
     if (from_week_node_ids.length === 1) {
       //event.api.getRowNode(from_week_node_ids[0]).setDataValue(tableFields.ORDER_IN_WEEK, null);
-      const node = event.api.getRowNode(from_week_node_ids[0]);
+      const node = api.getRowNode(from_week_node_ids[0]);
       this.pushNodes(itemsToUpdate, [node], null, null);  // Clear order
     } else {
       for (let idx = 0; idx < from_week_node_ids.length; idx++ ) {
-        const node = event.api.getRowNode(from_week_node_ids[idx]);
+        const node = api.getRowNode(from_week_node_ids[idx]);
         this.pushNodes(itemsToUpdate, [node], from_week_idx, idx+1);
       }
     }
     // Check to_weeks ids array
     if (to_week_node_ids.length < 1) {
-      let node = event.api.getDisplayedRowAtIndex(total_rows-1);
-      to_week_idx = node.data.week_idx+1;
-      this.pushNodes(itemsToUpdate, [node], to_week_idx, 1);
+      let node = api.getDisplayedRowAtIndex(total_rows-1);
+      this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dragged_nodes.length>1?1:null);
     } else {
       let dest_order = 1;
+      if (!overNode && pos === 0) {
+        // Insert to the top of the dest week
+        dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
+      }
       for (let idx = 0; idx < to_week_node_ids.length; idx++ ) {
-        const node = event.api.getRowNode(to_week_node_ids[idx]);
-        if (node === event.overNode) {
+        const node = api.getRowNode(to_week_node_ids[idx]);
+        if (node === overNode) {
           // Check position to determine the order of pushing row data
           if (pos === 0) {
             // Above
@@ -542,34 +544,29 @@ class ProgressdocDialog extends Component {
           dest_order = this.pushNodes(itemsToUpdate, [node], null, dest_order);
         }
       }
+      if (!overNode && pos === 1) {
+        // Insert to below of the dest week
+        dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
+      }
     }
-    event.api.applyTransaction({ update: itemsToUpdate });
+    api.applyTransaction({ update: itemsToUpdate });
+  }
 
-    /*
-    let dest_week_idx = event.overNode.data.week_idx;
-    let dest_row_idx = event.node.rowIndex;  // Dropped index result
-    let dragged_id = event.node.id;
-    // Find the index of the 1st row of this week.
-    let start_row_idx = 0;
-    for (let idx = dest_row_idx - 1; idx >= 0; idx --) {
-      let node = event.api.getDisplayedRowAtIndex(idx);
-      if (node.data.week_idx !== dest_week_idx) {
-        start_row_idx = idx + 1;
-        break;
-      }
+  onRowDragEnd = (event) => {
+    if (this.lastHighlightedRow) {
+      this.lastHighlightedRow.setHighlighted(null);
+      this.lastHighlightedRow.onMouseLeave();
+      this.lastHighlightedRow = null;
     }
-    // Reset cell order_in_week of rows for this week.
-    let total_rows = event.api.getDisplayedRowCount();
-    for (let idx = start_row_idx; idx < total_rows; idx++ ) {
-      let node = event.api.getDisplayedRowAtIndex(idx);
-      if (node.data.week_idx !== dest_week_idx && dragged_id !== node.id) {
-        break;
-      }
-      node.setDataValue("order_in_week", idx - start_row_idx + 1);
-      console.log("onRowDragEnd:set order_in_week to"+(idx-start_row_idx));
-    }
-    // Set drag item week index
-    event.node.setDataValue("week_idx", dest_week_idx);*/
+    const { rowTop, rowHeight } = event.overNode;
+    // Check if over the dragging row itself
+    if (event.overIndex < 0 || event.node === event.overNode) return;
+    let from_week_idx = event.node.data.week_idx;
+    let to_week_idx = event.overNode.data.week_idx;
+    let pos = ((event.y - rowTop) < rowHeight / 2) ?0:1;
+    let dragged_nodes = event.nodes?event.nodes:[event.node];
+
+    this.arrangeOrder(event.api, dragged_nodes, event.overNode, pos, from_week_idx, to_week_idx);
   };
 
   addRow = () => {
@@ -679,8 +676,9 @@ class ProgressdocDialog extends Component {
                 getRowNodeId={data => data.id}
                 onRowDragEnd={this.onRowDragEnd}
                 // Sort by week and order-in-week, enable dragging by setting rowDragManaged to false
-                onRowDragMove={this.onRowDragMove}
                 rowDragManaged={false}
+                onRowDragMove={this.onRowDragMove}
+                onRowDragEnter={this.onRowDragEnter}
                 additionalColumnState={{
                   state: [
                     { colId: tableFields.WEEK_IDX, sort: 'asc', sortIndex: 0 },
