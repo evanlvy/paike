@@ -70,6 +70,7 @@ class ProgressdocDialog extends Component {
     ];
     //this.btnRef = React.createRef()
     this.commonModalRef = React.createRef();
+    this.agGridRef = React.createRef();
     this.forms = [
       {id: "user_id", label: t("progressdocScreen.form_label_docowner"), minW: 280, isRequired: true},
       {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, isRequired: true},
@@ -84,7 +85,6 @@ class ProgressdocDialog extends Component {
       {id: "exam_type", label: t("progressdocScreen.form_label_examtype"), minW: 280, isRequired: true},
       {id: "comments", label: t("progressdocScreen.form_label_comments"), minW: 280, isRequired: false},
     ];
-    this.gridApi = null;
     this.insertDbId = -1;
     this.choices = [t("progressdocScreen.selector_save_doc_as_copy"), t("progressdocScreen.selector_save_original_doc", {count: 5})];
     this.lastHighlightedRow = null;
@@ -215,7 +215,6 @@ class ProgressdocDialog extends Component {
   }
 
   onCellValueChanged = (params) => {
-    this.gridApi = params.api;
     let dest_col = params.colDef.field;
     console.log("onCellValueChanged: newValue:"+JSON.stringify(params.newValue)+" oldValue:"+params.oldValue);
     if (params.oldValue && params.newValue && params.newValue == params.oldValue) {
@@ -243,7 +242,6 @@ class ProgressdocDialog extends Component {
   }
 
   onCellEditingStarted  = (params) => {
-    this.gridApi = params.api;
     let dest_col = params.colDef.field;
     // When theory cells added, check if the lab cells have contents
     let should_stop_editing = false;
@@ -261,24 +259,24 @@ class ProgressdocDialog extends Component {
   }
 
   flashCells = () => {
-    if (!this.gridApi || !this.state.editedRowCache) return;
+    if (!this.agGridRef.current.gridApi || !this.state.editedRowCache) return;
     Object.keys(this.state.editedRowCache).forEach(function(nodeId){
-      //let row = this.gridApi.getDisplayedRowAtIndex(parseInt(idx));
-      let rowNode = this.gridApi.getRowNode(nodeId);
+      //let row = this.agGridRef.current.gridApi.getDisplayedRowAtIndex(parseInt(idx));
+      let rowNode = this.agGridRef.current.gridApi.getRowNode(nodeId);
       if (rowNode) {
         let cols = Object.keys(this.state.editedRowCache[nodeId]);
         if (cols.includes(tableFields.LABITEM_ID)) {
           cols.push(tableFields.LAB_ALLOC);
         }
-        this.gridApi.flashCells({ rowNodes: [rowNode], columns: cols });
+        this.agGridRef.current.gridApi.flashCells({ rowNodes: [rowNode], columns: cols });
       }
     }, this);
   }
 
   onLabItemClosed = (params) => {
-    if (this.gridApi && params && 'progressId' in params /*&& 'rowIndex' in params*/) {
+    if (this.agGridRef && params && 'progressId' in params /*&& 'rowIndex' in params*/) {
       // Update labitem_id to row cache
-      let previous_row_data = this.gridApi.getRowNode(params.progressId).data;
+      let previous_row_data = this.agGridRef.current.gridApi.getRowNode(params.progressId).data;
       if (previous_row_data.lab_alloc && previous_row_data.lab_alloc.id != params.lab_alloc.id) {
         let newItem = { ...previous_row_data};
         if (tableFields.LAB_ALLOC in params && params.lab_alloc) {
@@ -286,7 +284,7 @@ class ProgressdocDialog extends Component {
         } else {
           delete newItem.lab_alloc;
         }
-        this.gridApi.applyTransaction({ update: [newItem] });
+        this.agGridRef.current.gridApi.applyTransaction({ update: [newItem] });
         // Update lab_alloc column to edited-row-cache
         this.setState({editedRowCache: {...this.state.editedRowCache, 
           [params.progressId]: {...this.state.editedRowCache[params.progressId], lab_alloc: params.lab_alloc}}});
@@ -351,7 +349,7 @@ class ProgressdocDialog extends Component {
   };
 
   onSaveDialogResult = (isOk) => {
-    if (!isOk || !this.gridApi) return true;
+    if (!isOk || !this.agGridRef.current.gridApi) return true;
     const { docProps } = this.props;
     if (this.state.saveOption === '2'){
       // Overwrite current doc directly:
@@ -366,7 +364,7 @@ class ProgressdocDialog extends Component {
       }
       // 2. Progress items: Compose a rows_diff object to send to server for updating existing doc
       let rows_diff = {};
-      this.gridApi.forEachNode((rowNode) => {
+      this.agGridRef.current.gridApi.forEachNode((rowNode) => {
         if (rowNode.id in rows_diff) {
           this.props.setToast({type:"error", message:"NodeId already exist in diff array!"})
           return false; // Break for error
@@ -420,7 +418,7 @@ class ProgressdocDialog extends Component {
         return col['field'] === tableFields.LAB_ALLOC?tableFields.LABITEM_ID:col['field'];
       });
       let df_data = [];
-      this.gridApi.forEachNode((rowNode) => {
+      this.agGridRef.current.gridApi.forEachNode((rowNode) => {
         df_data.push(df_col.map((col)=> {
           return (col in rowNode.data)?rowNode.data[col]:undefined;
         }));
@@ -438,9 +436,7 @@ class ProgressdocDialog extends Component {
   }
 
   onSelectionChanged = (params) => {
-    this.gridApi = params.api;
-    if (!this.gridApi) return;
-    const rowCount = this.gridApi.getSelectedNodes().length;
+    const rowCount = params.api.getSelectedNodes().length;
     this.setState({
       rowSelected: rowCount
     });
@@ -570,20 +566,21 @@ class ProgressdocDialog extends Component {
   };
 
   addRow = () => {
-    if (!this.gridApi) return;
-    const rows = this.gridApi.getSelectedNodes();
+    if (!this.agGridRef.current.gridApi) return;
+    const rows = this.agGridRef.current.gridApi.getSelectedNodes();
     if (!rows || rows.length != 1) return;
     let idx = rows[0].rowIndex;
     let row_data = rows[0].data;
+    //TODO: Select node index 0 will make the same dbid!
     let newRow = {id: this.insertDbId--, week_idx: row_data.week_idx, chapter_name: row_data.chapter_name, teaching_mode: row_data.teaching_mode};
-    this.gridApi.applyTransaction({ addIndex: idx+1, add: [newRow] });  // Insert after selected row.
+    this.agGridRef.current.gridApi.applyTransaction({ addIndex: idx+1, add: [newRow] });  // Insert after selected row.
   };
 
   delRow = () => {
-    if (!this.gridApi) return;
-    const nodes = this.gridApi.getSelectedNodes();
+    if (!this.agGridRef.current.gridApi) return;
+    const nodes = this.agGridRef.current.gridApi.getSelectedNodes();
     if (!nodes || nodes.length < 1) return;
-    this.gridApi.applyTransaction({ remove: nodes.map(node => (node.data)) });
+    this.agGridRef.current.gridApi.applyTransaction({ remove: nodes.map(node => (node.data)) });
     // Remembet NodeIds of removed rows for quick saving
     this.setState({removedNodeIds: [...this.state.removedNodeIds, ...nodes.map(node => (node.id))]});
   };
@@ -653,7 +650,8 @@ class ProgressdocDialog extends Component {
             }
             {
               (docItems || isNewDoc) &&
-              <EditableTable 
+              <EditableTable
+                ref={this.agGridRef}
                 flex={1}
                 autoShrinkDomHeight
                 minHeight={950}
