@@ -91,13 +91,18 @@ class Api {
     try {
       const url = this.baseUrl+"/set_progressdoc";
       console.log("Request url "+url+" with doc_id: "+JSON.stringify(docId));
-      let request_param = {id:docId, attributes:docDiffDict};
-      if (itemsDiffDict != null) {
-        request_param = {...request_param, ...{items: itemsDiffDict}};
+      let request_param = {id: docId};
+      if (docDiffDict && Object.getOwnPropertyNames(docDiffDict).length > 0) {
+        request_param["props"] = docDiffDict;
       }
-      else if (itemsDiffCol!=null && itemsDiffDataframe!=null){
-        request_param = {...request_param, ...{items_dfcol: itemsDiffCol, items_dfdata: itemsDiffDataframe}};
+      if (itemsDiffDict) {
+        request_param["items"] = itemsDiffDict;
       }
+      else if (itemsDiffCol && itemsDiffDataframe){
+        request_param["items_dfcol"] = itemsDiffCol;
+        request_param["items_dfdata"] = itemsDiffDataframe;
+      }
+      console.log(request_param);
       let response = await axios.post(url, request_param);
       const { success, data, message } = response.data;
       if (!success) {

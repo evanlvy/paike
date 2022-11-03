@@ -29,7 +29,7 @@ import { actions as authActions, getLoggedUser, getAccessLevel } from '../redux/
 //import { actions as authActions, getDepartmentId } from '../redux/modules/auth';
 import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getColoredJysList } from '../redux/modules/jiaoyanshi';
-import { actions as progressdocActions, getDocList } from '../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocList, getOpenedDocId } from '../redux/modules/progressdoc';
 import { actions as appActions } from '../redux/modules/app';
 import PromptDrawer from '../components/overlays/prompt-drawer';
 import ProgressdocDialog from '../components/overlays/progressdoc-dialog';
@@ -114,12 +114,20 @@ class ProgressdocScreen extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    console.log("LIFECYCLE: componentDidMount");
+    console.log("LIFECYCLE: componentDidUpdate");
     // Disable Open button when changing department then lost row selection
     if (prevState.selectedJysIdList !== this.state.selectedJysIdList) {
       this.setState({
         selectedDocId: -1,
       });
+    }
+    if (prevProps.openedDocId !== this.props.openedDocId) {
+      if (this.props.openedDocId < 0 && this.state.isNewDoc === false) {
+        this.setState({
+          isProgressDocOpen: false,
+        });
+      }
+      
     }
   }
 
@@ -233,7 +241,7 @@ class ProgressdocScreen extends Component {
   }
 
   render() {
-    const { t, jysList, docList, userInfo, accessLevel } = this.props;
+    const { t, jysList, docList, userInfo, accessLevel, openedDocId } = this.props;
     const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc } = this.state;
     const { color, jysTitle, titleSelected, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, onRowDoubleClicked } = this;
     let tableTitle = "";
@@ -304,6 +312,7 @@ class ProgressdocScreen extends Component {
           isOpen={isProgressDocOpen}
           onClose={this.onProgressDocClose}
           departments={jysList}
+          openedDocId={openedDocId}
           title={t("progressdocScreen.doc_detail_title")}
           btnText={t("common.open")}
           userInfo={userInfo}
@@ -323,6 +332,7 @@ const mapStateToProps = (state) => {
     docList: getDocList(state),
     userInfo: getLoggedUser(state),
     accessLevel: getAccessLevel(state),
+    openedDocId: getOpenedDocId(state),
     //defaultJys: getDepartmentId(state),
   }
 }

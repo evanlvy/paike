@@ -162,7 +162,7 @@ export const actions = {
     }),
     /* params_json_sample = {
       "id": 1,
-      "attributes": {"id": 1, "course_name": "ssskkk"},
+      "props": {"id": 1, "course_name": "ssskkk"},
       "items_dfcol": ["id", "ord"],
       "items_dfdata": [[1, 9999], [2, 8888]],
       or
@@ -178,7 +178,8 @@ export const actions = {
           const data = await progressdocApi.setDoc(docId, docDiffDict, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
           dispatch(appActions.finishRequest());
           dispatch(appActions.setToast({type:"success", message:"toast.toast_request_save_success"}));
-          dispatch(setDocSuccess(docId));
+          dispatch(setSelectedDoc(-1));  // Close doc dialog
+          dispatch(setDocSuccess(docId));  // Clear doc store
           // To update doc list table in progressdoc-screen.
           dispatch(updateDocList(getSelectedDepartment(getState()), docId, docDiffDict));
         } catch (error) {

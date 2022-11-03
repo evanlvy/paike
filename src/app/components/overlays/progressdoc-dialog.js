@@ -31,7 +31,7 @@ import {
 
 import { EditableTable, DATATYPE_WEEK, DATATYPE_COLOR_AS_WEEK } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
-import { actions as progressdocActions, tableFields, getDocProps, getDocItems, getOpenedDocId, parseImmutableLocs } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, tableFields, getDocProps, getDocItems, parseImmutableLocs } from '../../redux/modules/progressdoc';
 import { actions as appActions } from '../../redux/modules/app';
 import role from '../../redux/modules/auth';
 
@@ -124,7 +124,7 @@ class ProgressdocDialog extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { docId, docProps, docItems } = this.props;
+    //const { docId, docProps, docItems } = this.props;
     //const { isOpen, department_id, isLabItemOpen, editedRowCache } = this.state;
     //if (nextState.isOpen === this.state.isOpen) {
       // No need to update if dialog is closed
@@ -168,7 +168,7 @@ class ProgressdocDialog extends Component {
     console.log("LIFECYCLE: componentDidMount");
     const { docItems, openedDocId } = this.props;
     if (!docItems) return;
-    if (prevProps.openedDocId != openedDocId) {
+    if (prevProps.openedDocId !== openedDocId) {
       this.doc_items_obj = {};
       docItems.forEach(item => {
         this.doc_items_obj[item.id] = {...item};
@@ -197,15 +197,16 @@ class ProgressdocDialog extends Component {
     // Process lab_alloc column only
     if (event && event.column.colId === tableFields.LAB_ALLOC && !event.data.theory_item_hours && !event.data.theory_item_content) {
       let lab_alloc = event.data.lab_alloc;
-      let short_names = parseImmutableLocs(lab_alloc.items);
+      let short_names = lab_alloc?parseImmutableLocs(lab_alloc.items):"";
+      let lab_state = lab_alloc?{...lab_alloc, locations:short_names}:{};
       this.setState({
-        labs: {...lab_alloc, locations:short_names},
+        labs: lab_state,
         context: {
           doc_course_name: this.state.course_name,
           doc_short_name: this.state.short_name,
           doc_department_id: this.state.department_id,
           // Progress item lab content may not be the same with lab item name
-          doc_lab_content: event.data.lab_alloc.name, //event.data.labitem_content,
+          doc_lab_content: lab_alloc?lab_alloc.name:"", //event.data.labitem_content,
           //rowIndex: event.rowIndex,
           progressId: event.data.id,
         },
@@ -277,7 +278,7 @@ class ProgressdocDialog extends Component {
     if (this.agGridRef && params && 'progressId' in params /*&& 'rowIndex' in params*/) {
       // Update labitem_id to row cache
       let previous_row_data = this.agGridRef.current.gridApi.getRowNode(params.progressId).data;
-      if (previous_row_data.lab_alloc && previous_row_data.lab_alloc.id != params.lab_alloc.id) {
+      if (!previous_row_data.lab_alloc || (previous_row_data.lab_alloc && previous_row_data.lab_alloc.id !== params.lab_alloc.id)) {
         let newItem = { ...previous_row_data};
         if (tableFields.LAB_ALLOC in params && params.lab_alloc) {
           newItem.lab_alloc = params.lab_alloc;
@@ -373,7 +374,7 @@ class ProgressdocDialog extends Component {
         let original_row = this.doc_items_obj[rowNode.id];
         if (!original_row) {
           // Create new row
-          if (rowNode.id.startsWith('-')) {
+          if (rowNode.id < 0 || rowNode.id.startsWith('-')) {
             // New row for real
             rows_diff[rowNode.id] = rowNode.data;
             return true;  // Continue for next row
@@ -386,7 +387,7 @@ class ProgressdocDialog extends Component {
         let row_diff = {};
         this.tableHeaders.forEach(column => {
           if (rowNode.data[column.field] !== original_row[column.field]) {
-            row_diff = {...row_diff, [""+column.field]: rowNode.data[column.field]};
+            row_diff[""+column.field] = rowNode.data[column.field];
           }
         });
         // Add cell changes of the row to table-level changes array
@@ -465,7 +466,7 @@ class ProgressdocDialog extends Component {
     let counter = 0;
     for (let idx = 0; idx < nodes.length; idx++) {
       const node = nodes[idx];
-      node.data[tableFields.ORDER_IN_WEEK] = start_order?(start_order + idx):null;
+      node.data[tableFields.ORDER_IN_WEEK] = start_order?(start_order + idx):0;
       if (week_idx) {
         node.data[tableFields.WEEK_IDX] = week_idx;
       }
@@ -475,11 +476,36 @@ class ProgressdocDialog extends Component {
     return counter + start_order;
   }
 
-  arrangeOrder = (api, dragged_nodes, overNode, pos, _from, _to) => {
+  addRowArrangeOrder = (api, overNode, rowData) => {
+    this.arrangeOrder(api, null, overNode, 1, null, rowData['week_idx'], rowData);
+  }
+
+  delRowsArrangeOrder = (api, del_nodes) => {
+    let week_map = {};
+    del_nodes.forEach(node => {
+      if (!week_map[node.data.week_idx]) week_map[node.data.week_idx] = [];
+      week_map[node.data.week_idx].push(node);
+    });
+    for (const [key, value] of Object.entries(week_map)) {
+      this.arrangeOrder(api, value, null, 1, key, null, null);
+    }
+  }
+
+  arrangeOrder = (api, dragged_nodes, overNode, pos, _from, _to, added_data_array) => {
+    // pos: 0---Insert ahead of overNode; 1---Insert after overNode
+    // _from (week) is null, added_data_array is valid: add node
+    // _to (week) is null: delete node
+    if (!_from && (dragged_nodes || !added_data_array)) return;  // Bad add-data call
+    if (!_to && (overNode || added_data_array || !dragged_nodes)) return;  // Bad delete-node call
+
     let from_week_idx = parseInt(_from);
     let to_week_idx = parseInt(_to);
-    if (!from_week_idx || !to_week_idx) return;
-    const dragged_ids = dragged_nodes.map(node => node.id);
+    if (!_from && !_to) return;  // Bad call with no week_idx
+
+    let dragged_ids = []; 
+    if (Array.isArray(dragged_nodes)) {
+      dragged_ids = dragged_nodes.map(node => node.id);
+    }
     let max_week_idx = Math.max(from_week_idx, to_week_idx);
     let total_rows = api.getDisplayedRowCount();
     // Go through all notes, collecting ids of from_week and to_week.
@@ -490,62 +516,103 @@ class ProgressdocDialog extends Component {
       //console.log("onDragEnd: go through rows: node id="+node.id+" @week="+node.data.week_idx);
       if (dragged_ids.includes(node.id)) { //} === event.node.id) {
         //to_week_node_ids.push(node.id);
-      } else if (node.data.week_idx == to_week_idx) {
+      } else if (node.data.week_idx == to_week_idx) { // DO NOT USE ===
         // In case from_week == to_week, we put all of them to to_week array!
         // So put to_week condition behind from_week condition
         to_week_node_ids.push(node.id);
-      } else if (node.data.week_idx == from_week_idx) {
+      } else if (node.data.week_idx == from_week_idx) { // DO NOT USE ===
         // Use == instead of === because cell value was string
         from_week_node_ids.push(node.id);
       }
     }
     //console.log("From week "+from_week_idx+" to week "+to_week_idx);
     //console.log("From nodes: "+from_week_node_ids+" to nodes: "+to_week_node_ids);
+    const transactions = {};
     // Check from_week ids array, clear order_in_week cell if this week have only one row
     const itemsToUpdate = [];
-    if (from_week_node_ids.length === 1) {
-      //event.api.getRowNode(from_week_node_ids[0]).setDataValue(tableFields.ORDER_IN_WEEK, null);
-      const node = api.getRowNode(from_week_node_ids[0]);
-      this.pushNodes(itemsToUpdate, [node], null, null);  // Clear order
-    } else {
-      for (let idx = 0; idx < from_week_node_ids.length; idx++ ) {
-        const node = api.getRowNode(from_week_node_ids[idx]);
-        this.pushNodes(itemsToUpdate, [node], from_week_idx, idx+1);
+    if (_from) {
+      if (from_week_node_ids.length === 1) {
+        //event.api.getRowNode(from_week_node_ids[0]).setDataValue(tableFields.ORDER_IN_WEEK, null);
+        const node = api.getRowNode(from_week_node_ids[0]);
+        this.pushNodes(itemsToUpdate, [node], null, null);  // Clear order
+      } else if (from_week_node_ids.length > 1) {
+        for (let idx = 0; idx < from_week_node_ids.length; idx++ ) {
+          const node = api.getRowNode(from_week_node_ids[idx]);
+          this.pushNodes(itemsToUpdate, [node], from_week_idx, idx+1);
+        }
       }
     }
     // Check to_weeks ids array
-    if (to_week_node_ids.length < 1) {
-      let node = api.getDisplayedRowAtIndex(total_rows-1);
-      this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dragged_nodes.length>1?1:null);
-    } else {
-      let dest_order = 1;
-      if (!overNode && pos === 0) {
-        // Insert to the top of the dest week
-        dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
-      }
-      for (let idx = 0; idx < to_week_node_ids.length; idx++ ) {
-        const node = api.getRowNode(to_week_node_ids[idx]);
-        if (node === overNode) {
-          // Check position to determine the order of pushing row data
-          if (pos === 0) {
-            // Above
+    let added_order_in_week = 0;
+    if (_to) {
+      if (to_week_node_ids.length < 1) {
+        if (dragged_nodes && dragged_nodes.length > 0) {
+          // Move to a new week with no progress
+          this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dragged_nodes.length>1?1:null);
+        }
+      } else {
+        let dest_order = 1;
+        if (!overNode && pos === 0) {
+          // Insert to the top of the dest week
+          if (dragged_nodes && dragged_nodes.length > 0) {
             dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
-            dest_order = this.pushNodes(itemsToUpdate, [node], null, dest_order);
-          } else {
-            // Below
-            dest_order = this.pushNodes(itemsToUpdate, [node], null, dest_order);
-            dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
+          } else if(!_from) {
+            // No _from means add row!
+            added_order_in_week = 1;
           }
-        } else {
-          dest_order = this.pushNodes(itemsToUpdate, [node], null, dest_order);
+        }
+        for (let idx = 0; idx < to_week_node_ids.length; idx++ ) {
+          const node = api.getRowNode(to_week_node_ids[idx]);
+          if (node === overNode) {
+            // Check position to determine the order of inserting row datas
+            if (pos === 0) {
+              // Above
+              if (dragged_nodes && dragged_nodes.length > 0) {
+                dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
+              } else if (!_from) {
+                // No _from means add row!
+                added_order_in_week = dest_order;
+                dest_order += 1;
+              }
+              dest_order = this.pushNodes(itemsToUpdate, [node], null, dest_order);
+            } else {
+              // Below
+              dest_order = this.pushNodes(itemsToUpdate, [node], null, dest_order);
+              if (dragged_nodes && dragged_nodes.length > 0) {
+                dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
+              } else if (!_from) {
+                // No _from means add row!
+                added_order_in_week = dest_order;
+                dest_order += 1;
+              }
+            }
+          } else {
+            // Set Order of rows before & after overNode
+            dest_order = this.pushNodes(itemsToUpdate, [node], null, dest_order);
+          }
+        }
+        if (!overNode && pos === 1) {
+          // Insert to below of the dest week
+          if (dragged_nodes && dragged_nodes.length > 0) {
+            dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
+          } else if(!_from) {
+            // No _from means add row!
+            added_order_in_week = dest_order;
+          }
         }
       }
-      if (!overNode && pos === 1) {
-        // Insert to below of the dest week
-        dest_order = this.pushNodes(itemsToUpdate, dragged_nodes, to_week_idx, dest_order);
-      }
+    } else {
+      // _to is null means delete nodes
+      transactions['remove'] = dragged_nodes.map(node => (node.data));
     }
-    api.applyTransaction({ update: itemsToUpdate });
+    if (!_from) {
+      added_data_array['order_in_week'] = added_order_in_week;
+      transactions['add'] = [added_data_array];
+    }
+    if (itemsToUpdate && itemsToUpdate.length > 0) {
+      transactions['update'] = itemsToUpdate;
+    }
+    api.applyTransaction(transactions);
   }
 
   onRowDragEnd = (event) => {
@@ -566,21 +633,26 @@ class ProgressdocDialog extends Component {
   };
 
   addRow = () => {
-    if (!this.agGridRef.current.gridApi) return;
-    const rows = this.agGridRef.current.gridApi.getSelectedNodes();
-    if (!rows || rows.length != 1) return;
-    let idx = rows[0].rowIndex;
-    let row_data = rows[0].data;
+    const api = this.agGridRef.current.gridApi;
+    if (!api) return;
+    const nodes = api.getSelectedNodes();
+    if (!nodes || nodes.length !== 1) return;
+    let idx = nodes[0].rowIndex;
+    let row_data = nodes[0].data;
     //TODO: Select node index 0 will make the same dbid!
-    let newRow = {id: this.insertDbId--, week_idx: row_data.week_idx, chapter_name: row_data.chapter_name, teaching_mode: row_data.teaching_mode};
-    this.agGridRef.current.gridApi.applyTransaction({ addIndex: idx+1, add: [newRow] });  // Insert after selected row.
+    const to_week = row_data.week_idx;
+    let newRow = {id: this.insertDbId--, week_idx: to_week, chapter_name: row_data.chapter_name, teaching_mode: row_data.teaching_mode};
+    //api.applyTransaction({ addIndex: idx+1, add: [newRow] });  // Insert after selected row.
+    this.addRowArrangeOrder(api, nodes[nodes.length-1], newRow);
   };
 
   delRow = () => {
-    if (!this.agGridRef.current.gridApi) return;
-    const nodes = this.agGridRef.current.gridApi.getSelectedNodes();
+    const api = this.agGridRef.current.gridApi;
+    if (!api) return;
+    const nodes = api.getSelectedNodes();
     if (!nodes || nodes.length < 1) return;
-    this.agGridRef.current.gridApi.applyTransaction({ remove: nodes.map(node => (node.data)) });
+    //api.applyTransaction({ remove: nodes.map(node => (node.data)) });
+    this.delRowsArrangeOrder(api, nodes);
     // Remembet NodeIds of removed rows for quick saving
     this.setState({removedNodeIds: [...this.state.removedNodeIds, ...nodes.map(node => (node.id))]});
   };
@@ -597,7 +669,7 @@ class ProgressdocDialog extends Component {
   };*/
 
   render() {
-    const { id, department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, isSaving, saveOption, createdItems } = this.state;
+    const { department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, saveOption, createdItems } = this.state;
     const { t, title, color, isOpen, onClose, openedDocId, isSaveable, tableTitle, departments, docProps, docItems, userInfo, accessLevel, isNewDoc } = this.props;
     return (
       <>
@@ -740,7 +812,6 @@ const mapStateToProps = (state) => {
   return {
     docProps: getDocProps(state),
     docItems: getDocItems(state),
-    openedDocId: getOpenedDocId(state),
   }
 }
 
