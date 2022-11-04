@@ -49,6 +49,7 @@ class ProgressdocScreen extends Component {
       selectedJysIdList: [],  // Keep the latest selected Id, NOT index!
       selectedDocId: 0,
       isProgressDocOpen: false,
+      isNewDoc: false,
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.defaultselectedJysIdList = [userInfo.departmentId];  //Keep default selected index!
@@ -95,17 +96,17 @@ class ProgressdocScreen extends Component {
     const { schoolYear, jysList, stageList, docList } = this.props;
     const { selectedJysIdList, selectedDocId, isProgressDocOpen } = this.state;
     if (nextProps.schoolYear !== schoolYear || nextProps.jysList !== jysList || nextProps.docList !== docList) {
-      console.log("shouldComponentUpdate, props diff");
+      //console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextProps.stageList !== stageList ) {
-      console.log("shouldComponentUpdate, stageList diff");
+      //console.log("shouldComponentUpdate, stageList diff");
       this.buildSemester();
       return true;
     } else if (nextState.selectedJysIdList !== selectedJysIdList) {
-      console.log("shouldComponentUpdate, selected_jys diff");
+      //console.log("shouldComponentUpdate, selected_jys diff");
       return true;
     } else if (nextState.selectedDocId != selectedDocId) {
-      console.log("shouldComponentUpdate, selectedDocId diff");
+      //console.log("shouldComponentUpdate, selectedDocId diff");
       return true;
     } else if (nextState.isProgressDocOpen != isProgressDocOpen) {
       return true;
@@ -114,7 +115,7 @@ class ProgressdocScreen extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    console.log("LIFECYCLE: componentDidUpdate");
+    //console.log("LIFECYCLE: componentDidUpdate");
     // Disable Open button when changing department then lost row selection
     if (prevState.selectedJysIdList !== this.state.selectedJysIdList) {
       this.setState({
@@ -146,12 +147,12 @@ class ProgressdocScreen extends Component {
   buildSemester = () => {
     if (Object.keys(this.semesterPages).length <= 0) {
       this.semesterPages = {...this.props.stageList};
-      console.log("buildSemester: stages: "+JSON.stringify(this.semesterPages));
+      //console.log("buildSemester: stages: "+JSON.stringify(this.semesterPages));
     }
   }
 
   loadjysData = () => {
-    console.log("loadjysData");
+    //console.log("loadjysData");
     this.props.fetchJiaoyanshi();
   }
   
@@ -179,7 +180,7 @@ class ProgressdocScreen extends Component {
   }
 
   onRowSelected = (rowId, docId) => {
-    console.log(`onRowSelected: rowId=${rowId} docId=${docId}`);
+    //console.log(`onRowSelected: rowId=${rowId} docId=${docId}`);
     this.setState({
       selectedDocId: docId
     });
@@ -204,7 +205,7 @@ class ProgressdocScreen extends Component {
   }
 
   onRowDoubleClicked = (rowId, docId) => {
-    console.log(`onRowDoubleClicked: rowId=${rowId} docId=${docId}`);
+    //console.log(`onRowDoubleClicked: rowId=${rowId} docId=${docId}`);
     this.openProgressDocDialog(docId);
   }
 

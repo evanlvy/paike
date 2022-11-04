@@ -175,7 +175,7 @@ export const actions = {
       return async (dispatch, getState) => {
         try {
           dispatch(appActions.startRequest());
-          const data = await progressdocApi.setDoc(docId, docDiffDict, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
+          await progressdocApi.setDoc(docId, docDiffDict, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
           dispatch(appActions.finishRequest());
           dispatch(appActions.setToast({type:"success", message:"toast.toast_request_save_success"}));
           dispatch(setSelectedDoc(-1));  // Close doc dialog

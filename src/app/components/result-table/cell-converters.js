@@ -1,5 +1,6 @@
 
 import { isImmutable } from 'immutable';
+import { slotsTranslation } from "../../redux/modules/rawplan";
 
 export class CellConverters {
 
@@ -110,6 +111,24 @@ export class CellConverters {
     }
     let short_names = Object.values(value);
     return short_names.join(', ');
+  };
+
+  static slotWeekdayGetter = (params) => {
+    //console.log("slotWeekdayGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
+    let value = params.data[params.colDef.field];
+    console.log("slotWeekdayGetter: value:"+JSON.stringify(value));
+    //Data sample: [mon_12, tue_56] or [mon, fri]
+    if (!value) {
+      return "";
+    }
+    let flat_string = "";
+    Object.keys(value).forEach(index => {
+      let translated = slotsTranslation[value[index]];
+      if (translated) {
+        flat_string += translated+" ";
+      }
+    });
+    return flat_string;
   };
 
   static labListGetter = (params) => {

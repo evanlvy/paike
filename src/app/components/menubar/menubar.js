@@ -299,7 +299,7 @@ class MenuBarWrapped extends Component {
     const { selectStage } = this.state;
     const { name, departmentName, labdivisionName } = userInfo;
     const { grade_name, major_name, class_seq} = stuInfo;
-    console.log("renderer, access level: "+accessLevel);
+    //console.log("renderer, access level: "+accessLevel);
     return (
       <Flex direction="column" justify="center" basis="100%" my={2}>
         <Box color="black" bg="gray.700" rounded="lg" boxShadow="lg" 

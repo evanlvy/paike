@@ -153,7 +153,7 @@ class ProgressdocDialog extends Component {
       }
     }*/
     if (nextState !== this.state) {
-      console.log("shouldComponentUpdate, nextState diff");
+      //console.log("shouldComponentUpdate, nextState diff");
       return true;
     }
     /*if (nextState.isOpen !== isOpen || nextState.editedRowCache !== editedRowCache
@@ -165,7 +165,7 @@ class ProgressdocDialog extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    console.log("LIFECYCLE: componentDidMount");
+    //console.log("LIFECYCLE: componentDidMount");
     const { docItems, openedDocId } = this.props;
     if (!docItems) return;
     if (prevProps.openedDocId !== openedDocId) {
@@ -637,7 +637,7 @@ class ProgressdocDialog extends Component {
     if (!api) return;
     const nodes = api.getSelectedNodes();
     if (!nodes || nodes.length !== 1) return;
-    let idx = nodes[0].rowIndex;
+    //let idx = nodes[0].rowIndex;
     let row_data = nodes[0].data;
     //TODO: Select node index 0 will make the same dbid!
     const to_week = row_data.week_idx;

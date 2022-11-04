@@ -43,26 +43,26 @@ class WrappedLoginScreen extends Component {
     }
   }
 
-  static contextTypes = {
-    router: PropTypes.object.isRequired,
-  }
+  //static contextTypes = {
+  //  router: PropTypes.object.isRequired,
+  //}
 
   shouldComponentUpdate(nextProps, nextState) {
     const { user, error, stuInfo, timeStamp } = this.props;
     const { showError } = this.state;
 
     if (nextProps.user !== user || nextProps.stuInfo !== stuInfo || nextProps.error !== error || nextProps.timeStamp !== timeStamp) {
-      console.log("shouldComponentUpdate, props diff");
+      //console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextState.showError !== showError) {
-      console.log("shouldComponentUpdate, state diff");
+      //console.log("shouldComponentUpdate, state diff");
       return true;
     }
     return false;
   }
 
   componentDidUpdate(prevProp, prevState) {
-    console.log("componentDidUpdate");
+    //console.log("componentDidUpdate");
     if (!this.redirectToReferer) {
       // Not logged in
       this.checkError();

@@ -148,7 +148,7 @@ class MainNavigatorWrapper extends PureComponent {
     }
     const { onConfirmError, onStageChanged } = this;
     const { t, initStage, stageList, gradeTypes, centers, labBuildings, requestsCount, requestError, requestToast, user, accessLevel, stuInfo } = this.props;
-    console.log("Request count: "+requestsCount);
+    //console.log("Request count: "+requestsCount);
     return (
       <Flex direction="column" justify="center" basis="100%">
         <Flex px="10%" direction="column" justify="flex-start" flex={1}>

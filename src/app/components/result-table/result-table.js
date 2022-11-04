@@ -18,7 +18,7 @@ import './table.css';
 import { CommonRenderer } from "./common-renderer";
 import { ArrayDataRenderer } from "./arraydata-renderer";
 import { ConflictsRenderer } from "./conflicts-renderer";
-import { slotsTranslation } from "../../redux/modules/rawplan";
+import { CellConverters } from './cell-converters';
 
 class ResultTableWrapper extends Component {
   constructor(props) {
@@ -52,7 +52,6 @@ class ResultTableWrapper extends Component {
     };*/
     this.onItemClicked = this.onItemClicked.bind(this);
     this.buildColDef(props);
-    this.buildUI(props);
     this.previousRowCount = 0;
     this.underShrink = false;
     this.gridSizeAdapted = false;
@@ -73,21 +72,16 @@ class ResultTableWrapper extends Component {
       if (nextProps.initPageIndex !== props.initPageIndex) {
         this.needCorrectPageIndex = true;
       }
-      this.buildUI(nextProps);
-      //setTimeout(()=>{this.buildUI(nextProps)}, 0);
-      console.log("shouldComponentUpdate1:true");
       return true;
     }
     if (nextState.curPageIndex !== state.curPageIndex) {
-      console.log("shouldComponentUpdate2:true");
       return true;
     }
-    console.log("shouldComponentUpdate:false");
     return false;
   }
 
   componentDidUpdate() {
-    console.log("componentDidUpdate, state.curPageIndex: "+this.state.curPageIndex+", props.initPageIndex: "+this.props.initPageIndex+", need correct: "+this.needCorrectPageIndex);
+    //console.log("componentDidUpdate, state.curPageIndex: "+this.state.curPageIndex+", props.initPageIndex: "+this.props.initPageIndex+", need correct: "+this.needCorrectPageIndex);
     if (this.needCorrectPageIndex) {
       this.setState({
         curPageIndex: this.props.initPageIndex
@@ -97,14 +91,7 @@ class ResultTableWrapper extends Component {
   }
 
   componentWillUnmount() {
-    console.log("componentWillUnmount");
     this.clearEditTimer();
-  }
-
-  buildUI = (props) => {
-    console.log("resultTable buildUI");
-    //this.buildColDef(props);
-    this.buildData(props);
   }
 
   buildColDef = (props) => {
@@ -114,7 +101,6 @@ class ResultTableWrapper extends Component {
 
   buildColDefArray = (headers, defaultColWidth, colLineHeight) => {
     let columnDefs = [];
-    const { t } = this.props;
     for (let i=0; i < headers.length; i++) {
       let { name, width, maxW, minW, dataType, fn_disable, children, ...defs_generated} = headers[i];
       if (width) {
@@ -130,7 +116,7 @@ class ResultTableWrapper extends Component {
         // Use Large text editor for super long text!
         defs_generated.cellEditor = 'agLargeTextCellEditor';
       }
-      if (defs_generated.rowDrag != true) {
+      if (defs_generated.rowDrag !== true) {
         defs_generated.cellRenderer = i === 0 ? "arrayDataRenderer" : "commonRenderer";
         defs_generated.cellRendererParams = {
           lineHeight : colLineHeight, // pass the field value here
@@ -144,22 +130,18 @@ class ResultTableWrapper extends Component {
       if (dataType && dataType !== null) {
         switch(dataType) {
           case "classes_id_name_obj":
-            defs_generated.valueGetter = this.classNamesGetter;
+            defs_generated.valueGetter = CellConverters.classNamesGetter;
             break;
           case "slot_weekday_renderer":
-            //columnDefs[i]["valueGetter"] = this.slotWeekdayGetter;
+            //columnDefs[i]["valueGetter"] = CellConverters.slotWeekdayGetter;
             defs_generated.cellRenderer = "conflictsRenderer";
             defs_generated.cellRendererParams = {
               onItemClicked: this.onItemClicked
             };
             break;
           case "course_teacher_combined":
-            defs_generated.valueGetter = this.courseTeacherGetter;
-            defs_generated.cellStyle = params => { 
-              let course_teacher_combined = params.data[params.colDef.field];
-              if (!course_teacher_combined) return;
-              return course_teacher_combined.cid < 0 ? { backgroundColor: '#FEB2B2' } : (course_teacher_combined.tid < 0? { backgroundColor: '#FED7E2' }:{});
-            };
+            defs_generated.valueGetter = CellConverters.courseTeacherGetter;
+            defs_generated.cellStyle = CellConverters.courseTeacherCellStyle;
             break;
           default:
             console.log(`Sorry, Unknown dataType: ${dataType}.`);
@@ -178,67 +160,6 @@ class ResultTableWrapper extends Component {
     }
   }
 
-  classNamesGetter = (params) => {
-    //console.log("courseTeacherGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
-    let value = params.data[params.colDef.field];
-    //console.log("courseTeacherGetter: value:"+JSON.stringify(value));
-    //Data sample: {12: '20全科1', 13:'20全科2'}
-    if (!value) {
-      return "";
-    }
-    let short_names = Object.values(value);
-    return short_names.join(', ');
-  };
-
-  
-  slotWeekdayGetter = (params) => {
-    //console.log("slotWeekdayGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
-    let value = params.data[params.colDef.field];
-    console.log("slotWeekdayGetter: value:"+JSON.stringify(value));
-    //Data sample: [mon_12, tue_56] or [mon, fri]
-    if (!value) {
-      return "";
-    }
-    let flat_string = "";
-    Object.keys(value).forEach(index => {
-      let translated = slotsTranslation[value[index]];
-      if (translated) {
-        flat_string += translated+" ";
-      }
-    });
-    return flat_string;
-  };
-
-  //Cell Edit Ref https://www.ag-grid.com/javascript-grid/cell-editing/?
-  courseTeacherGetter = (params) => {
-    //console.log("courseTeacherGetter: params:"+params.value+" column:"+JSON.stringify(params.colDef, this.getCircularReplacer()));
-    let value = params.data[params.colDef.field];
-    //console.log("courseTeacherGetter: value:"+JSON.stringify(value));
-    if (!value) {
-      return this.zixi;
-    }
-    let cname = value.course;
-    /*if (value.cid <= 0){
-      cname = (value.cid < 0?"\u274C":"\u2753")+cname;
-    }*/
-    let tname = value.teacher;
-    /*if (value.tid <= 0){
-      tname = (value.tid < 0?"\u274C":"\u2753")+tname;
-    }*/
-    let output = "\u3010" + cname + "\u3011 " + tname;
-    //console.log("courseTeacherGetter: "+output);
-    return output;
-  };
-  
-  buildData = (props) => {
-    const { data } = props;
-    this.rowData = [];
-    for (let i=0; i < data.length; i++) {
-      this.rowData[i] = data[i];
-    }
-    //console.log("buildData: "+JSON.stringify(data));
-  }
-
   onGridReady = (params) => {
     this.gridApi = params.api;
     // Following line to make the currently visible columns fit the screen  
@@ -248,7 +169,7 @@ class ResultTableWrapper extends Component {
   }
 
   onGridSizeChanged = (event) => {
-    console.log("onGridSizeChanged");
+    //console.log("onGridSizeChanged");
     const { autoShrinkDomHeight, maxHeight } = this.props;
     let max_height = maxHeight;
     if (!max_height) {
@@ -287,7 +208,7 @@ class ResultTableWrapper extends Component {
       this.setAutoHeight(event, should_shrink, max_height);
       this.gridSizeAdapted = true;
     } else {
-      console.log("RESULTABLE: resetRowHeights:"+event.type);
+      //console.log("RESULTABLE: resetRowHeights:"+event.type);
       //event.api.resetRowHeights();
       if (event.clientWidth !== this.prevWidth) {
         // Following line to make the currently visible columns fit the screen  
@@ -428,11 +349,11 @@ class ResultTableWrapper extends Component {
   }
 
   render() {
-    const { frameworkComponents, columnDefs, defaultColDef, rowClassRules, rowData, onGridSizeChanged, onGridReady,
+    const { frameworkComponents, columnDefs, defaultColDef, onGridSizeChanged, onGridReady,
       onCellClicked, onRowClicked, onRowDoubleClicked, onRowSelected, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, titleHeight, color, rowHeight,
       pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption, rowSelection, 
-      onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback,
+      onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onRowDoubleClicked: onRowDoubleClickedCb,
       headers, data, autoHeight, colLineHeight, autoShrinkDomHeight, onResultPageIndexChanged, onRowSelected: onRowSelectedCallback,
       ...other_props } = this.props;
     const { curPageIndex } = this.state;
@@ -474,7 +395,7 @@ class ResultTableWrapper extends Component {
               defaultColDef={defaultColDef}
               frameworkComponents={frameworkComponents}
               columnDefs={columnDefs}
-              rowData={rowData}
+              rowData={data}
               rowHeight={rowHeight}
               //rowClassRules={rowClassRules}
               onCellClicked={onCellClicked}

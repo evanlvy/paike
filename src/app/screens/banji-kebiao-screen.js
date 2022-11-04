@@ -114,8 +114,8 @@ class BanJiKeBiaoScreen extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     console.log("LIFECYCLE: componentDidUpdate");
-    const { edu, grd, major, clas } = prevProps.location.state;
-    const { edu: edu2, grd: grd2, major: major2, clas: clas2 } = this.props.location.state;
+    const { edu, grd, major } = prevProps.location.state;
+    const { edu: edu2, grd: grd2, major: major2 } = this.props.location.state;
     if (edu !== edu2 || grd !== grd2) {
       this.resetData();
       //this.buildGradeInfo();

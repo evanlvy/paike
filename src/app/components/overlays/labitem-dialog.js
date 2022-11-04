@@ -76,7 +76,7 @@ class LabitemDialog extends Component {
   };
 
   static getDerivedStateFromProps(props, state) {
-    console.log("getDerivedStateFromProps");
+    //console.log("getDerivedStateFromProps");
     let result = {isOpen: props.isOpen};
     if (!props.context) {
       result = {...result, ...LabitemDialog.empty_context};
@@ -122,7 +122,7 @@ class LabitemDialog extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    console.log("LIFECYCLE: componentDidUpdate");
+    //console.log("LIFECYCLE: componentDidUpdate");
     if (prevProps.searchResult !== this.props.searchResult) {
       if (prevState.isSearching) {
         // Got the search API result! Change button loading state.
@@ -157,13 +157,13 @@ class LabitemDialog extends Component {
     if (context && nextProps.context !== context && nextProps.context.doc_course_name !== context.doc_course_name) {
       // Doc course name changed, clear searched result!
       if (!nextProps.imported || !("id" in nextProps.imported)) {
-        console.log("shouldComponentUpdate, clearSearchedLabitem!");
+        //console.log("shouldComponentUpdate, clearSearchedLabitem!");
         this.props.clearSearchedLabitem();
       }
       return true;
     }
     if (nextProps.data !== data || nextProps.searchResult !== searchResult || nextProps.imported !== imported) {
-      console.log("shouldComponentUpdate, nextProp data diff");
+      //console.log("shouldComponentUpdate, nextProp data diff");
       return true;
     }
 
@@ -171,7 +171,7 @@ class LabitemDialog extends Component {
       if (nextState.isSearching !== this.state.isSearching) {
         return false;
       }
-      console.log("shouldComponentUpdate, nextState diff");
+      //console.log("shouldComponentUpdate, nextState diff");
       /*if (nextState.formValues.id !== this.state.formValues.id) {
         if (!nextProps.imported || !("id" in nextProps.imported)) {
           console.log("shouldComponentUpdate, clearSearchedLabitem!");
