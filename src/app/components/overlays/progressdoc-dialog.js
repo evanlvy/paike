@@ -281,9 +281,12 @@ class ProgressdocDialog extends Component {
       if (!previous_row_data.lab_alloc || (previous_row_data.lab_alloc && previous_row_data.lab_alloc.id !== params.lab_alloc.id)) {
         let newItem = { ...previous_row_data};
         if (tableFields.LAB_ALLOC in params && params.lab_alloc) {
-          newItem.lab_alloc = params.lab_alloc;
+          newItem[tableFields.LAB_ALLOC] = params.lab_alloc;
+          // Server do not accept lab_alloc attribute, so record down labitem_id directly (only way to change labitem_id was here)
+          newItem[tableFields.LABITEM_ID] = params.lab_alloc.id;
         } else {
-          delete newItem.lab_alloc;
+          delete newItem[tableFields.LAB_ALLOC];
+          delete newItem[tableFields.LABITEM_ID];
         }
         this.agGridRef.current.gridApi.applyTransaction({ update: [newItem] });
         // Update lab_alloc column to edited-row-cache
@@ -377,6 +380,8 @@ class ProgressdocDialog extends Component {
           if (rowNode.id < 0 || rowNode.id.startsWith('-')) {
             // New row for real
             rows_diff[rowNode.id] = rowNode.data;
+            // Server do not accept lab_alloc attribute
+            delete rows_diff[rowNode.id][tableFields.LAB_ALLOC];
             return true;  // Continue for next row
           } else {
             this.props.setToast({type:"error", message:"New rowNode Id should use negaitive number!"})
@@ -387,7 +392,12 @@ class ProgressdocDialog extends Component {
         let row_diff = {};
         this.tableHeaders.forEach(column => {
           if (rowNode.data[column.field] !== original_row[column.field]) {
-            row_diff[""+column.field] = rowNode.data[column.field];
+            if (column.field === tableFields.LAB_ALLOC) {
+              // Server do not accept lab_alloc attribute
+              row_diff[tableFields.LABITEM_ID] =rowNode.data[tableFields.LABITEM_ID];
+            } else {
+              row_diff[""+column.field] = rowNode.data[column.field];
+            }
           }
         });
         // Add cell changes of the row to table-level changes array
@@ -416,6 +426,7 @@ class ProgressdocDialog extends Component {
       });
       // When many rows changed, use dataframe mode.
       let df_col = this.tableHeaders.map((col) => {
+        // Server do not accept lab_alloc attribute, change to labitem_id
         return col['field'] === tableFields.LAB_ALLOC?tableFields.LABITEM_ID:col['field'];
       });
       let df_data = [];
