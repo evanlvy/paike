@@ -15,6 +15,11 @@ import {
     FormLabel,
     FormErrorMessage,
     FormHelperText,
+    NumberInput,
+    NumberInputField,
+    NumberInputStepper,
+    NumberIncrementStepper,
+    NumberDecrementStepper,
     Flex,
     Input,
     Select,
@@ -72,15 +77,15 @@ class ProgressdocDialog extends Component {
     this.commonModalRef = React.createRef();
     this.agGridRef = React.createRef();
     this.forms = [
-      {id: "user_id", label: t("progressdocScreen.form_label_docowner"), minW: 280, isRequired: true},
+      {id: "user_id", label: t("progressdocScreen.form_label_docowner"), minW: 280, isRequired: true, type: 'int'},
       {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, isRequired: true},
       {id: "short_name", label: t("progressdocScreen.form_label_shortname"), minW: 280, isRequired: true},
       {id: "description", label: t("progressdocScreen.form_label_description"), minW: 280, isRequired: false},
       //{id: "department_id", label: t("progressdocScreen.form_label_departmentid"), maxW: 100, isRequired: true},
-      {id: "total_hours", label: t("progressdocScreen.form_label_totalhours"), maxW: 100, isRequired: true},
-      {id: "theory_hours", label: t("progressdocScreen.form_label_theoryhours"), maxW: 100, isRequired: true},
-      {id: "lab_hours", label: t("progressdocScreen.form_label_labhours"), maxW: 100, isRequired: true},
-      {id: "flex_hours", label: t("progressdocScreen.form_label_flexhours"), maxW: 100, isRequired: true},
+      {id: "total_hours", label: t("progressdocScreen.form_label_totalhours"), maxW: 100, isRequired: true, type: 'int'},
+      {id: "theory_hours", label: t("progressdocScreen.form_label_theoryhours"), maxW: 100, isRequired: true, type: 'int'},
+      {id: "lab_hours", label: t("progressdocScreen.form_label_labhours"), maxW: 100, isRequired: true, type: 'int'},
+      {id: "flex_hours", label: t("progressdocScreen.form_label_flexhours"), maxW: 100, isRequired: true, type: 'int'},
       {id: "textbook", label: t("progressdocScreen.form_label_textbook"), minW: 280, isRequired: true},
       {id: "exam_type", label: t("progressdocScreen.form_label_examtype"), minW: 280, isRequired: true},
       {id: "comments", label: t("progressdocScreen.form_label_comments"), minW: 280, isRequired: false},
@@ -96,7 +101,7 @@ class ProgressdocDialog extends Component {
       if (props.openedDocId >= 0 && !state.isOpen) result = {isOpen: true};
       else if (props.openedDocId < 0 && state.isOpen) result = {isOpen: false};
     }*/
-    if (props.openedDocId < 0 || props.isNewDoc) {
+    if ((props.openedDocId < 0 || props.isNewDoc) && props.openedDocId !== state.id) {  // No doc-props but id is not the same as previous
       // Closed or create new doc
       // Clear doc props
       result = {...result, id: 0, user_id:props.userInfo.id, course_name:"", short_name:"", description:"",total_hours:0, theory_hours:0, lab_hours:0, flex_hours:0, textbook:"", exam_tyoe:"", comments:"" };
@@ -177,6 +182,7 @@ class ProgressdocDialog extends Component {
   }
   
   onFormChanged = (event) => {
+    if (typeof(event) === 'number') return;
     let newVal = event.target.value;
     if (event.target.id.endsWith("_hours")){
       // Keep numberic value, remove 0 from header
@@ -351,6 +357,10 @@ class ProgressdocDialog extends Component {
     // Ask user if we should copy to a new doc
     this.commonModalRef.current.show();
   };
+
+  validateForms = () => {
+
+  }
 
   onSaveDialogResult = (isOk) => {
     if (!isOk || !this.agGridRef.current.gridApi) return true;
@@ -710,8 +720,19 @@ class ProgressdocDialog extends Component {
                   this.forms.map((form, index) => (
                     <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
                       <FormLabel><b>{form.label}</b></FormLabel>
-                      <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={this.onFormChanged}
-                        borderColor={(docProps && this.state[form.id]===docProps[form.id])?"gray.200":"blue.500"}/>
+                      {form.type!=='int'
+                        ? <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={this.onFormChanged}
+                          borderColor={(docProps && this.state[form.id]===docProps[form.id])?"gray.200":"blue.500"}/>
+                        : <NumberInput defaultValue={0} max={12} keepWithinRange={false} clampValueOnBlur={false} id={form.id} type={form.id} value={this.state[form.id]} onChange={newVal => {
+                          this.setState({[form.id] : newVal})}}
+                        borderColor={(docProps && this.state[form.id]===docProps[form.id])?"gray.200":"blue.500"}>
+                            <NumberInputField type="number"/>
+                            <NumberInputStepper>
+                              <NumberIncrementStepper />
+                              <NumberDecrementStepper />
+                            </NumberInputStepper>
+                          </NumberInput>
+                      }
                     </FormControl>
                   ))
                 }
