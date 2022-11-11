@@ -49,6 +49,7 @@ export const types = {
     DEL_LABITEM: "PROGRESSDOC/DEL_LABITEM",
     SET_SELECTED_LABITEM: "PROGRESSDOC/SET_SELECTED_LABITEM",
     SET_CREATED_LABITEM: "PROGRESSDOC/SET_CREATED_LABITEM",
+    GET_CURRICULUM_COUNT_RESULT: "PROGRESSDOC/GET_CURRICULUM_COUNT_RESULT",
   };
 
 export const buildGroupStageWeekId = (stage, weekIdx, degreeId, gradeId) => {
@@ -228,6 +229,21 @@ export const actions = {
         }
       }
     },
+    getCurriculumCount: (doc_id) => {
+      return async (dispatch, getState) => {
+        try {
+          dispatch(appActions.startRequest());
+          if (doc_id) {
+            const result = await progressdocApi.getCurriculumCount(doc_id);
+            let count = result.count?result.count:0;
+            dispatch(setCurriculumsCountResult(count));
+          }
+          dispatch(appActions.finishRequest());
+        } catch (error) {
+          dispatch(appActions.setError(error));
+        }
+      }
+    },
 }
 
 const shouldSearchList = (keyword, department_id, state) => {
@@ -357,6 +373,14 @@ const updateLabItemCache = (docId, progressId, labItemObj) => {
   })
 }
 
+const setCurriculumsCountResult = (count) => {
+  return ({
+    type: types.GET_CURRICULUM_COUNT_RESULT,
+    count
+  })
+}
+
+
 // reducers
 const searchedList = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
@@ -438,6 +462,14 @@ const searchedLabitemBriefs = (state = Immutable.fromJS({}), action) => {
   }
 }
 
+const curriculumCountResult = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.GET_CURRICULUM_COUNT_RESULT:
+      return action.count;
+    default:
+      return state;
+  }
+}
 
 const reducer = combineReducers({
   searchedList,
@@ -445,6 +477,7 @@ const reducer = combineReducers({
   fetchedDoc,
   fetchedLabitems,
   searchedLabitemBriefs,
+  curriculumCountResult,
 });
 
 export default reducer;
@@ -464,6 +497,7 @@ export const getSelectedLabitem = (state) => state.getIn(["progressdoc", "fetche
 export const getCreatedLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", "created"]);
 export const getCachedLabitems = (state) => state.getIn(["progressdoc", "fetchedLabitems"]);
 export const getSearchedLabitemBriefs = (state) => state.getIn(["progressdoc", "searchedLabitemBriefs"]).toJS();
+export const getCurriculumCountResult = (state) => state.getIn(["progressdoc", "curriculumCountResult"]);
 
 export const getDocList = createSelector(
   getList,
@@ -489,6 +523,16 @@ export const getDocProps = createSelector(
     }
     //console.log("getDocContents: "+JSON.stringify(value));
     return value.props;
+  }
+);
+
+export const getCurriculumCount = createSelector(
+  [getDoc, getOpenedDocId],
+  (value, openedId) => {
+    if (openedId <= 0 || !value || value.length <= 0) {
+      return null;
+    }
+    return value.curriculums;
   }
 );
 

@@ -150,6 +150,24 @@ class Api {
     }
   }
 
+  getCurriculumCount = async (id) => {
+    try {
+      const url = this.baseUrl+"/get_curriculumcount";
+      console.log("Request url "+url+" with doc_id: "+id);
+      let request_param = {
+        doc_id: id,
+      };
+      let response = await axios.post(url, request_param);
+      const { success, data, message } = response.data;
+      if (!success) {
+        throw new Error(message.message);
+      }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   updateDocProps = async (docId, arrayDiff) => {
     try {
       const url = this.baseUrl+"/set_progressdoc";

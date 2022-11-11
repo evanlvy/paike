@@ -316,6 +316,7 @@
     "form_label_examtype": "考试形式",
     "form_label_comments": "备注",
     "form_helper_departmentid": "仅当发现进度表不属于本教研室时修改!",
+    "info_curriculum_related_count": "关联课程数：",
     "selector_save_dialog_title": "请选择 继续按下列方式保存该进度表",
     "selector_save_doc_as_copy": "另存为: 新的进度表", 
     "selector_save_original_doc": "保存: 修改本进度表 (引用该进度表的所有 {{count}} 个课程进度都将被修改，您将需要重新排课!)",

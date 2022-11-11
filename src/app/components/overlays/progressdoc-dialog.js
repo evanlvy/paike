@@ -31,7 +31,7 @@ import {
 
 import { EditableTable, DATATYPE_WEEK, DATATYPE_COLOR_AS_WEEK } from '../result-table/editable-table';
 import LabitemDialog from './labitem-dialog';
-import { actions as progressdocActions, tableFields, getDocProps, getDocItems, parseImmutableLocs } from '../../redux/modules/progressdoc';
+import { actions as progressdocActions, tableFields, getDocProps, getDocItems, parseImmutableLocs, getCurriculumCount } from '../../redux/modules/progressdoc';
 import { actions as appActions } from '../../redux/modules/app';
 import role from '../../redux/modules/auth';
 
@@ -85,7 +85,7 @@ class ProgressdocDialog extends Component {
       {id: "exam_type", label: t("progressdocScreen.form_label_examtype"), minW: 280, isRequired: true},
       {id: "comments", label: t("progressdocScreen.form_label_comments"), minW: 280, isRequired: false},
     ];
-    this.insertDbId = -1;
+    this.insertDbId = -3;
     this.choices = [t("progressdocScreen.selector_save_doc_as_copy"), t("progressdocScreen.selector_save_original_doc", {count: 5})];
     this.lastHighlightedRow = null;
   }
@@ -647,7 +647,12 @@ class ProgressdocDialog extends Component {
     const api = this.agGridRef.current.gridApi;
     if (!api) return;
     const nodes = api.getSelectedNodes();
-    if (!nodes || nodes.length !== 1) return;
+    if (!nodes || nodes.length !== 1) {
+      nodes = [api.getDisplayedRowAtIndex(api.getDisplayedRowCount()-1)];
+    };
+    while (api.getRowNode(this.insertDbId)) {
+      this.insertDbId -= 1;
+    }
     //let idx = nodes[0].rowIndex;
     let row_data = nodes[0].data;
     //TODO: Select node index 0 will make the same dbid!
@@ -681,7 +686,7 @@ class ProgressdocDialog extends Component {
 
   render() {
     const { department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, saveOption, createdItems } = this.state;
-    const { t, title, color, isOpen, onClose, openedDocId, isSaveable, tableTitle, departments, docProps, docItems, userInfo, accessLevel, isNewDoc } = this.props;
+    const { t, title, color, isOpen, onClose, openedDocId, isSaveable, tableTitle, departments, docProps, docItems, userInfo, accessLevel, isNewDoc, curriculums } = this.props;
     return (
       <>
         <Modal
@@ -783,7 +788,8 @@ class ProgressdocDialog extends Component {
               title={t("labitemScreen.title")}
               isSaveable />
             </ModalBody>
-            <ModalFooter>
+            <ModalFooter alignItems='center'>
+              <Text mr={3} as='b'>{curriculums?(t("progressdocScreen.info_curriculum_related_count")+curriculums):''}</Text>
               <Button variantColor="blue" mr={3} onClick={this.addRow} leftIcon={MdNoteAdd} isDisabled={rowSelected!==1}>{t("common.insert_row")}</Button>
               <Button variantColor="red" mr={3} onClick={this.delRow} leftIcon={MdDelete} isDisabled={rowSelected<1}>{t("common.remove_row")}</Button>
               <Button variantColor="green" mr={3} onClick={this.flashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button>
@@ -823,6 +829,7 @@ const mapStateToProps = (state) => {
   return {
     docProps: getDocProps(state),
     docItems: getDocItems(state),
+    curriculums: getCurriculumCount(state),
   }
 }
 
@@ -834,6 +841,3 @@ const mapDispatchToProps = (dispatch) => {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(withTranslation()(ProgressdocDialog));
-
-// TODO: 增加API获取此doc关联的课程数，用来决定保存是否使用另存为。 2. 增加创建新doc 3. 删除doc 4. 插入新行时指定周内序号  5. 载入时排序按week_idx+order_in_week两个
-// 没拖动一行，就重新计算赋值from和to两周的order_in_week，简化当前算法！
