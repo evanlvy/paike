@@ -24,18 +24,17 @@ export const DATATYPE_COLOR_AS_WEEK = "grouped_color_as_week";
 class EditableTableWrapper extends Component {
   constructor(props) {
     super(props);
-    const { t, initPageIndex, rowHeight, fixedColWidth } = props;
+    const { t, initPageIndex, fixedColWidth } = props;
     this.state = {
       curPageIndex: initPageIndex ? initPageIndex : 0,
       editPageNum: ""
     };
     this.defaultColDef = {
-      autoHeight: !rowHeight,
-      flex: 1,
       minWidth: 80,
       resizable: !fixedColWidth,
       wrapText: true,
       enableCellChangeFlash: true,
+      //cellStyle: { display: 'block', textOverflow:'ellipsis',whiteSpace:'nowrap', overflow: 'hidden', padding: 0 }
     }
     this.frameworkComponents = {
       commonRenderer: CommonRenderer,
@@ -86,17 +85,9 @@ class EditableTableWrapper extends Component {
       return;
     }
     for (let i=0; i < headers.length; i++) {
-      let { name, width, maxW, minW, dataType, fn_disable, ...defs_generated} = headers[i];
-      if (width) {
-        defs_generated.width = width;
-      } else if (minW) {
-        defs_generated.minWidth = minW;
-      } else if (maxW) {
-        defs_generated.maxWidth = maxW;
-      } else {
-        defs_generated.width = defaultColWidth;
-      }
-      if (width && width>=200) {
+      let { name, dataType, fn_disable, ...defs_generated} = headers[i];
+      if (defs_generated.editable) {
+        if ((defs_generated.width && defs_generated.width>=200) || ( defs_generated.minWidth && defs_generated.minWidth>=200))
         // Use Large text editor for super long text!
         defs_generated.cellEditor = 'agLargeTextCellEditor';
       }

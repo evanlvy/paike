@@ -17,7 +17,7 @@ class Api {
         items_per_page: items_per_page,
         page_id: page_id,
       };
-      if (stage <= 0) {
+      if (stage < 0) {
         delete request_param.stage_id;
       }
       if (items_per_page <= 0) {

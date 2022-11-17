@@ -170,13 +170,13 @@ export const actions = {
       "items": {"0": {"id": 1, "ord": 888},
                 "1": {"id": 2, "ord": 999}}
     }*/
-    saveDoc: (docId, docDiffDict, itemsDiffDict, itemsDiffCol=null, itemsDiffDataframe=null) => {
+    saveDoc: (departmentId, docId, docDiffDict, itemsDiffDict, itemsDiffCol=null, itemsDiffDataframe=null) => {
       // Save progress doc props from form to progress_doc table
       console.log(`saveDoc: doc_id: ${docId}`);
       return async (dispatch, getState) => {
         try {
           dispatch(appActions.startRequest());
-          await progressdocApi.setDoc(docId, docDiffDict, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
+          await progressdocApi.setDoc(docId, {...docDiffDict, department_id:departmentId}, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
           dispatch(appActions.finishRequest());
           dispatch(appActions.setToast({type:"success", message:"toast.toast_request_save_success"}));
           dispatch(setSelectedDoc(-1));  // Close doc dialog

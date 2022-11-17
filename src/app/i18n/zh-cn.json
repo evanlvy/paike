@@ -46,7 +46,8 @@
     "toast_request_save_success": "您的修改被成功保存!",
     "toast_request_create_success": "您新建的项目被成功保存!",
     "toast_lab_location_not_found": "您输入了无效的实验室！若有新实验室需要录入，请联系管理员",
-    "warn_no_row_selected": "请先选择要操作的行!"
+    "warn_no_row_selected": "请先选择要操作的行!",
+    "warning_save_no_change": "提示：没有可以保存的改动！"
   },
   "grade": {
     "college": "大专",
@@ -289,6 +290,9 @@
     "list_header_classes": "实施班级",
     "doclist_table_title_template": "教研室学期教学进度表 {{jys_name}}",
     "doc_detail_title": "教学进度表格",
+    "hint_stageselector": "按学期过滤",
+    "stage_none": "新进度表(尚未指派课程)",
+    "stage_all": "全部",
     "items_header_order": "序号",
     "items_header_id": "DBId",
     "items_header_chapter_name": "章节",

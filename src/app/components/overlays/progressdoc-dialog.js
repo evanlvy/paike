@@ -58,17 +58,18 @@ class ProgressdocDialog extends Component {
       saveOption: '1',
     };
     this.color = color ? color : DEFAULT_COLOR;
+    // autoHeight:true will set the row height as conent of this col
     this.tableHeaders = [
       //{name: t("progressdocScreen.items_header_order"), field: "ord", rowDrag: true, width: 80, dataType: "grouped_color_as_week"},
       {name: t("progressdocScreen.items_header_id"), field: "id", width: 80, dataType: DATATYPE_COLOR_AS_WEEK},
       {name: t("progressdocScreen.items_header_weekidx"), field: tableFields.WEEK_IDX, rowDrag: true, editable: true, width: 80, dataType: DATATYPE_WEEK},
       {name: t("progressdocScreen.items_header_order_in_week"), field: tableFields.ORDER_IN_WEEK, width: 80, dataType: DATATYPE_COLOR_AS_WEEK},
-      {name: t("progressdocScreen.items_header_chapter_name"), field: tableFields.CHAPTER_NAME, editable: true, width: 120},
-      {name: t("progressdocScreen.items_header_theory"), field: tableFields.THEORY_ITEM_CONTENT, editable: true, width: 380, fn_disable: this.theory_should_disable},
+      {name: t("progressdocScreen.items_header_chapter_name"), field: tableFields.CHAPTER_NAME, editable: true, width: 200},
+      {name: t("progressdocScreen.items_header_theory"), field: tableFields.THEORY_ITEM_CONTENT, editable: true, minWidth: 280, flex:1, fn_disable: this.theory_should_disable},
       {name: t("progressdocScreen.items_header_theoryhours"), field: tableFields.THEORY_ITEM_HOURS, editable: true, width: 80, fn_disable: this.theory_should_disable},
-      {name: t("progressdocScreen.items_header_labitem"), field: tableFields.LABITEM_CONTENT, editable: true, width: 380, fn_disable: this.lab_should_disable},
+      {name: t("progressdocScreen.items_header_labitem"), field: tableFields.LABITEM_CONTENT, editable: true, minWidth: 280, flex:1, fn_disable: this.lab_should_disable},
       {name: t("progressdocScreen.items_header_labhours"), field: tableFields.LABITEM_HOURS, editable: true, width: 80, fn_disable: this.lab_should_disable},
-      {name: t("progressdocScreen.items_header_labs"), field: tableFields.LAB_ALLOC, width: 100, dataType: "lab_list", fn_disable: this.lab_should_disable},
+      {name: t("progressdocScreen.items_header_labs"), field: tableFields.LAB_ALLOC, width: 180, dataType: "lab_list", fn_disable: this.lab_should_disable},
       {name: t("progressdocScreen.items_header_teaching_mode"), field: tableFields.TEACHING_MODE, editable: true},
       {name: t("progressdocScreen.items_header_comment"), field: tableFields.COMMENT, editable: true},
       //{name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
@@ -346,25 +347,30 @@ class ProgressdocDialog extends Component {
     });
     this.props.closeDoc();
   }*/
-  onSave = () => {
-    const { accessLevel, docProps, docItems } = this.props;
-    if (!docProps || !docItems) return;
-    if (accessLevel > role.PROFESSOR ) {
+
+  authCheck = () => {
+    const { accessLevel, userInfo } = this.props;
+    if (accessLevel > role.PROFESSOR || !userInfo || !userInfo.id) {
       // Not enouth access right!
       this.props.setToast({type:"error", message:"toast.access_denied"})
-      return;
+      return false;
     }
-    // Ask user if we should copy to a new doc
-    this.commonModalRef.current.show();
-  };
+    return true;
+  }
 
-  validateForms = () => {
-
+  onSave = () => {
+    const { docProps, docItems } = this.props;
+    if (!docProps || !docItems) return;
+    if (this.authCheck()) {
+      // Ask user if we should copy to a new doc
+      this.commonModalRef.current.show();
+    }
   }
 
   onSaveDialogResult = (isOk) => {
     if (!isOk || !this.agGridRef.current.gridApi) return true;
-    const { docProps } = this.props;
+    const { docProps, userInfo } = this.props;
+    if (!this.authCheck()) return false;
     if (this.state.saveOption === '2'){
       // Overwrite current doc directly:
       // 1. Doc Propertises: Check each prop change
@@ -425,8 +431,13 @@ class ProgressdocDialog extends Component {
         }
       });
       console.log(rows_diff);
-      // Call Server backend API
-      this.props.saveDoc(this.state['id'], props_diff, rows_diff);
+      if (Object.keys(rows_diff).length > 0) {
+        // Call Server backend API
+        this.props.saveDoc(this.state.department_id, this.state['id'], props_diff, rows_diff);
+      } else {
+        this.props.setToast({type:"info", message:"toast.warning_save_no_change"})
+        return true;
+      }
     } else {
       // Copy a new set of doc & items! Change user_id to current user!
       // Send data as dataframe to save traffic
@@ -434,19 +445,65 @@ class ProgressdocDialog extends Component {
       this.forms.forEach((form) => {
         new_props[form.id] = this.state[form.id];
       });
+      // Create new doc by current user id!
+      new_props.user_id = userInfo.id;
       // When many rows changed, use dataframe mode.
-      let df_col = this.tableHeaders.map((col) => {
+      //let df_col = this.tableHeaders.map((col) => {
         // Server do not accept lab_alloc attribute, change to labitem_id
-        return col['field'] === tableFields.LAB_ALLOC?tableFields.LABITEM_ID:col['field'];
+      //  return col['field'] === tableFields.LAB_ALLOC?tableFields.LABITEM_ID:col['field'];
+      //});
+      let df_col = [];
+      this.tableHeaders.forEach((col) => {
+        if (col['field'] !== 'id') {
+          // Do not set id for new items
+          df_col.push(col['field']);
+        }
       });
+      let col_data_count = {};
       let df_data = [];
       this.agGridRef.current.gridApi.forEachNode((rowNode) => {
-        df_data.push(df_col.map((col)=> {
-          return (col in rowNode.data)?rowNode.data[col]:undefined;
-        }));
+        let row = df_col.map((col)=> {
+          if (col in rowNode.data) {
+            col_data_count[col] += 1;
+            if (col === tableFields.LAB_ALLOC) {
+              // Server do not accept lab_alloc attribute, change to labitem_id
+              //df_col.push(tableFields.LABITEM_ID);
+              return rowNode.data[col]['id'];
+            } else {
+              return rowNode.data[col];
+            }
+          }
+          return undefined;
+        });
+        // Push row if there's non-null data item
+        if (row.some(item => item!==null)) {
+          df_data.push(row);
+        }
       });
+      // Find out which col_idx should we remove
+      // Remove empty rows & lines
+      let df_col_compressed = [];
+      let col_idx_to_compress = [];
+      df_col.forEach((col, idx) => {
+        if (col in col_data_count) {
+          df_col_compressed.push(col===tableFields.LAB_ALLOC?tableFields.LABITEM_ID:col);
+        } else {
+          col_idx_to_compress.push(idx);
+        }
+      });
+      let df_data_compressed = [];
+      df_data.forEach(row => {
+        let row_compressed = [];
+        row.forEach((item, col_idx) => {
+          if (!col_idx_to_compress.includes(col_idx)) {
+            row_compressed.push(item);
+          }
+        });
+        df_data_compressed.push(row_compressed);
+      });
+
       console.log("onSave: df_data"+JSON.stringify(df_data));
-      this.props.saveDoc(this.state['id'], new_props, null, df_col, df_data);
+      this.props.saveDoc(this.state.department_id, ~this.state['id'], new_props, null, df_col_compressed, df_data_compressed);
     }
     return true;
   }
@@ -717,13 +774,13 @@ class ProgressdocDialog extends Component {
               (openedDocId>=0 || isNewDoc) &&
               <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
                 {
-                  this.forms.map((form, index) => (
+                  this.forms.map((form) => (
                     <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
                       <FormLabel><b>{form.label}</b></FormLabel>
                       {form.type!=='int'
                         ? <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={this.onFormChanged}
                           borderColor={(docProps && this.state[form.id]===docProps[form.id])?"gray.200":"blue.500"}/>
-                        : <NumberInput defaultValue={0} max={12} keepWithinRange={false} clampValueOnBlur={false} id={form.id} type={form.id} value={this.state[form.id]} onChange={newVal => {
+                        : <NumberInput defaultValue={0} max={200} keepWithinRange={false} clampValueOnBlur={false} id={form.id} type={form.id} value={this.state[form.id]} onChange={newVal => {
                           this.setState({[form.id] : newVal})}}
                         borderColor={(docProps && this.state[form.id]===docProps[form.id])?"gray.200":"blue.500"}>
                             <NumberInputField type="number"/>
@@ -765,6 +822,7 @@ class ProgressdocDialog extends Component {
                 autoShrinkDomHeight
                 minHeight={950}
                 titleHeight={50}
+                rowHeight={50}
                 colLineHeight={15}
                 defaultColWidth={180}
                 title={tableTitle}

@@ -12,6 +12,7 @@ import {
   Icon,
   Button,
   ButtonGroup,
+  CircularProgress,
 } from '@chakra-ui/core';
 import {
   MdTune,
@@ -50,10 +51,11 @@ class ProgressdocScreen extends Component {
       selectedDocId: 0,
       isProgressDocOpen: false,
       isNewDoc: false,
+      isLoading: false,
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.defaultselectedJysIdList = [userInfo.departmentId];  //Keep default selected index!
-    this.semesterPages = [];
+    this.semesterPages = {};
 
     this.docListHeaders = [
       {name: t("progressdocScreen.list_header_id"), field: "id", width: 80},
@@ -94,21 +96,16 @@ class ProgressdocScreen extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, jysList, stageList, docList } = this.props;
-    const { selectedJysIdList, selectedDocId, isProgressDocOpen } = this.state;
-    if (nextProps.schoolYear !== schoolYear || nextProps.jysList !== jysList || nextProps.docList !== docList) {
+    const { selectedJysIdList, selectedDocId, isProgressDocOpen, isLoading } = this.state;
+    if (nextState.selectedDocId !== selectedDocId || nextState.isProgressDocOpen !== isProgressDocOpen || nextState.selectedJysIdList !== selectedJysIdList || nextState.isLoading !== isLoading) {
+      //console.log("shouldComponentUpdate, selected_jys diff");
+      return true;
+    } else if (nextProps.schoolYear !== schoolYear || nextProps.jysList !== jysList || nextProps.docList !== docList) {
       //console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextProps.stageList !== stageList ) {
       //console.log("shouldComponentUpdate, stageList diff");
       this.buildSemester();
-      return true;
-    } else if (nextState.selectedJysIdList !== selectedJysIdList) {
-      //console.log("shouldComponentUpdate, selected_jys diff");
-      return true;
-    } else if (nextState.selectedDocId != selectedDocId) {
-      //console.log("shouldComponentUpdate, selectedDocId diff");
-      return true;
-    } else if (nextState.isProgressDocOpen != isProgressDocOpen) {
       return true;
     }
     return false;
@@ -128,7 +125,9 @@ class ProgressdocScreen extends Component {
           isProgressDocOpen: false,
         });
       }
-      
+    }
+    if (prevProps.docList !== this.props.docList) {
+      this.setState({isLoading: false});
     }
   }
 
@@ -145,8 +144,9 @@ class ProgressdocScreen extends Component {
   }
   
   buildSemester = () => {
+    const { t, stageList } = this.props;
     if (Object.keys(this.semesterPages).length <= 0) {
-      this.semesterPages = {...this.props.stageList};
+      this.semesterPages = {0: t("progressdocScreen.stage_none"), ...stageList, 99999: t("progressdocScreen.stage_all")};
       //console.log("buildSemester: stages: "+JSON.stringify(this.semesterPages));
     }
   }
@@ -156,16 +156,17 @@ class ProgressdocScreen extends Component {
     this.props.fetchJiaoyanshi();
   }
   
-  loadDocList = (jysIdList, stage_id=0) => {
+  loadDocList = (jysIdList, stage_id=-1) => {
     if (!jysIdList || jysIdList.length < 1) {
       console.error("JYS not selected yet");
       return;
     }
     let stage = stage_id;
-    if (stage < 1) {
+    if (stage < 0) {
       stage = this.state.selectStage;
     }
     console.log("loadDocList, year: "+stage+" jysId:"+jysIdList[0]);
+    this.setState({isLoading: true});
     this.props.fetchDocList(jysIdList[0], stage);
     this.hasFetchKebiao = true;
   }
@@ -243,8 +244,8 @@ class ProgressdocScreen extends Component {
 
   render() {
     const { t, jysList, docList, userInfo, accessLevel, openedDocId } = this.props;
-    const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc } = this.state;
-    const { color, jysTitle, titleSelected, docListHeaders, semesterPages, onStageChanged, onJysIdsChanged, onRowSelected, onRowDoubleClicked } = this;
+    const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc, isLoading } = this.state;
+    const { color, jysTitle, titleSelected, docListHeaders, semesterPages } = this;
     let tableTitle = "";
     if (titleSelected && titleSelected.length > 0) {
       tableTitle =  t("progressdocScreen.doclist_table_title_template", {jys_name: titleSelected});
@@ -254,13 +255,20 @@ class ProgressdocScreen extends Component {
 
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center" mb={5}>
-        <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" minW={588} >
+        <SubjectBoard t={t} my={4} color={color}
+          title={jysTitle}
+          subjects={jysList}
+          initSelectIds={this.defaultselectedJysIdList}
+          selectedIdsChanged={this.onJysIdsChanged}
+          enableAutoTitle={true}
+          enableSelect />
+        <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" minW={588} my={4} >
           <Flex direction="row" alignItems="center" px={5} py={2}>
             <Icon as={MdTune} color={color+".200"} size={12} />
-            <Text mx={5} whiteSpace="break-spaces" flexWrap="true" minW={60}>{t("editRawplanScreen.hint_stageselector")}</Text>
+            <Text mx={5} whiteSpace="break-spaces" flexWrap="false" minW={120}>{t("progressdocScreen.hint_stageselector")}</Text>
             {
               (semesterPages && Object.keys(semesterPages).length > 0) &&
-              <Select width="100%" variant="filled" value={selectStage} onChange={onStageChanged}>
+              <Select width="100%" variant="filled" value={selectStage} onChange={this.onStageChanged}>
               {
                 Object.keys(semesterPages).map((stage_id) => (
                   <option key={stage_id} value={stage_id} >{semesterPages[stage_id]}</option>
@@ -271,15 +279,12 @@ class ProgressdocScreen extends Component {
             <PromptDrawer t={t} promptText={t("editRawplanScreen.prompt_text")}/>
           </Flex>
         </Box>
-        <SubjectBoard t={t} my={4} color={color}
-          title={jysTitle}
-          subjects={jysList}
-          initSelectIds={this.defaultselectedJysIdList}
-          selectedIdsChanged={onJysIdsChanged}
-          enableAutoTitle={true}
-          enableSelect />
         {
-          docList && 
+          isLoading &&
+          <CircularProgress isIndeterminate color="blue" size="120px" width="100%"></CircularProgress>
+        }
+        {
+          !isLoading && docList && 
           <ResultTable
             //minHeight={docList.length>3?800:180}
             autoShrinkDomHeight
@@ -291,8 +296,8 @@ class ProgressdocScreen extends Component {
             headers={docListHeaders}
             data={docList}
             rowSelection="single"
-            onRowSelected={onRowSelected}
-            onRowDoubleClicked={onRowDoubleClicked}
+            onRowSelected={this.onRowSelected}
+            onRowDoubleClicked={this.onRowDoubleClicked}
           />
         }
         <ButtonGroup size="lg">
