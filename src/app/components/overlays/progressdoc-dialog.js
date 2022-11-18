@@ -61,17 +61,17 @@ class ProgressdocDialog extends Component {
     // autoHeight:true will set the row height as conent of this col
     this.tableHeaders = [
       //{name: t("progressdocScreen.items_header_order"), field: "ord", rowDrag: true, width: 80, dataType: "grouped_color_as_week"},
-      {name: t("progressdocScreen.items_header_id"), field: "id", width: 80, dataType: DATATYPE_COLOR_AS_WEEK},
-      {name: t("progressdocScreen.items_header_weekidx"), field: tableFields.WEEK_IDX, rowDrag: true, editable: true, width: 80, dataType: DATATYPE_WEEK},
-      {name: t("progressdocScreen.items_header_order_in_week"), field: tableFields.ORDER_IN_WEEK, width: 80, dataType: DATATYPE_COLOR_AS_WEEK},
+      {name: t("progressdocScreen.items_header_id"), field: "id", maxWidth: 80, dataType: DATATYPE_COLOR_AS_WEEK},
+      {name: t("progressdocScreen.items_header_weekidx"), field: tableFields.WEEK_IDX, rowDrag: true, editable: true, maxWidth: 80, dataType: DATATYPE_WEEK},
+      {name: t("progressdocScreen.items_header_order_in_week"), field: tableFields.ORDER_IN_WEEK, maxWidth: 60, dataType: DATATYPE_COLOR_AS_WEEK},
       {name: t("progressdocScreen.items_header_chapter_name"), field: tableFields.CHAPTER_NAME, editable: true, width: 200},
       {name: t("progressdocScreen.items_header_theory"), field: tableFields.THEORY_ITEM_CONTENT, editable: true, minWidth: 280, flex:1, fn_disable: this.theory_should_disable},
-      {name: t("progressdocScreen.items_header_theoryhours"), field: tableFields.THEORY_ITEM_HOURS, editable: true, width: 80, fn_disable: this.theory_should_disable},
+      {name: t("progressdocScreen.items_header_theoryhours"), field: tableFields.THEORY_ITEM_HOURS, editable: true, maxWidth: 80, fn_disable: this.theory_should_disable},
       {name: t("progressdocScreen.items_header_labitem"), field: tableFields.LABITEM_CONTENT, editable: true, minWidth: 280, flex:1, fn_disable: this.lab_should_disable},
-      {name: t("progressdocScreen.items_header_labhours"), field: tableFields.LABITEM_HOURS, editable: true, width: 80, fn_disable: this.lab_should_disable},
+      {name: t("progressdocScreen.items_header_labhours"), field: tableFields.LABITEM_HOURS, editable: true, maxWidth: 80, fn_disable: this.lab_should_disable},
       {name: t("progressdocScreen.items_header_labs"), field: tableFields.LAB_ALLOC, width: 180, dataType: "lab_list", fn_disable: this.lab_should_disable},
-      {name: t("progressdocScreen.items_header_teaching_mode"), field: tableFields.TEACHING_MODE, editable: true},
-      {name: t("progressdocScreen.items_header_comment"), field: tableFields.COMMENT, editable: true},
+      {name: t("progressdocScreen.items_header_teaching_mode"), field: tableFields.TEACHING_MODE, editable: true, maxWidth: 280},
+      {name: t("progressdocScreen.items_header_comment"), field: tableFields.COMMENT, editable: true, maxWidth: 280},
       //{name: t("progressdocScreen.items_header_docid"), field: "doc_id", width: 80},
     ];
     //this.btnRef = React.createRef()
@@ -691,6 +691,11 @@ class ProgressdocDialog extends Component {
       transactions['update'] = itemsToUpdate;
     }
     api.applyTransaction(transactions);
+    if (!_from) {
+      // Reselect the newly created row & keep it single selected!
+      let node = api.getRowNode(added_data_array.id)
+      node.setSelected(true, true);  // 2nd param: clearSelection true
+    }
   }
 
   onRowDragEnd = (event) => {
