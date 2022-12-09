@@ -130,6 +130,10 @@ export const actions = {
         }
       }
     },
+    clearSelectedLabitem: () => ({
+      type: types.SET_SELECTED_LABITEM,
+      id: 0
+    }),
     searchLabitem: (course_name, short_name="", content="", department_id=-1) => {
       console.log(`searchLabitem: course_name: ${course_name}`);
       return async (dispatch, getState) => {
@@ -170,13 +174,13 @@ export const actions = {
       "items": {"0": {"id": 1, "ord": 888},
                 "1": {"id": 2, "ord": 999}}
     }*/
-    saveDoc: (departmentId, docId, docDiffDict, itemsDiffDict, itemsDiffCol=null, itemsDiffDataframe=null) => {
+    saveDoc: (docId, docDiffDict, itemsDiffDict, itemsDiffCol=null, itemsDiffDataframe=null, departmentId=-1) => {
       // Save progress doc props from form to progress_doc table
       console.log(`saveDoc: doc_id: ${docId}`);
       return async (dispatch, getState) => {
         try {
           dispatch(appActions.startRequest());
-          await progressdocApi.setDoc(docId, {...docDiffDict, department_id:departmentId}, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
+          await progressdocApi.setDoc(docId, departmentId<=0?docDiffDict:{...docDiffDict, department_id:departmentId}, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
           dispatch(appActions.finishRequest());
           dispatch(appActions.setToast({type:"success", message:"toast.toast_request_save_success"}));
           dispatch(setSelectedDoc(-1));  // Close doc dialog

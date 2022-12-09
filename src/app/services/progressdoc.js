@@ -106,7 +106,7 @@ class Api {
       let response = await axios.post(url, request_param);
       const { success, data, message } = response.data;
       if (!success) {
-        throw new Error(message.message);
+        throw new Error(message.message+" "+message.detail);
       }
       return data;
     } catch (error) {

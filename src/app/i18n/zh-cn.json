@@ -369,7 +369,7 @@
     "form_label_name": "实验类型",
     "form_label_labs": "关联实验室(空格或逗号分隔)",
     "form_label_department": "教研室",
-    "form_label_max_team_headcount": "分组人数",
+    "form_label_max_team_headcount": "分组人数(0表示默认)",
     "form_label_teacher_count": "带教老师数",
     "form_label_labdivision_id": "实训分中心",
     "form_btn_select": "选择已录入类型",
