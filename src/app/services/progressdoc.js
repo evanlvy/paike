@@ -108,7 +108,7 @@ class Api {
       if (!success) {
         throw new Error(message.message+" "+message.detail);
       }
-      return data;
+      return data.id;
     } catch (error) {
       throw error;
     }
@@ -126,7 +126,7 @@ class Api {
       if (!success) {
         throw new Error(message.message);
       }
-      return data;
+      return data.id;
     } catch (error) {
       throw error;
     }

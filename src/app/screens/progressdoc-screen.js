@@ -84,6 +84,7 @@ class ProgressdocScreen extends Component {
     ];
     this.tableData = null;
     this.tabsListRef = React.createRef();
+    this.agGridRef = React.createRef();
     this.jysTitle = t("kebiao.jys");
     this.titleSelected = "";
     this.buildSemester();
@@ -129,6 +130,10 @@ class ProgressdocScreen extends Component {
     if (prevProps.docList !== this.props.docList) {
       this.setState({isLoading: false});
     }
+  }
+
+  componentWillUnmount() {
+    this.setState = ()=>false;
   }
 
   loadData = () => {
@@ -239,7 +244,20 @@ class ProgressdocScreen extends Component {
       this.props.setToast({type:"warning", message:"toast.warn_no_row_selected"});
       return;
     }
-    this.props.setToast({type:"warning", message:"toast.warn_no_row_selected"});
+    const api = this.agGridRef.current.gridApi;
+    if (api) {
+      let node = api.getRowNode(""+selectedDocId);
+      if (!node) {
+        this.props.setToast({type:"warning", message:"toast.warn_doc_delete_stopped_by_grid_fail"});
+        return;
+      }
+      if ((node.data.classes && Object.keys(node.data.classes).length > 0) || (node.data.curriculums && node.data.curriculums > 0)){
+        this.props.setToast({type:"warning", message:"toast.warn_doc_delete_stopped_by_reference"});
+        return;
+      } else {
+        this.props.deleteDoc(selectedDocId);
+      }
+    }
   }
 
   render() {
@@ -286,6 +304,8 @@ class ProgressdocScreen extends Component {
         {
           !isLoading && docList && 
           <ResultTable
+            ref={this.agGridRef}
+            getRowNodeId={data => data.id}
             //minHeight={docList.length>3?800:180}
             autoShrinkDomHeight
             titleHeight={50}

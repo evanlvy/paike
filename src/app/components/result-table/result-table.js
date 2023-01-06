@@ -229,7 +229,7 @@ class ResultTableWrapper extends Component {
     gridOptions.api.setDomLayout(shouldShrink?'normal':'autoHeight');
     // auto height will get the grid to fill the height of the contents,
     // so the grid div should have no height set, the height is dynamic.
-    document.querySelector('#myGrid').style.height = shouldShrink?((maxTableHeight-this.props.titleHeight)+'px'):'';
+    document.querySelector('#resultGrid').style.height = shouldShrink?((maxTableHeight-this.props.titleHeight)+'px'):'';
     this.underShrink = shouldShrink;
     console.log("RESULTABLE: setDomLayout: "+(shouldShrink?'normal':'autoHeight'));
   }
@@ -359,7 +359,7 @@ class ResultTableWrapper extends Component {
     const { curPageIndex } = this.state;
     //console.log("render: curPageIndex: "+curPageIndex);
     return (
-      <Flex flex={1} direction="column" width={width ? width : "100%"} height="inherit" {...other_props}>
+      <Flex flex={1} direction="column" width={width ? width : "100%"} height="inherit">
         {
           (title || pageNames) &&
           <Box display="flex" flexDirection="row" bg={color+".400"} minH={titleHeight} px={4} alignItems="center"
@@ -384,7 +384,7 @@ class ResultTableWrapper extends Component {
           </Box>
         }
         <Box flex={1} width="100%" height="inherit" borderWidth={1} borderColor={color+".200"} roundedBottom="md">
-          <div id="myGrid" className="ag-theme-alpine" style={{width: "100%", height: "inherit"}}>
+          <div id="resultGrid" className="ag-theme-alpine" style={{width: "100%", height: "inherit"}}>
             <AgGridReact
               //domLayout={autoShrinkDomHeight?'autoHeight':'normal'}
               overlayNoRowsTemplate={this.overlayNoRowsTemplate}
@@ -402,7 +402,8 @@ class ResultTableWrapper extends Component {
               onRowClicked={onRowClicked}
               onRowDoubleClicked={onRowDoubleClicked}
               rowSelection={rowSelection}
-              onRowSelected={onRowSelected} >
+              onRowSelected={onRowSelected}
+              {...other_props} >
             </AgGridReact>
           </div>
         </Box>
@@ -411,5 +412,5 @@ class ResultTableWrapper extends Component {
   }
 }
 
-const ResultTable = withTranslation("translation")(ResultTableWrapper);
+const ResultTable = withTranslation("translation", {withRef: true})(ResultTableWrapper);
 export { ResultTable };

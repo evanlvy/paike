@@ -29,7 +29,8 @@
     "no_limitation": "不限",
     "flash_changed_cells": "高亮我的改动",
     "insert_row": "插入新行",
-    "remove_row": "删除行"
+    "remove_row": "删除行",
+    "just_now": "刚刚"
   },
   "alert": {
     "default_title": "警告",
@@ -47,7 +48,9 @@
     "toast_request_create_success": "您新建的项目被成功保存!",
     "toast_lab_location_not_found": "您输入了无效的实验室！若有新实验室需要录入，请联系管理员",
     "warn_no_row_selected": "请先选择要操作的行!",
-    "warning_save_no_change": "提示：没有可以保存的改动！"
+    "warning_save_no_change": "提示：没有可以保存的改动!",
+    "warn_doc_delete_stopped_by_reference": "该进度已经绑定了课程，请解绑后再删除!",
+    "warn_doc_delete_stopped_by_grid_fail": "无法读取表格数据，请重试!"
   },
   "grade": {
     "college": "大专",

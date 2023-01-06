@@ -27,18 +27,21 @@ export const tableFields = {
 // action types
 export const types = {
     SEARCH_DOC_LIST: "PROGRESSDOC/SEARCH_DOC_LIST",
-    FETCH_DOC_LIST: "PROGRESSDOC/FETCH_DOC_LIST",
+    FETCH_DOC_GROUP: "PROGRESSDOC/FETCH_DOC_GROUP",
+    UPDATE_FETCHED_GROUP: "PROGRESSDOC/UPDATE_FETCHED_GROUP",
     UPDATE_DOC_LIST: "PROGRESSDOC/UPDATE_DOC_LIST",
     FETCH_DOC: "PROGRESSDOC/FETCH_DOC",
     CLEAR_DOC: "PROGRESSDOC/CLEAR_DOC",
+    CLEAR_DOC_CONTENT: "PROGRESSDOC/CLEAR_DOC_CONTENT",
     UPDATE_LAB_ITEM_CACHE: "PROGRESSDOC/UPDATE_LAB_ITEM_CACHE",
-    SET_SELECTED_DEPAETMENT: "PROGRESSDOC/SET_SELECTED_DEPAETMENT",
+    SET_SELECTED_GROUP: "PROGRESSDOC/SET_SELECTED_GROUP",
     SET_SELECTED_SEARCH: "PROGRESSDOC/SET_SELECTED_SEARCH",
     SET_OPENED_DOC_ID: "PROGRESSDOC/SET_OPENED_DOC_ID",
     CLR_OPENED_DOC_ID: "PROGRESSDOC/CLR_OPENED_DOC_ID",
     ADD_DOC: "PROGRESSDOC/ADD_DOC",
     DEL_DOC: "PROGRESSDOC/DEL_DOC",
     UPDATE_DOC: "PROGRESSDOC/UPDATE_DOC",
+    UPDATE_DOCS: "PROGRESSDOC/UPDATE_DOCS",
     ADD_ROW: "PROGRESSDOC/ADD_ROW",
     DEL_ROW: "PROGRESSDOC/DEL_ROW",
     UPDATE_ROW: "PROGRESSDOC/UPDATE_ROW",
@@ -51,6 +54,8 @@ export const types = {
     SET_CREATED_LABITEM: "PROGRESSDOC/SET_CREATED_LABITEM",
     GET_CURRICULUM_COUNT_RESULT: "PROGRESSDOC/GET_CURRICULUM_COUNT_RESULT",
   };
+
+export const nonProps = ["total", "items", "curriculums"];
 
 export const buildGroupStageWeekId = (stage, weekIdx, degreeId, gradeId) => {
   return stage+"_"+weekIdx+"_"+degreeId+"_"+gradeId;
@@ -85,9 +90,10 @@ export const actions = {
             const data = await progressdocApi.queryDocList(department_id, stage, items_per_page, page_id);
             dispatch(appActions.finishRequest());
             //let groups = convertGroupsToPlain(data);
-            dispatch(fetchListSuccess(department_id, stage, data));
+            dispatch(fetchGroupSuccess(department_id, stage, Object.keys(data)));
+            dispatch(updateDocs(data));
           }
-          dispatch(setSelectedDepartment(department_id, stage));
+          dispatch(setSelectedGroup(department_id, stage));
         } catch (error) {
           dispatch(appActions.setError(error));
         }
@@ -180,13 +186,18 @@ export const actions = {
       return async (dispatch, getState) => {
         try {
           dispatch(appActions.startRequest());
-          await progressdocApi.setDoc(docId, departmentId<=0?docDiffDict:{...docDiffDict, department_id:departmentId}, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
+          const new_id = await progressdocApi.setDoc(docId, departmentId<=0?docDiffDict:{...docDiffDict, department_id:departmentId}, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
           dispatch(appActions.finishRequest());
           dispatch(appActions.setToast({type:"success", message:"toast.toast_request_save_success"}));
           dispatch(setSelectedDoc(-1));  // Close doc dialog
-          dispatch(setDocSuccess(docId));  // Clear doc store
-          // To update doc list table in progressdoc-screen.
-          dispatch(updateDocList(getSelectedDepartment(getState()), docId, docDiffDict));
+          let isNewDoc = docId <= 0;
+          if (!isNewDoc) {
+            dispatch(setDocSuccess(docId));  // Clear doc store
+            // To update doc list table in progressdoc-screen.  
+            dispatch(updateDoc(docId, docDiffDict));
+          } else {
+            dispatch(addToFetchedGroup(getSelectedGroup(getState()), new_id));
+          }
         } catch (error) {
           dispatch(appActions.setError(error));
         }
@@ -248,6 +259,23 @@ export const actions = {
         }
       }
     },
+    deleteDoc: (doc_id) => {
+      return async (dispatch) => {
+        try {
+          dispatch(appActions.startRequest());
+          if (doc_id) {
+            const result = await progressdocApi.deleteDoc(doc_id);
+            let count = result.count?result.count:0;
+            if (count > 0) {
+              dispatch(delDocSuccess(doc_id));
+            }
+          }
+          dispatch(appActions.finishRequest());
+        } catch (error) {
+          dispatch(appActions.setError(error));
+        }
+      }
+    },
 }
 
 const shouldSearchList = (keyword, department_id, state) => {
@@ -256,18 +284,16 @@ const shouldSearchList = (keyword, department_id, state) => {
 }
 
 const shouldFetchList = (department_id, stage, state) => {
-  const doc_list = state.getIn(["progressdoc", "fetchedList", department_id+"_"+stage]);
+  const doc_list = state.getIn(["progressdoc", "fetchedGroup", department_id+"_"+stage]);
   return !doc_list || doc_list.length === 0;
 }
 
 const shouldFetchDoc = (doc_id, state) => {
-  const doc = state.getIn(["progressdoc", "fetchedDoc", ""+doc_id]);
-  return !doc || doc.length === 0;
+  return state.hasIn(["progressdoc", "fetchedDoc", ""+doc_id, 'items']);
 }
 
 const shouldFetchLabitem = (labitem_id, state) => {
-  const item = state.getIn(["progressdoc", "fetchedLabitems", ""+labitem_id]);
-  return !item || item.length === 0;
+  return state.hasIn(["progressdoc", "fetchedLabitems", ""+labitem_id]);
 }
 
 const convertGroupsToPlain = (groupsInfo) => {
@@ -292,12 +318,20 @@ const setSelectedSearch = (department_id, keyword) => {
   })
 }
 
-const fetchListSuccess = (department_id, stage, data) => {
+const fetchGroupSuccess = (department_id, stage, data) => {
   return ({
-    type: types.FETCH_DOC_LIST,
+    type: types.FETCH_DOC_GROUP,
     department_id,
     stage,
     data
+  })
+}
+
+const addToFetchedGroup = (selected, id) => {
+  return ({
+    type: types.UPDATE_FETCHED_GROUP,
+    selected,
+    id
   })
 }
 
@@ -330,9 +364,9 @@ const setSelectedDoc = (id) => {
   })
 }
 
-const setSelectedDepartment = (id, stage) => {
+const setSelectedGroup = (id, stage) => {
   return ({
-    type: types.SET_SELECTED_DEPAETMENT,
+    type: types.SET_SELECTED_GROUP,
     id,
     stage
   })
@@ -354,17 +388,30 @@ const setCreatedLabitem = (id) => {
 
 const setDocSuccess = (id) => {
   return ({
+    type: types.CLEAR_DOC_CONTENT,
+    id
+  })
+}
+
+const delDocSuccess = (id) => {
+  return ({
     type: types.CLEAR_DOC,
     id
   })
 }
 
-const updateDocList = (docId, progressId, diff) => {
+const updateDoc = (id, props) => {
   return ({
-    type: types.UPDATE_DOC_LIST,
-    docId,
-    progressId,
-    diff
+    type: types.UPDATE_DOC,
+    id,
+    props
+  })
+}
+
+const updateDocs = (docs) => {
+  return ({
+    type: types.UPDATE_DOCS,
+    docs
   })
 }
 
@@ -397,18 +444,15 @@ const searchedList = (state = Immutable.fromJS({}), action) => {
   }
 }
 
-const fetchedList = (state = Immutable.fromJS({}), action) => {
+const fetchedGroup = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
-    case types.FETCH_DOC_LIST:
+    case types.FETCH_DOC_GROUP:
       return state.merge({[action.department_id+"_"+action.stage]: action.data});
-    case types.SET_SELECTED_DEPAETMENT:
+    case types.SET_SELECTED_GROUP:
       return state.merge({selected: action.id+"_"+action.stage});
-    case types.UPDATE_DOC_LIST:
-      return state.mergeDeep({
-        [action.docId]: {
-          [action.progressId]: {...action.diff, updated_at: "Just now"}
-        }
-      });
+    case types.UPDATE_FETCHED_GROUP:
+      return state.update(action.selected, docList => 
+        {docList.push(action.id)});
     default:
       return state;
   }
@@ -418,8 +462,16 @@ const fetchedDoc = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
     case types.FETCH_DOC:
       return state.merge({[""+action.id]: action.data});
+    case types.UPDATE_DOC:
+      return state.mergeDeep({
+        [action.id]: {...action.props, id: action.id, updated_at: "Just Now"}
+      });
+    case types.UPDATE_DOCS:
+      return state.mergeDeep(action.docs);
     case types.CLEAR_DOC:
       return state.removeIn([""+action.id]);
+    case types.CLEAR_DOC_CONTENT:
+      return state.removeIn([""+action.id, "items"]);
     case types.SET_OPENED_DOC_ID:
       return state.merge({selected: action.id})
     case types.CLR_OPENED_DOC_ID:
@@ -477,7 +529,7 @@ const curriculumCountResult = (state = Immutable.fromJS({}), action) => {
 
 const reducer = combineReducers({
   searchedList,
-  fetchedList,
+  fetchedGroup,
   fetchedDoc,
   fetchedLabitems,
   searchedLabitemBriefs,
@@ -487,12 +539,13 @@ const reducer = combineReducers({
 export default reducer;
 
 // selectors
-export const getList = state => state.getIn(["progressdoc", "fetchedList", getSelectedDepartment(state)]);
-export const getSelectedDepartment = (state) => state.getIn(["progressdoc", "fetchedList", "selected"]);
+export const getGroup = state => state.getIn(["progressdoc", "fetchedGroup", getSelectedGroup(state)]);
+export const getSelectedGroup = (state) => state.getIn(["progressdoc", "fetchedGroup", "selected"]);
 
 export const getSearchedList = (state) => state.getIn(["progressdoc", "searchedList", getSelectedSearch(state)]).valueSeq();
 export const getSelectedSearch = (state) => state.getIn(["progressdoc", "searchedList", "selected"]);
 
+export const getDocs = (state) => state.getIn(["progressdoc", "fetchedDoc"]);
 export const getDoc = (state) => state.getIn(["progressdoc", "fetchedDoc", ""+getOpenedDocId(state)]);
 export const getOpenedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
 
@@ -504,36 +557,33 @@ export const getSearchedLabitemBriefs = (state) => state.getIn(["progressdoc", "
 export const getCurriculumCountResult = (state) => state.getIn(["progressdoc", "curriculumCountResult"]);
 
 export const getDocList = createSelector(
-  getList,
-  (docList) => {
-    if (!docList) return [];
-    return Object.values(docList);
-  }
-);
-
-export const getSearchedDocList = createSelector(
-  getSearchedList, 
-  (docList) => {
-    if (!docList) return [];
-    return docList.toJS();
+  [getGroup, getDocs],
+  (docList, docs) => {
+    if (!docList || !docs) return [];
+    //return Object.values(docList);
+    let ret = docs.filter(function (value, key) {
+      return (docList.includes(key));
+    });
+    return ret.valueSeq();
   }
 );
 
 export const getDocProps = createSelector(
   [getDoc, getOpenedDocId],
   (value, openedId) => {
-    if (openedId <= 0 || !value || value.length <= 0) {
+    if (openedId <= 0 || !value || Object.keys(value).length <= 0) {
       return null;
     }
-    //console.log("getDocContents: "+JSON.stringify(value));
-    return value.props;
+    // Remove non-props values
+    let {total, items, curriculums, checksum, ...docProps} = value;
+    return docProps;
   }
 );
 
 export const getCurriculumCount = createSelector(
   [getDoc, getOpenedDocId],
   (value, openedId) => {
-    if (openedId <= 0 || !value || value.length <= 0) {
+    if (openedId <= 0 || !value || Object.keys(value).length <= 0) {
       return null;
     }
     return value.curriculums;
@@ -543,10 +593,11 @@ export const getCurriculumCount = createSelector(
 export const getDocItems = createSelector(
   [getDoc, getOpenedDocId],
   (value, openedId) => {
-    if (openedId <= 0 || !value || value.length <= 0) {
+    if (openedId <= 0 || !value || Object.keys(value).length <= 0 || !value.items) {
       return null;
     }
     //console.log("ReSelector: rows="+JSON.stringify(rows));
+    // Trans to array
     return Object.values(value.items);
   }
 );
@@ -569,3 +620,12 @@ export const parseImmutableLocs = (imm_loc_array) => {
   });
   return short_names.join(', ');
 };
+
+// TBD: not in use yet
+export const getSearchedDocList = createSelector(
+  getSearchedList, 
+  (docList) => {
+    if (!docList) return [];
+    return docList.toJS();
+  }
+);

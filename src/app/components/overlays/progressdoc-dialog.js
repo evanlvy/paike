@@ -440,11 +440,16 @@ class ProgressdocDialog extends Component {
       //  return col['field'] === tableFields.LAB_ALLOC?tableFields.LABITEM_ID:col['field'];
       //});
       let df_col = [];
-      this.tableHeaders.forEach((col) => {
-        if (col['field'] === tableFields.LAB_ALLOC) {
-          // Server do not accept lab_alloc attribute, change to labitem_id
-          df_col.push(tableFields.LABITEM_ID);
-        } else if (col['field'] !== 'id') {
+      let laballoc_idx = -1;
+      this.tableHeaders.forEach((col, index) => {
+        //if (col['field'] === tableFields.LAB_ALLOC) {
+        //  // Server do not accept lab_alloc attribute, change to labitem_id
+        //  df_col.push(tableFields.LABITEM_ID);
+        //} else 
+        if (col['field'] !== 'id') {
+          if (col['field'] === tableFields.LAB_ALLOC) {
+            laballoc_idx = df_col.length;
+          }
           // Do not set id for new items
           df_col.push(col['field']);
         }
@@ -452,11 +457,15 @@ class ProgressdocDialog extends Component {
       let df_data = [];
       this.agGridRef.current.gridApi.forEachNode((rowNode) => {
         df_data.push(df_col.map((col)=> {
-          return (col in rowNode.data)?rowNode.data[col]:undefined;
+          let ret = (col in rowNode.data)?rowNode.data[col]:undefined;
+          if (typeof(ret) === 'object') ret = ret.id;
+          return ret;
         }));
       });
+      df_col[laballoc_idx] = tableFields.LABITEM_ID;
       console.log("onSave: df_data"+JSON.stringify(df_data));
-      this.props.saveDoc(this.state['id'], new_props, null, df_col, df_data);
+      //TODO: 解决新建doc包含doc_id问题。解决新建item时的id问题！
+      this.props.saveDoc(-1, new_props, null, df_col, df_data, this.state.department_id);
     }
     return true;
   }
