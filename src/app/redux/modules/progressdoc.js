@@ -289,11 +289,11 @@ const shouldFetchList = (department_id, stage, state) => {
 }
 
 const shouldFetchDoc = (doc_id, state) => {
-  return state.hasIn(["progressdoc", "fetchedDoc", ""+doc_id, 'items']);
+  return !state.hasIn(["progressdoc", "fetchedDoc", ""+doc_id, 'items']);
 }
 
 const shouldFetchLabitem = (labitem_id, state) => {
-  return state.hasIn(["progressdoc", "fetchedLabitems", ""+labitem_id]);
+  return !state.hasIn(["progressdoc", "fetchedLabitems", ""+labitem_id]);
 }
 
 const convertGroupsToPlain = (groupsInfo) => {

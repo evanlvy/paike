@@ -52,6 +52,7 @@ class ProgressdocScreen extends Component {
       isProgressDocOpen: false,
       isNewDoc: false,
       isLoading: false,
+      rowSelected: 0,
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.defaultselectedJysIdList = [userInfo.departmentId];  //Keep default selected index!
@@ -97,8 +98,8 @@ class ProgressdocScreen extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, jysList, stageList, docList } = this.props;
-    const { selectedJysIdList, selectedDocId, isProgressDocOpen, isLoading } = this.state;
-    if (nextState.selectedDocId !== selectedDocId || nextState.isProgressDocOpen !== isProgressDocOpen || nextState.selectedJysIdList !== selectedJysIdList || nextState.isLoading !== isLoading) {
+    const { selectedJysIdList, selectedDocId, isProgressDocOpen, isLoading, rowSelected } = this.state;
+    if (nextState.selectedDocId !== selectedDocId || nextState.isProgressDocOpen !== isProgressDocOpen || nextState.selectedJysIdList !== selectedJysIdList || nextState.isLoading !== isLoading || nextState.rowSelected !== rowSelected) {
       //console.log("shouldComponentUpdate, selected_jys diff");
       return true;
     } else if (nextProps.schoolYear !== schoolYear || nextProps.jysList !== jysList || nextProps.docList !== docList) {
@@ -205,7 +206,8 @@ class ProgressdocScreen extends Component {
   onStageChanged = (event) => {
     let target_stage = event.target.value;
     this.setState({
-      selectStage: target_stage
+      selectStage: target_stage,
+      rowSelected: 0
     });
     this.loadDocList(this.state.selectedJysIdList, target_stage);
   }
@@ -256,13 +258,21 @@ class ProgressdocScreen extends Component {
         return;
       } else {
         this.props.deleteDoc(selectedDocId);
+        this.setState({rowSelected: 0});
       }
     }
   }
 
+  onSelectionChanged = (params) => {
+    const rowCount = params.api.getSelectedNodes().length;
+    this.setState({
+      rowSelected: rowCount
+    });
+  };
+
   render() {
     const { t, jysList, docList, userInfo, accessLevel, openedDocId } = this.props;
-    const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc, isLoading } = this.state;
+    const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc, isLoading, rowSelected } = this.state;
     const { color, jysTitle, titleSelected, docListHeaders, semesterPages } = this;
     let tableTitle = "";
     if (titleSelected && titleSelected.length > 0) {
@@ -318,10 +328,11 @@ class ProgressdocScreen extends Component {
             rowSelection="single"
             onRowSelected={this.onRowSelected}
             onRowDoubleClicked={this.onRowDoubleClicked}
+            onSelectionChanged={this.onSelectionChanged}
           />
         }
         <ButtonGroup size="lg">
-          <Button leftIcon={MdEdit} variantColor="blue" variant="solid" mt={3} isDisabled={selectedDocId<=0} 
+          <Button leftIcon={MdEdit} variantColor="blue" variant="solid" mt={3} isDisabled={rowSelected<1} 
             onClick={e => this.openProgressDocDialog(selectedDocId)}>
             {t("common.open")}
           </Button>
@@ -329,7 +340,7 @@ class ProgressdocScreen extends Component {
             onClick={this.onCreateDoc}>
             {t("common.new")}
           </Button>
-          <ButtonConfirmPopover t={t} leftIcon={MdDelete} variantColor="red" variant="solid" mt={3} isDisabled={selectedDocId<=0} 
+          <ButtonConfirmPopover t={t} leftIcon={MdDelete} variantColor="red" variant="solid" mt={3} isDisabled={rowSelected<1} 
             onConfirm={this.onDeleteDoc} btnTitle={t("common.delete")} popText={t("progressdocScreen.warning_delete_doc")}/>
         </ButtonGroup>
         <ProgressdocDialog
