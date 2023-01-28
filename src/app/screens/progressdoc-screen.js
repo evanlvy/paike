@@ -35,6 +35,7 @@ import { actions as appActions } from '../redux/modules/app';
 import PromptDrawer from '../components/overlays/prompt-drawer';
 import ProgressdocDialog from '../components/overlays/progressdoc-dialog';
 import ButtonConfirmPopover from '../components/modal/button-confirm-popover';
+import role from '../redux/modules/auth';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -53,10 +54,10 @@ class ProgressdocScreen extends Component {
       isNewDoc: false,
       isLoading: false,
       rowSelected: 0,
+      semesterPages: {},
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.defaultselectedJysIdList = [userInfo.departmentId];  //Keep default selected index!
-    this.semesterPages = {};
 
     this.docListHeaders = [
       {name: t("progressdocScreen.list_header_id"), field: "id", width: 80},
@@ -88,8 +89,6 @@ class ProgressdocScreen extends Component {
     this.agGridRef = React.createRef();
     this.jysTitle = t("kebiao.jys");
     this.titleSelected = "";
-    this.buildSemester();
-    //this.buildData();
   }
 
   componentDidMount() {
@@ -98,7 +97,7 @@ class ProgressdocScreen extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, jysList, stageList, docList } = this.props;
-    const { selectedJysIdList, selectedDocId, isProgressDocOpen, isLoading, rowSelected } = this.state;
+    const { selectedJysIdList, selectedDocId, isProgressDocOpen, isLoading, rowSelected, semesterPages } = this.state;
     if (nextState.selectedDocId !== selectedDocId || nextState.isProgressDocOpen !== isProgressDocOpen || nextState.selectedJysIdList !== selectedJysIdList || nextState.isLoading !== isLoading || nextState.rowSelected !== rowSelected) {
       //console.log("shouldComponentUpdate, selected_jys diff");
       return true;
@@ -106,8 +105,8 @@ class ProgressdocScreen extends Component {
       //console.log("shouldComponentUpdate, props diff");
       return true;
     } else if (nextProps.stageList !== stageList ) {
-      //console.log("shouldComponentUpdate, stageList diff");
-      this.buildSemester();
+      return true;
+    } else if (nextState.semesterPages !== semesterPages) {
       return true;
     }
     return false;
@@ -131,6 +130,10 @@ class ProgressdocScreen extends Component {
     if (prevProps.docList !== this.props.docList) {
       this.setState({isLoading: false});
     }
+    if (prevProps.stageList !== this.props.stageList) {
+      const { t } = this.props;
+      this.setState({semesterPages : {0: t("progressdocScreen.stage_none"), ...this.props.stageList, 99999: t("progressdocScreen.stage_all")}});
+    }
   }
 
   componentWillUnmount() {
@@ -138,7 +141,7 @@ class ProgressdocScreen extends Component {
   }
 
   loadData = () => {
-    if (!this.semesterPages || this.semesterPages.length === 0) {
+    if (!this.state.semesterPages || this.state.semesterPages.length === 0) {
       this.props.fetchStageList();
     }
     if (!this.jysData || this.jysData.length === 0) { // only get jys list when it's empty
@@ -146,14 +149,6 @@ class ProgressdocScreen extends Component {
     }
     if (this.state.selectedJysIdList && !this.hasFetchKebiao) {
       this.loadDocList(this.state.selectedJysIdList);
-    }
-  }
-  
-  buildSemester = () => {
-    const { t, stageList } = this.props;
-    if (Object.keys(this.semesterPages).length <= 0) {
-      this.semesterPages = {0: t("progressdocScreen.stage_none"), ...stageList, 99999: t("progressdocScreen.stage_all")};
-      //console.log("buildSemester: stages: "+JSON.stringify(this.semesterPages));
     }
   }
 
@@ -194,7 +189,7 @@ class ProgressdocScreen extends Component {
   }
 
   onSemesterPageChanged = (index) => {
-    const { semesterPages } = this;
+    const { semesterPages } = this.state;
     console.log("onSemesterPageChanged: "+semesterPages[index].name);
     if (index < 0 || index >= semesterPages.length) {
       return;
@@ -242,6 +237,7 @@ class ProgressdocScreen extends Component {
 
   onDeleteDoc = (event) => {
     const { selectedDocId } = this.state;
+    const { userInfo, accessLevel } = this.props;
     if (selectedDocId <= 0) {
       this.props.setToast({type:"warning", message:"toast.warn_no_row_selected"});
       return;
@@ -251,6 +247,10 @@ class ProgressdocScreen extends Component {
       let node = api.getRowNode(""+selectedDocId);
       if (!node) {
         this.props.setToast({type:"warning", message:"toast.warn_doc_delete_stopped_by_grid_fail"});
+        return;
+      }
+      if (node.data.user_id !== userInfo.id || accessLevel < role.OFFICER) {
+        this.props.setToast({type:"warning", message:"toast.warn_doc_delete_stopped_by_access_right"});
         return;
       }
       if ((node.data.classes && Object.keys(node.data.classes).length > 0) || (node.data.curriculums && node.data.curriculums > 0)){
@@ -272,8 +272,8 @@ class ProgressdocScreen extends Component {
 
   render() {
     const { t, jysList, docList, userInfo, accessLevel, openedDocId } = this.props;
-    const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc, isLoading, rowSelected } = this.state;
-    const { color, jysTitle, titleSelected, docListHeaders, semesterPages } = this;
+    const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc, isLoading, rowSelected, semesterPages } = this.state;
+    const { color, jysTitle, titleSelected, docListHeaders } = this;
     let tableTitle = "";
     if (titleSelected && titleSelected.length > 0) {
       tableTitle =  t("progressdocScreen.doclist_table_title_template", {jys_name: titleSelected});
@@ -354,8 +354,7 @@ class ProgressdocScreen extends Component {
           btnText={t("common.open")}
           userInfo={userInfo}
           accessLevel={accessLevel}
-          isNewDoc={isNewDoc}
-          isSaveable />
+          isNewDoc={isNewDoc} />
       </Flex>
     );
   }

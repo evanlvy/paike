@@ -50,7 +50,9 @@
     "warn_no_row_selected": "请先选择要操作的行!",
     "warning_save_no_change": "提示：没有可以保存的改动!",
     "warn_doc_delete_stopped_by_reference": "该进度已经绑定了课程，请解绑后再删除!",
-    "warn_doc_delete_stopped_by_grid_fail": "无法读取表格数据，请重试!"
+    "warn_doc_delete_stopped_by_grid_fail": "无法读取表格数据，请重试!",
+    "warn_doc_delete_stopped_by_access_right": "只有该文档的所有者或管理员能删除该文档!",
+    "toast_doc_save_not_allowed": "只有文档所有者或管理员能保存修改!"
   },
   "grade": {
     "college": "大专",
@@ -291,6 +293,7 @@
     "list_header_updated": "更新时间",
     "list_header_comments": "注释",
     "list_header_classes": "实施班级",
+    "btn_save_as": "另存为我的进度",
     "doclist_table_title_template": "教研室学期教学进度表 {{jys_name}}",
     "doc_detail_title": "教学进度表格",
     "hint_stageselector": "按学期过滤",

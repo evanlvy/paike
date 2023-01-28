@@ -79,17 +79,21 @@ class EditableTableWrapper extends Component {
   }
 
   buildColDef = (props) => {
-    const { headers, defaultColWidth, colLineHeight, cellClassRules } = props;
+    const { headers, defaultColWidth, colLineHeight, cellClassRules, disableEdit } = props;
     const columnDefs = [];
     if (!headers || !Array.isArray(headers)) {
       return;
     }
     for (let i=0; i < headers.length; i++) {
       let { name, dataType, fn_disable, ...defs_generated} = headers[i];
-      if (defs_generated.editable) {
-        if ((defs_generated.width && defs_generated.width>=200) || ( defs_generated.minWidth && defs_generated.minWidth>=200))
-        // Use Large text editor for super long text!
-        defs_generated.cellEditor = 'agLargeTextCellEditor';
+      if (defs_generated.editable === true) {
+        if (disableEdit === false) {
+          defs_generated.editable = false;
+        }
+        else if ((defs_generated.width && defs_generated.width>=200) || ( defs_generated.minWidth && defs_generated.minWidth>=200)) {
+          // Use Large text editor for super long text!
+          defs_generated.cellEditor = 'agLargeTextCellEditor';
+        }
       }
       if (cellClassRules) {
         defs_generated.cellClassRules = cellClassRules;

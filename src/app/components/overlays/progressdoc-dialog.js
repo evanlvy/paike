@@ -364,8 +364,13 @@ class ProgressdocDialog extends Component {
 
   onSaveDialogResult = (isOk) => {
     if (!isOk || !this.agGridRef.current.gridApi) return true;
-    const { docProps } = this.props;
+    const { docProps, userInfo } = this.props;
     if (this.state.saveOption === '2'){
+      // Check if current user is the doc owner
+      if (!this.isDocEditable()) {
+        this.props.setToast({type:"error", message:"toast.toast_doc_save_not_allowed"})
+        return false; // Break for error
+      }
       // Overwrite current doc directly:
       // 1. Doc Propertises: Check each prop change
       let props_diff = {};
@@ -428,46 +433,57 @@ class ProgressdocDialog extends Component {
       // Call Server backend API
       this.props.saveDoc(this.state['id'], props_diff, rows_diff);
     } else {
-      // Copy a new set of doc & items! Change user_id to current user!
-      // Send data as dataframe to save traffic
-      let new_props = {}
-      this.forms.forEach((form) => {
-        new_props[form.id] = this.state[form.id];
-      });
-      // When many rows changed, use dataframe mode.
-      //let df_col = this.tableHeaders.map((col) => {
-        // Server do not accept lab_alloc attribute, change to labitem_id
-      //  return col['field'] === tableFields.LAB_ALLOC?tableFields.LABITEM_ID:col['field'];
-      //});
-      let df_col = [];
-      let laballoc_idx = -1;
-      this.tableHeaders.forEach((col, index) => {
-        //if (col['field'] === tableFields.LAB_ALLOC) {
-        //  // Server do not accept lab_alloc attribute, change to labitem_id
-        //  df_col.push(tableFields.LABITEM_ID);
-        //} else 
-        if (col['field'] !== 'id') {
-          if (col['field'] === tableFields.LAB_ALLOC) {
-            laballoc_idx = df_col.length;
-          }
-          // Do not set id for new items
-          df_col.push(col['field']);
-        }
-      });
-      let df_data = [];
-      this.agGridRef.current.gridApi.forEachNode((rowNode) => {
-        df_data.push(df_col.map((col)=> {
-          let ret = (col in rowNode.data)?rowNode.data[col]:undefined;
-          if (typeof(ret) === 'object') ret = ret.id;
-          return ret;
-        }));
-      });
-      df_col[laballoc_idx] = tableFields.LABITEM_ID;
-      console.log("onSave: df_data"+JSON.stringify(df_data));
-      //TODO: 解决新建doc包含doc_id问题。解决新建item时的id问题！
-      this.props.saveDoc(-1, new_props, null, df_col, df_data, this.state.department_id);
+      this.saveDocAs();
     }
     return true;
+  }
+
+  saveDocAs = () => {
+    const { userInfo } = this.props;
+    // Copy a new set of doc & items! Change user_id to current user!
+    // Send data as dataframe to save traffic
+    let new_props = {}
+    this.forms.forEach((form) => {
+      new_props[form.id] = this.state[form.id];
+    });
+    if (this.state.department_id && this.state.department_id > 0) {
+      new_props['department_id'] = this.state.department_id;
+    }
+    if (userInfo && userInfo.id > 0) {
+      new_props['user_id'] = userInfo.id;
+    }
+    // When many rows changed, use dataframe mode.
+    //let df_col = this.tableHeaders.map((col) => {
+    //// Server do not accept lab_alloc attribute, change to labitem_id
+    //  return col['field'] === tableFields.LAB_ALLOC?tableFields.LABITEM_ID:col['field'];
+    //});
+    let df_col = [];
+    let laballoc_idx = -1;
+    this.tableHeaders.forEach((col, index) => {
+      //if (col['field'] === tableFields.LAB_ALLOC) {
+      //  // Server do not accept lab_alloc attribute, change to labitem_id
+      //  df_col.push(tableFields.LABITEM_ID);
+      //} else 
+      if (col['field'] !== 'id') {
+        if (col['field'] === tableFields.LAB_ALLOC) {
+          laballoc_idx = df_col.length;
+        }
+        // Do not set id for new items
+        df_col.push(col['field']);
+      }
+    });
+    let df_data = [];
+    this.agGridRef.current.gridApi.forEachNode((rowNode) => {
+      df_data.push(df_col.map((col)=> {
+        let ret = (col in rowNode.data)?rowNode.data[col]:undefined;
+        if (typeof(ret) === 'object') ret = ret.id;
+        return ret;
+      }));
+    });
+    df_col[laballoc_idx] = tableFields.LABITEM_ID;
+    console.log("onSave: df_data"+JSON.stringify(df_data));
+    //TODO: 解决新建doc包含doc_id问题。解决新建item时的id问题！
+    this.props.saveDoc(-1, new_props, null, df_col, df_data);
   }
 
   onSaveOptionChanged = (event) => {
@@ -713,9 +729,16 @@ class ProgressdocDialog extends Component {
     }
   };*/
 
+  isDocEditable = () => {
+    const { docProps, userInfo, accessLevel } = this.props;
+    return (accessLevel && (accessLevel >= role.PROFESSOR)) || (docProps && userInfo && (userInfo.id === docProps.user_id || accessLevel >= role.OFFICER));
+  }
+
   render() {
     const { department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, saveOption, createdItems } = this.state;
-    const { t, title, color, isOpen, onClose, openedDocId, isSaveable, tableTitle, departments, docProps, docItems, userInfo, accessLevel, isNewDoc, curriculums } = this.props;
+    const { t, title, color, isOpen, onClose, openedDocId, tableTitle, departments, docProps, docItems, isNewDoc, curriculums } = this.props;
+    // Admin or doc author can edit this doc
+    let isEditable = this.isDocEditable();
     return (
       <>
         <Modal
@@ -781,6 +804,7 @@ class ProgressdocDialog extends Component {
               <EditableTable
                 ref={this.agGridRef}
                 flex={1}
+                disableEdit={isEditable}
                 autoShrinkDomHeight
                 minHeight={950}
                 titleHeight={50}
@@ -829,12 +853,14 @@ class ProgressdocDialog extends Component {
               isSaveable />
             </ModalBody>
             <ModalFooter alignItems='center'>
-              <Text mr={3} as='b'>{curriculums?(t("progressdocScreen.info_curriculum_related_count")+curriculums):''}</Text>
-              <Button variantColor="blue" mr={3} onClick={this.addRow} leftIcon={MdNoteAdd} isDisabled={rowSelected!==1}>{t("common.insert_row")}</Button>
-              <Button variantColor="red" mr={3} onClick={this.delRow} leftIcon={MdDelete} isDisabled={rowSelected<1}>{t("common.remove_row")}</Button>
-              <Button variantColor="green" mr={3} onClick={this.flashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button>
-              { isSaveable && 
-                <Button variantColor="red" mr={3} onClick={this.onSave} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("common.save")}</Button>
+              { isEditable && 
+                <Text mr={3} as='b'>{curriculums?(t("progressdocScreen.info_curriculum_related_count")+curriculums):''}</Text> }
+              { isEditable && <Button variantColor="blue" mr={3} onClick={this.addRow} leftIcon={MdNoteAdd} isDisabled={rowSelected!==1}>{t("common.insert_row")}</Button> }
+              { isEditable && <Button variantColor="red" mr={3} onClick={this.delRow} leftIcon={MdDelete} isDisabled={rowSelected<1}>{t("common.remove_row")}</Button> }
+              { isEditable && <Button variantColor="green" mr={3} onClick={this.flashCells} isDisabled={Object.keys(editedRowCache).length<=0}>{t("common.flash_changed_cells")}</Button> }
+              { isEditable
+                ? <Button variantColor="red" mr={3} onClick={this.onSave} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("common.save")}</Button>
+                : <Button variantColor="red" mr={3} onClick={this.saveDocAs} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("progressdocScreen.btn_save_as")}</Button>
               }
               <Button onClick={onClose}>{t("common.close")}</Button>
             </ModalFooter>
@@ -854,7 +880,7 @@ class ProgressdocDialog extends Component {
             <Radio value='1' variantColor='green' size='lg'>
               {t("progressdocScreen.selector_save_doc_as_copy")}
             </Radio>
-            <Radio value='2' variantColor='red' size='lg' isDisabled={docProps && userInfo && userInfo.id !== docProps.user_id && accessLevel >= role.PROFESSOR}>
+            <Radio value='2' variantColor='red' size='lg' isDisabled={docProps && isEditable}>
               {t("progressdocScreen.selector_save_original_doc", {count: 5})}
             </Radio>
           </RadioGroup>

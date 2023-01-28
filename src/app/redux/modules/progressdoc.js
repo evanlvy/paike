@@ -180,13 +180,13 @@ export const actions = {
       "items": {"0": {"id": 1, "ord": 888},
                 "1": {"id": 2, "ord": 999}}
     }*/
-    saveDoc: (docId, docDiffDict, itemsDiffDict, itemsDiffCol=null, itemsDiffDataframe=null, departmentId=-1) => {
+    saveDoc: (docId, propsDiffDict, itemsDiffDict, itemsDiffCol=null, itemsDiffDataframe=null) => {
       // Save progress doc props from form to progress_doc table
       console.log(`saveDoc: doc_id: ${docId}`);
       return async (dispatch, getState) => {
         try {
           dispatch(appActions.startRequest());
-          const new_id = await progressdocApi.setDoc(docId, departmentId<=0?docDiffDict:{...docDiffDict, department_id:departmentId}, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
+          const new_id = await progressdocApi.setDoc(docId, propsDiffDict, itemsDiffDict, itemsDiffCol, itemsDiffDataframe);
           dispatch(appActions.finishRequest());
           dispatch(appActions.setToast({type:"success", message:"toast.toast_request_save_success"}));
           dispatch(setSelectedDoc(-1));  // Close doc dialog
@@ -194,7 +194,7 @@ export const actions = {
           if (!isNewDoc) {
             dispatch(setDocSuccess(docId));  // Clear doc store
             // To update doc list table in progressdoc-screen.  
-            dispatch(updateDoc(docId, docDiffDict));
+            dispatch(updateDoc(docId, propsDiffDict));
           } else {
             dispatch(addToFetchedGroup(getSelectedGroup(getState()), new_id));
           }
