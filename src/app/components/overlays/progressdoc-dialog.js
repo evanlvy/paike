@@ -450,7 +450,15 @@ class ProgressdocDialog extends Component {
       new_props['department_id'] = this.state.department_id;
     }
     if (userInfo && userInfo.id > 0) {
+      // Change user id to current teacher
       new_props['user_id'] = userInfo.id;
+      // Replace or append current teacher name to description
+      let description = new_props['description'];
+      let prefix_idx = description.indexOf('-');
+      if (prefix_idx > 0) {
+        description = description.substr(0, prefix_idx);
+      }
+      new_props['description'] = description+'-'+userInfo.name;
     }
     // When many rows changed, use dataframe mode.
     //let df_col = this.tableHeaders.map((col) => {
@@ -880,8 +888,8 @@ class ProgressdocDialog extends Component {
             <Radio value='1' variantColor='green' size='lg'>
               {t("progressdocScreen.selector_save_doc_as_copy")}
             </Radio>
-            <Radio value='2' variantColor='red' size='lg' isDisabled={docProps && isEditable}>
-              {t("progressdocScreen.selector_save_original_doc", {count: 5})}
+            <Radio value='2' variantColor='red' size='lg' isDisabled={!isEditable}>
+              {t("progressdocScreen.selector_save_original_doc", {count: curriculums?curriculums:0})}
             </Radio>
           </RadioGroup>
           <br/>

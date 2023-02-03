@@ -30,7 +30,8 @@
     "flash_changed_cells": "高亮我的改动",
     "insert_row": "插入新行",
     "remove_row": "删除行",
-    "just_now": "刚刚"
+    "just_now": "刚刚",
+    "only_mine": "只看我的"
   },
   "alert": {
     "default_title": "警告",

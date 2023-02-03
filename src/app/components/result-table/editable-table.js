@@ -235,6 +235,13 @@ class EditableTableWrapper extends Component {
     }, 1000);
   }
 
+  clearEditTimer = () => {
+    if (this.editTimer) {
+      clearTimeout(this.editTimer);
+      this.editTimer = null;
+    }
+  }
+
   notifyPageIndexChanged = (index) => {
     const { onResultPageIndexChanged } = this.props;
     if (onResultPageIndexChanged) {

@@ -349,8 +349,6 @@ class ResultTableWrapper extends Component {
   }
 
   render() {
-    const { frameworkComponents, columnDefs, defaultColDef, onGridSizeChanged, onGridReady,
-      onCellClicked, onRowClicked, onRowDoubleClicked, onRowSelected, onPagePrevClicked, onPageNextClicked, onEditPageNum } = this;
     const { t, width, title, titleHeight, color, rowHeight,
       pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption, rowSelection, 
       onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onRowDoubleClicked: onRowDoubleClickedCb,
@@ -372,13 +370,13 @@ class ResultTableWrapper extends Component {
                   pageInputCaption &&
                   <Flex direction="row" alignItems="center">
                     <Text ml={2} whiteSpace="nowrap">{pageInputCaption[0]}</Text>
-                    <Input width="3rem" px="4px" textAlign="center" mx={2} size="md" value={curPageIndex+1} onChange={onEditPageNum} />
+                    <Input width="3rem" px="4px" textAlign="center" mx={2} size="md" value={curPageIndex+1} onChange={this.onEditPageNum} />
                     <Text mr={2} whiteSpace="nowrap">{pageInputCaption[1]}</Text>
                   </Flex>
                 }
-                <Button mr={2} variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
+                <Button mr={2} variantColor="gray" variant="solid" disabled={curPageIndex <= 0} onClick={this.onPagePrevClicked}>{pagePrevCaption ? pagePrevCaption : t("common.previous")}</Button>
                 { !pageInputCaption && <Text whiteSpace="nowrap" mx={2}>{this.getPageText(pageNames, curPageIndex)}</Text> }
-                <Button ml={2} variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
+                <Button ml={2} variantColor="gray" variant="solid" disabled={curPageIndex >= pageNames.length-1} onClick={this.onPageNextClicked}>{pageNextCaption ? pageNextCaption : t("common.next")}</Button>
               </Flex>
             }
           </Box>
@@ -390,19 +388,19 @@ class ResultTableWrapper extends Component {
               overlayNoRowsTemplate={this.overlayNoRowsTemplate}
               overlayLoadingTemplate={this.overlayLoadingTemplate}
               animateRows={false}
-              onGridReady={onGridReady}
-              onGridSizeChanged={onGridSizeChanged}
-              defaultColDef={defaultColDef}
-              frameworkComponents={frameworkComponents}
-              columnDefs={columnDefs}
+              onGridReady={this.onGridReady}
+              onGridSizeChanged={this.onGridSizeChanged}
+              defaultColDef={this.defaultColDef}
+              frameworkComponents={this.frameworkComponents}
+              columnDefs={this.columnDefs}
               rowData={data}
               rowHeight={rowHeight}
               //rowClassRules={rowClassRules}
-              onCellClicked={onCellClicked}
-              onRowClicked={onRowClicked}
-              onRowDoubleClicked={onRowDoubleClicked}
+              onCellClicked={this.onCellClicked}
+              onRowClicked={this.onRowClicked}
+              onRowDoubleClicked={this.onRowDoubleClicked}
               rowSelection={rowSelection}
-              onRowSelected={onRowSelected}
+              onRowSelected={this.onRowSelected}
               {...other_props} >
             </AgGridReact>
           </div>

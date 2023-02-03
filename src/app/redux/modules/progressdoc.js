@@ -28,8 +28,8 @@ export const tableFields = {
 export const types = {
     SEARCH_DOC_LIST: "PROGRESSDOC/SEARCH_DOC_LIST",
     FETCH_DOC_GROUP: "PROGRESSDOC/FETCH_DOC_GROUP",
-    UPDATE_FETCHED_GROUP: "PROGRESSDOC/UPDATE_FETCHED_GROUP",
-    UPDATE_DOC_LIST: "PROGRESSDOC/UPDATE_DOC_LIST",
+    ADD_FETCHED_GROUP: "PROGRESSDOC/ADD_FETCHED_GROUP",
+    DEL_FETCHED_GROUP: "PROGRESSDOC/DEL_FETCHED_GROUP",
     FETCH_DOC: "PROGRESSDOC/FETCH_DOC",
     CLEAR_DOC: "PROGRESSDOC/CLEAR_DOC",
     CLEAR_DOC_CONTENT: "PROGRESSDOC/CLEAR_DOC_CONTENT",
@@ -37,22 +37,18 @@ export const types = {
     SET_SELECTED_GROUP: "PROGRESSDOC/SET_SELECTED_GROUP",
     SET_SELECTED_SEARCH: "PROGRESSDOC/SET_SELECTED_SEARCH",
     SET_OPENED_DOC_ID: "PROGRESSDOC/SET_OPENED_DOC_ID",
-    CLR_OPENED_DOC_ID: "PROGRESSDOC/CLR_OPENED_DOC_ID",
-    ADD_DOC: "PROGRESSDOC/ADD_DOC",
-    DEL_DOC: "PROGRESSDOC/DEL_DOC",
+    SET_CREATED_DOC_ID: "PROGRESSDOC/SET_CREATED_DOC_ID",
+    SET_FLAG_LIST_EXPIRED: "PROGRESSDOC/SET_FLAG_LIST_EXPIRED",
     UPDATE_DOC: "PROGRESSDOC/UPDATE_DOC",
     UPDATE_DOCS: "PROGRESSDOC/UPDATE_DOCS",
-    ADD_ROW: "PROGRESSDOC/ADD_ROW",
-    DEL_ROW: "PROGRESSDOC/DEL_ROW",
-    UPDATE_ROW: "PROGRESSDOC/UPDATE_ROW",
     FETCH_LABITEM: "PROGRESSDOC/FETCH_LABITEM",
     SEARCH_LABITEM: "PROGRESSDOC/SEARCH_LABITEM",
-    UPDATE_LABITEM: "PROGRESSDOC/UPDATE_LABITEM",
-    ADD_LABITEM: "PROGRESSDOC/ADD_LABITEM",
-    DEL_LABITEM: "PROGRESSDOC/DEL_LABITEM",
+    //UPDATE_LABITEM: "PROGRESSDOC/UPDATE_LABITEM",
+    //ADD_LABITEM: "PROGRESSDOC/ADD_LABITEM",
+    //DEL_LABITEM: "PROGRESSDOC/DEL_LABITEM",
     SET_SELECTED_LABITEM: "PROGRESSDOC/SET_SELECTED_LABITEM",
     SET_CREATED_LABITEM: "PROGRESSDOC/SET_CREATED_LABITEM",
-    GET_CURRICULUM_COUNT_RESULT: "PROGRESSDOC/GET_CURRICULUM_COUNT_RESULT",
+    CURRICULUM_COUNT_RESULT: "PROGRESSDOC/CURRICULUM_COUNT_RESULT",
   };
 
 export const nonProps = ["total", "items", "curriculums"];
@@ -81,6 +77,12 @@ export const actions = {
       }
     },
     fetchDocList: (department_id, stage=0, items_per_page=0, page_id=0) => {
+      //const test0 = Immutable.fromJS({'30-0': [45, 46, 47, 48], "30-4": [64, 65,66,67,68]});
+      //const test1 = Immutable.fromJS(['30-0', [47]]);
+      //console.log(test0.update('30-0', docList => docList.splice(docList.indexOf(46), 1)).toJS());
+      // Stage: as sate_id, 2 special values as below:
+      //        0: curriculum-not-assigned
+      //        99999: all-stages
       console.log(`fetchDocList: dep_id: ${department_id}`);
       return async (dispatch, getState) => {
         try {
@@ -165,7 +167,30 @@ export const actions = {
 
     },
     closeDoc: () => ({
-      type: types.CLR_OPENED_DOC_ID,
+      type: types.SET_OPENED_DOC_ID,
+      id: -1,
+    }),
+    setCreatedDoc: (id) => ({
+      type: types.SET_CREATED_DOC_ID,
+      id,
+    }),
+    clearCreatedDoc: () => ({
+      type: types.SET_CREATED_DOC_ID,
+      id: -1,
+    }),
+    setDocListExpired: (isExpired) => ({
+      type: types.SET_FLAG_LIST_EXPIRED,
+      isExpired,
+    }),
+    addToFetchedGroup: (group, id) => ({
+        type: types.ADD_FETCHED_GROUP,
+        group,
+        id
+    }),
+    delFromFetchedGroup: (group, id) => ({
+      type: types.DEL_FETCHED_GROUP,
+      group,
+      id
     }),
     clearCreatedLabitem: () => ({
       type: types.SET_CREATED_LABITEM,
@@ -196,7 +221,18 @@ export const actions = {
             // To update doc list table in progressdoc-screen.  
             dispatch(updateDoc(docId, propsDiffDict));
           } else {
-            dispatch(addToFetchedGroup(getSelectedGroup(getState()), new_id));
+            // New doc! Add to non-assigned group!
+            let dest_group = getSelectedGroup(getState());
+            let prefix_idx = dest_group.indexOf('_');
+            if (prefix_idx > 0) {
+              dest_group = dest_group.substring(0, prefix_idx)+'_0';
+            }
+            // Add new doc props and items to fetchedDoc!
+            dispatch(updateDoc(new_id, propsDiffDict));
+            // Add new doc id to stage_0 group!
+            dispatch(actions.addToFetchedGroup(dest_group, new_id));
+            // Set created doc id flag to notify UI!
+            dispatch(actions.setCreatedDoc(new_id));
           }
         } catch (error) {
           dispatch(appActions.setError(error));
@@ -216,7 +252,7 @@ export const actions = {
     saveLabItem: (progressId, labitemId, itemDiffDict) => {
       // Add/modify a lab item, return the created/modified labitem_id
       console.log(`saveLabItem: labitem_id: ${labitemId}`);
-      return async (dispatch, getState) => {
+      return async (dispatch) => {
         try {
           dispatch(appActions.startRequest());
           if (labitemId <= 0) {
@@ -245,7 +281,7 @@ export const actions = {
       }
     },
     getCurriculumCount: (doc_id) => {
-      return async (dispatch, getState) => {
+      return async (dispatch) => {
         try {
           dispatch(appActions.startRequest());
           if (doc_id) {
@@ -260,7 +296,7 @@ export const actions = {
       }
     },
     deleteDoc: (doc_id) => {
-      return async (dispatch) => {
+      return async (dispatch, getState) => {
         try {
           dispatch(appActions.startRequest());
           if (doc_id) {
@@ -268,6 +304,7 @@ export const actions = {
             let count = result.count?result.count:0;
             if (count > 0) {
               dispatch(delDocSuccess(doc_id));
+              dispatch(actions.delFromFetchedGroup(getSelectedGroup(getState()), doc_id));
             }
           }
           dispatch(appActions.finishRequest());
@@ -327,14 +364,6 @@ const fetchGroupSuccess = (department_id, stage, data) => {
   })
 }
 
-const addToFetchedGroup = (selected, id) => {
-  return ({
-    type: types.UPDATE_FETCHED_GROUP,
-    selected,
-    id
-  })
-}
-
 const fetchDocSuccess = (id, data) => {
   return ({
     type: types.FETCH_DOC,
@@ -364,10 +393,10 @@ const setSelectedDoc = (id) => {
   })
 }
 
-const setSelectedGroup = (id, stage) => {
+const setSelectedGroup = (department_id, stage) => {
   return ({
     type: types.SET_SELECTED_GROUP,
-    id,
+    department_id,
     stage
   })
 }
@@ -426,7 +455,7 @@ const updateLabItemCache = (docId, progressId, labItemObj) => {
 
 const setCurriculumsCountResult = (count) => {
   return ({
-    type: types.GET_CURRICULUM_COUNT_RESULT,
+    type: types.CURRICULUM_COUNT_RESULT,
     count
   })
 }
@@ -449,10 +478,32 @@ const fetchedGroup = (state = Immutable.fromJS({}), action) => {
     case types.FETCH_DOC_GROUP:
       return state.merge({[action.department_id+"_"+action.stage]: action.data});
     case types.SET_SELECTED_GROUP:
-      return state.merge({selected: action.id+"_"+action.stage});
-    case types.UPDATE_FETCHED_GROUP:
-      return state.update(action.selected, docList => 
-        {docList.push(action.id)});
+      return state.merge({selected: action.department_id+"_"+action.stage});
+    case types.SET_FLAG_LIST_EXPIRED:
+      return state.merge({expired: action.isExpired});
+    case types.ADD_FETCHED_GROUP:
+      {
+        let id_list = state.get(action.group);
+        if (!id_list) {
+          // List not loaded yet! keep undefined
+          return state;
+        }
+        return state.mergeDeep({[action.group]: [...id_list, String(action.id)]})
+      }
+    case types.DEL_FETCHED_GROUP:
+      {
+        let id_list = state.get(action.group);
+        if (!id_list || !Array.isArray(id_list)) {
+          // List not loaded yet! keep undefined
+          return state;
+        }
+        let id_idx = id_list.indexOf(String(action.id));
+        if (id_idx < 0) {
+          return state;
+        }
+        id_list.splice(id_idx, 1)
+        return state.merge({[action.group]: id_list});
+      }
     default:
       return state;
   }
@@ -464,7 +515,7 @@ const fetchedDoc = (state = Immutable.fromJS({}), action) => {
       return state.merge({[""+action.id]: action.data});
     case types.UPDATE_DOC:
       return state.mergeDeep({
-        [action.id]: {...action.props, id: action.id, updated_at: "Just Now"}
+        [action.id]: {...action.props, id: action.id, created_at: "Just Now"}
       });
     case types.UPDATE_DOCS:
       return state.mergeDeep(action.docs);
@@ -474,8 +525,8 @@ const fetchedDoc = (state = Immutable.fromJS({}), action) => {
       return state.removeIn([""+action.id, "items"]);
     case types.SET_OPENED_DOC_ID:
       return state.merge({selected: action.id})
-    case types.CLR_OPENED_DOC_ID:
-      return state.merge({selected: -1})
+    case types.SET_CREATED_DOC_ID:
+      return state.merge({created: action.id})
     //case types.REMOVE_LAB_LOCATIONS:
     //  return state.removeIn([""+action.docId, "items", ""+action.progressId, "lab_alloc", "items"]);
     case types.UPDATE_LAB_ITEM_CACHE:
@@ -520,7 +571,7 @@ const searchedLabitemBriefs = (state = Immutable.fromJS({}), action) => {
 
 const curriculumCountResult = (state = Immutable.fromJS({}), action) => {
   switch (action.type) {
-    case types.GET_CURRICULUM_COUNT_RESULT:
+    case types.CURRICULUM_COUNT_RESULT:
       return action.count;
     default:
       return state;
@@ -548,6 +599,8 @@ export const getSelectedSearch = (state) => state.getIn(["progressdoc", "searche
 export const getDocs = (state) => state.getIn(["progressdoc", "fetchedDoc"]);
 export const getDoc = (state) => state.getIn(["progressdoc", "fetchedDoc", ""+getOpenedDocId(state)]);
 export const getOpenedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
+export const getCreatedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "created"]);
+export const isDocListExpired = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
 
 export const getLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", ""+getSelectedLabitem(state)]);
 export const getSelectedLabitem = (state) => state.getIn(["progressdoc", "fetchedLabitems", "selected"]);

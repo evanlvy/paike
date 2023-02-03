@@ -13,12 +13,14 @@ import {
   Button,
   ButtonGroup,
   CircularProgress,
+  Checkbox,
 } from '@chakra-ui/core';
 import {
   MdTune,
   MdEdit,
   MdAdd,
   MdDelete,
+  MdFilter,
 } from 'react-icons/md';
 
 import {
@@ -27,10 +29,9 @@ import {
 } from '../components';
 
 import { actions as authActions, getLoggedUser, getAccessLevel } from '../redux/modules/auth';
-//import { actions as authActions, getDepartmentId } from '../redux/modules/auth';
 import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getColoredJysList } from '../redux/modules/jiaoyanshi';
-import { actions as progressdocActions, getDocList, getOpenedDocId } from '../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocList, getOpenedDocId, getCreatedDocId, getSelectedGroup } from '../redux/modules/progressdoc';
 import { actions as appActions } from '../redux/modules/app';
 import PromptDrawer from '../components/overlays/prompt-drawer';
 import ProgressdocDialog from '../components/overlays/progressdoc-dialog';
@@ -55,25 +56,27 @@ class ProgressdocScreen extends Component {
       isLoading: false,
       rowSelected: 0,
       semesterPages: {},
+      showMyProgress: true,
+      filteredDocList: [],
     };
     this.color = color ? color : DEFAULT_COLOR;
     this.defaultselectedJysIdList = [userInfo.departmentId];  //Keep default selected index!
 
     this.docListHeaders = [
-      {name: t("progressdocScreen.list_header_id"), field: "id", width: 80},
-      {name: t("progressdocScreen.list_header_name"), field: "course_name"},
-      {name: t("progressdocScreen.list_header_short"), field: "short_name"},
+      {name: t("progressdocScreen.list_header_id"), field: "id", width: 80, sortable: true},
+      {name: t("progressdocScreen.list_header_name"), field: "course_name", sortable: true},
+      {name: t("progressdocScreen.list_header_short"), field: "short_name", sortable: true},
       {name: t("progressdocScreen.list_header_description"), field: "description"},
-      {name: t("progressdocScreen.list_header_hours_total"), field: "total_hours", width: 80},
-      {name: t("progressdocScreen.list_header_hours_theory"), field: "theory_hours", width: 80},
-      {name: t("progressdocScreen.list_header_hours_lab"), field: "lab_hours", width: 80},
-      {name: t("progressdocScreen.list_header_hours_flex"), field: "flex_hours", width: 80},
+      {name: t("progressdocScreen.list_header_hours_total"), field: "total_hours", width: 80, sortable: true},
+      {name: t("progressdocScreen.list_header_hours_theory"), field: "theory_hours", width: 80, sortable: true},
+      {name: t("progressdocScreen.list_header_hours_lab"), field: "lab_hours", width: 80, sortable: true},
+      {name: t("progressdocScreen.list_header_hours_flex"), field: "flex_hours", width: 80, sortable: true},
       {name: t("progressdocScreen.list_header_textbook"), field: "textbook"},
       {name: t("progressdocScreen.list_header_exam"), field: "exam_type", width: 120},
       {name: t("progressdocScreen.list_header_comments"), field: "comments"},
-      {name: t("progressdocScreen.list_header_classes"), field: "classes", dataType: "classes_id_name_obj"},
-      {name: t("progressdocScreen.list_header_created"), field: "created_at"},
-      {name: t("progressdocScreen.list_header_updated"), field: "updated_at"},
+      {name: t("progressdocScreen.list_header_classes"), field: "classes", dataType: "classes_id_name_obj", sortable: true},
+      {name: t("progressdocScreen.list_header_created"), field: "created_at", sortable: true},
+      {name: t("progressdocScreen.list_header_updated"), field: "updated_at", sortable: true, sort: 'desc'},
     ];
 
     this.weekdayNames = [
@@ -97,7 +100,7 @@ class ProgressdocScreen extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     const { schoolYear, jysList, stageList, docList } = this.props;
-    const { selectedJysIdList, selectedDocId, isProgressDocOpen, isLoading, rowSelected, semesterPages } = this.state;
+    const { selectedJysIdList, selectedDocId, isProgressDocOpen, isLoading, rowSelected, semesterPages, showMyProgress, filteredDocList } = this.state;
     if (nextState.selectedDocId !== selectedDocId || nextState.isProgressDocOpen !== isProgressDocOpen || nextState.selectedJysIdList !== selectedJysIdList || nextState.isLoading !== isLoading || nextState.rowSelected !== rowSelected) {
       //console.log("shouldComponentUpdate, selected_jys diff");
       return true;
@@ -106,7 +109,7 @@ class ProgressdocScreen extends Component {
       return true;
     } else if (nextProps.stageList !== stageList ) {
       return true;
-    } else if (nextState.semesterPages !== semesterPages) {
+    } else if (nextState.semesterPages !== semesterPages || nextState.showMyProgress !== showMyProgress || nextState.filteredDocList !== filteredDocList) {
       return true;
     }
     return false;
@@ -127,17 +130,51 @@ class ProgressdocScreen extends Component {
         });
       }
     }
-    if (prevProps.docList !== this.props.docList) {
-      this.setState({isLoading: false});
+    if (prevProps.docList !== this.props.docList || prevState.showMyProgress !== this.state.showMyProgress) {
+      // Perform doc list filter
+      this.setState({
+        isLoading: false,
+        filteredDocList: this.state.showMyProgress?this.props.docList.filter(doc => doc.user_id === this.props.userInfo.id):this.props.docList
+      });
+      //console.log(this.state.filteredDocList);
     }
     if (prevProps.stageList !== this.props.stageList) {
       const { t } = this.props;
+      // Add special items to selector
       this.setState({semesterPages : {0: t("progressdocScreen.stage_none"), ...this.props.stageList, 99999: t("progressdocScreen.stage_all")}});
+    }
+    if (this.props.createdDocId > 0) {
+      // New doc created! Switch to stage 0
+      if (this.state.selectStage == 0 && this.props.selectedGroup.endsWith('_0')) {
+        // Currently on stage_0 page
+        const docId = this.props.createdDocId;
+        // Wait for 800ms for data grid ready, otherwise getRowNode will return null if cells not rendered yet!
+        setTimeout(() => {
+          this.selectDoc(docId);
+        }, 800);
+        this.props.clearCreatedDoc();
+      } else if (prevProps.createdDocId !== this.props.createdDocId) {
+        this.setState({selectStage: 0, rowSelected: 0});
+        this.loadDocList(this.state.selectedJysIdList, 0);  
+      }
     }
   }
 
   componentWillUnmount() {
     this.setState = ()=>false;
+  }
+
+  // SelectDoc works only after onGridReady called!!!
+  selectDoc = (docId) => {
+    if (!this.agGridRef.current || docId <= 0) return;
+    const api = this.agGridRef.current.gridApi;
+    if (api) {
+      let node = api.getRowNode(docId);
+      if (node) {
+        api.deselectAll();
+        node.setSelected(true);
+      }
+    }
   }
 
   loadData = () => {
@@ -272,7 +309,7 @@ class ProgressdocScreen extends Component {
 
   render() {
     const { t, jysList, docList, userInfo, accessLevel, openedDocId } = this.props;
-    const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc, isLoading, rowSelected, semesterPages } = this.state;
+    const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc, isLoading, rowSelected, semesterPages, filteredDocList } = this.state;
     const { color, jysTitle, titleSelected, docListHeaders } = this;
     let tableTitle = "";
     if (titleSelected && titleSelected.length > 0) {
@@ -290,13 +327,13 @@ class ProgressdocScreen extends Component {
           selectedIdsChanged={this.onJysIdsChanged}
           enableAutoTitle={true}
           enableSelect />
-        <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" minW={588} my={4} >
-          <Flex direction="row" alignItems="center" px={5} py={2}>
-            <Icon as={MdTune} color={color+".200"} size={12} />
-            <Text mx={5} whiteSpace="break-spaces" flexWrap="false" minW={120}>{t("progressdocScreen.hint_stageselector")}</Text>
+        <Box borderWidth={1} borderColor={color+".200"} borderRadius="md" overflowY="hidden" width="100%" my={4} >
+          <Flex direction="row" justifyContent="flex-start" alignItems="center" px={5} py={2}>
+            <Icon as={MdFilter} color={color+".200"} size={8} />
+            <Text mx={5} minW={100} whiteSpace="break-spaces">{t("progressdocScreen.hint_stageselector")}</Text>
             {
               (semesterPages && Object.keys(semesterPages).length > 0) &&
-              <Select width="100%" variant="filled" value={selectStage} onChange={this.onStageChanged}>
+              <Select minW={200} variant="filled" value={selectStage} onChange={this.onStageChanged}>
               {
                 Object.keys(semesterPages).map((stage_id) => (
                   <option key={stage_id} value={stage_id} >{semesterPages[stage_id]}</option>
@@ -304,6 +341,7 @@ class ProgressdocScreen extends Component {
               }
               </Select>
             }
+            <Checkbox mx={5} size='lg' colorScheme='orange' minW={100} defaultIsChecked defaultChecked onChange={(e) => this.setState({ showMyProgress: e.target.checked })}>{t("common.only_mine")}</Checkbox>
             <PromptDrawer t={t} promptText={t("editRawplanScreen.prompt_text")}/>
           </Flex>
         </Box>
@@ -324,11 +362,12 @@ class ProgressdocScreen extends Component {
             title={tableTitle}
             color={color}
             headers={docListHeaders}
-            data={docList}
+            data={filteredDocList}
             rowSelection="single"
             onRowSelected={this.onRowSelected}
             onRowDoubleClicked={this.onRowDoubleClicked}
             onSelectionChanged={this.onSelectionChanged}
+            //onGrid2Ready={this.onGrid2Ready}
           />
         }
         <ButtonGroup size="lg">
@@ -369,7 +408,8 @@ const mapStateToProps = (state) => {
     userInfo: getLoggedUser(state),
     accessLevel: getAccessLevel(state),
     openedDocId: getOpenedDocId(state),
-    //defaultJys: getDepartmentId(state),
+    createdDocId: getCreatedDocId(state),
+    selectedGroup: getSelectedGroup(state),
   }
 }
 
@@ -383,4 +423,6 @@ const mapDispatchToProps = (dispatch) => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(withTranslation()(ProgressdocScreen));
+export default connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(withTranslation()(ProgressdocScreen));
+
+// 打开自己doc，另存为新的... 然后一直转圈
