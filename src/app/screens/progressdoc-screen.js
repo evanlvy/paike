@@ -31,7 +31,7 @@ import {
 import { actions as authActions, getLoggedUser, getAccessLevel } from '../redux/modules/auth';
 import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getColoredJysList } from '../redux/modules/jiaoyanshi';
-import { actions as progressdocActions, getDocList, getOpenedDocId, getCreatedDocId, getSelectedGroup } from '../redux/modules/progressdoc';
+import { actions as progressdocActions, getDocList, getFetchedDocId, getCreatedDocId, getSelectedGroup } from '../redux/modules/progressdoc';
 import { actions as appActions } from '../redux/modules/app';
 import PromptDrawer from '../components/overlays/prompt-drawer';
 import ProgressdocDialog from '../components/overlays/progressdoc-dialog';
@@ -123,8 +123,8 @@ class ProgressdocScreen extends Component {
         selectedDocId: -1,
       });
     }
-    if (prevProps.openedDocId !== this.props.openedDocId) {
-      if (this.props.openedDocId < 0 && this.state.isNewDoc === false) {
+    if (prevProps.fetchedDocId !== this.props.fetchedDocId) {
+      if (this.props.fetchedDocId < 0 && this.state.isNewDoc === false) {
         this.setState({
           isProgressDocOpen: false,
         });
@@ -308,7 +308,7 @@ class ProgressdocScreen extends Component {
   };
 
   render() {
-    const { t, jysList, docList, userInfo, accessLevel, openedDocId } = this.props;
+    const { t, jysList, docList, userInfo, accessLevel, fetchedDocId } = this.props;
     const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc, isLoading, rowSelected, semesterPages, filteredDocList } = this.state;
     const { color, jysTitle, titleSelected, docListHeaders } = this;
     let tableTitle = "";
@@ -388,7 +388,7 @@ class ProgressdocScreen extends Component {
           isOpen={isProgressDocOpen}
           onClose={this.onProgressDocClose}
           departments={jysList}
-          openedDocId={openedDocId}
+          fetchedDocId={fetchedDocId}
           title={t("progressdocScreen.doc_detail_title")}
           btnText={t("common.open")}
           userInfo={userInfo}
@@ -407,7 +407,7 @@ const mapStateToProps = (state) => {
     docList: getDocList(state),
     userInfo: getLoggedUser(state),
     accessLevel: getAccessLevel(state),
-    openedDocId: getOpenedDocId(state),
+    fetchedDocId: getFetchedDocId(state),
     createdDocId: getCreatedDocId(state),
     selectedGroup: getSelectedGroup(state),
   }
@@ -424,5 +424,3 @@ const mapDispatchToProps = (dispatch) => {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null, { forwardRef: true })(withTranslation()(ProgressdocScreen));
-
-// 打开自己doc，另存为新的... 然后一直转圈

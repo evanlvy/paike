@@ -1,6 +1,7 @@
 import Immutable, { isImmutable } from 'immutable';
 import { combineReducers } from 'redux-immutable';
 import { createSelector } from 'reselect';
+import { formatDate } from './common/info';
 
 import { actions as appActions } from './app';
 import { api as progressdocApi } from '../../services/progressdoc';
@@ -93,7 +94,7 @@ export const actions = {
             dispatch(appActions.finishRequest());
             //let groups = convertGroupsToPlain(data);
             dispatch(fetchGroupSuccess(department_id, stage, Object.keys(data)));
-            dispatch(updateDocs(data));
+            dispatch(updateDocListRows(data));
           }
           dispatch(setSelectedGroup(department_id, stage));
         } catch (error) {
@@ -129,7 +130,7 @@ export const actions = {
               dispatch(appActions.finishRequest());
               dispatch(fetchLabitemSuccess(id, data));
               if (updateProgressId > 0){
-                dispatch(updateLabItemCache(getOpenedDocId(getState()), updateProgressId, data[id]));
+                dispatch(updateLabItemCache(getFetchedDocId(getState()), updateProgressId, data[id]));
               }
             }
             dispatch(setSelectedLabitem(id));
@@ -219,7 +220,7 @@ export const actions = {
           if (!isNewDoc) {
             dispatch(setDocSuccess(docId));  // Clear doc store
             // To update doc list table in progressdoc-screen.  
-            dispatch(updateDoc(docId, propsDiffDict));
+            dispatch(updateDocListRow(docId, propsDiffDict));
           } else {
             // New doc! Add to non-assigned group!
             let dest_group = getSelectedGroup(getState());
@@ -228,7 +229,7 @@ export const actions = {
               dest_group = dest_group.substring(0, prefix_idx)+'_0';
             }
             // Add new doc props and items to fetchedDoc!
-            dispatch(updateDoc(new_id, propsDiffDict));
+            dispatch(updateDocListRow(new_id, propsDiffDict));
             // Add new doc id to stage_0 group!
             dispatch(actions.addToFetchedGroup(dest_group, new_id));
             // Set created doc id flag to notify UI!
@@ -246,7 +247,7 @@ export const actions = {
         locArray.forEach((v, i) => loc_items[i] = {location:v});
         let itemObj = Object.assign(labItemObj, {items:loc_items});
         console.log(`updateLabItemCache: progress_id: ${progressId}`);
-        dispatch(updateLabItemCache(getOpenedDocId(getState()), progressId, itemObj));
+        dispatch(updateLabItemCache(getFetchedDocId(getState()), progressId, itemObj));
       }
     },*/
     saveLabItem: (progressId, labitemId, itemDiffDict) => {
@@ -268,7 +269,7 @@ export const actions = {
           /*if ('lab_locs' in itemDiffDict) {
             let loc_items = {};
             itemDiffDict['lab_locs'].forEach((v, i) => loc_items[i] = {location:v});
-            dispatch(updateLabItemCache(getOpenedDocId(getState()), progressId, loc_items));
+            dispatch(updateLabItemCache(getFetchedDocId(getState()), progressId, loc_items));
           }*/
         } catch (error) {
           if (error.cause && error.cause==="E00000404"){
@@ -429,7 +430,7 @@ const delDocSuccess = (id) => {
   })
 }
 
-const updateDoc = (id, props) => {
+const updateDocListRow = (id, props) => {
   return ({
     type: types.UPDATE_DOC,
     id,
@@ -437,7 +438,7 @@ const updateDoc = (id, props) => {
   })
 }
 
-const updateDocs = (docs) => {
+const updateDocListRows = (docs) => {
   return ({
     type: types.UPDATE_DOCS,
     docs
@@ -515,7 +516,7 @@ const fetchedDoc = (state = Immutable.fromJS({}), action) => {
       return state.merge({[""+action.id]: action.data});
     case types.UPDATE_DOC:
       return state.mergeDeep({
-        [action.id]: {...action.props, id: action.id, created_at: "Just Now"}
+        [action.id]: {...action.props, id: action.id, created_at: "Just Now", updated_at: formatDate(new Date())}
       });
     case types.UPDATE_DOCS:
       return state.mergeDeep(action.docs);
@@ -597,8 +598,8 @@ export const getSearchedList = (state) => state.getIn(["progressdoc", "searchedL
 export const getSelectedSearch = (state) => state.getIn(["progressdoc", "searchedList", "selected"]);
 
 export const getDocs = (state) => state.getIn(["progressdoc", "fetchedDoc"]);
-export const getDoc = (state) => state.getIn(["progressdoc", "fetchedDoc", ""+getOpenedDocId(state)]);
-export const getOpenedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
+export const getDoc = (state) => state.getIn(["progressdoc", "fetchedDoc", ""+getFetchedDocId(state)]);
+export const getFetchedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
 export const getCreatedDocId = (state) => state.getIn(["progressdoc", "fetchedDoc", "created"]);
 export const isDocListExpired = (state) => state.getIn(["progressdoc", "fetchedDoc", "selected"]);
 
@@ -622,7 +623,7 @@ export const getDocList = createSelector(
 );
 
 export const getDocProps = createSelector(
-  [getDoc, getOpenedDocId],
+  [getDoc, getFetchedDocId],
   (value, openedId) => {
     if (openedId <= 0 || !value || Object.keys(value).length <= 0) {
       return null;
@@ -634,7 +635,7 @@ export const getDocProps = createSelector(
 );
 
 export const getCurriculumCount = createSelector(
-  [getDoc, getOpenedDocId],
+  [getDoc, getFetchedDocId],
   (value, openedId) => {
     if (openedId <= 0 || !value || Object.keys(value).length <= 0) {
       return null;
@@ -644,7 +645,7 @@ export const getCurriculumCount = createSelector(
 );
 
 export const getDocItems = createSelector(
-  [getDoc, getOpenedDocId],
+  [getDoc, getFetchedDocId],
   (value, openedId) => {
     if (openedId <= 0 || !value || Object.keys(value).length <= 0 || !value.items) {
       return null;

@@ -77,9 +77,9 @@ class ProgressdocDialog extends Component {
     this.commonModalRef = React.createRef();
     this.agGridRef = React.createRef();
     this.forms = [
-      {id: "user_id", label: t("progressdocScreen.form_label_docowner"), minW: 280, isRequired: true, type: 'int'},
-      {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, isRequired: true},
-      {id: "short_name", label: t("progressdocScreen.form_label_shortname"), minW: 280, isRequired: true},
+      {id: "user_id", label: t("progressdocScreen.form_label_docowner"), maxW: 100, isRequired: true, type: 'int'},
+      {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, placeholder: "全称", isRequired: true},
+      {id: "short_name", label: t("progressdocScreen.form_label_shortname"), minW: 280, placeholder: "简称(用于课表)", isRequired: true},
       {id: "description", label: t("progressdocScreen.form_label_description"), minW: 280, isRequired: false},
       //{id: "department_id", label: t("progressdocScreen.form_label_departmentid"), maxW: 100, isRequired: true},
       {id: "total_hours", label: t("progressdocScreen.form_label_totalhours"), maxW: 100, isRequired: true, type: 'int'},
@@ -95,16 +95,18 @@ class ProgressdocDialog extends Component {
     this.lastHighlightedRow = null;
   }
 
+  static initDocState = { id: 0, user_id:0, department_id:0, course_name:"", short_name:"", description:"",total_hours:0, theory_hours:0, lab_hours:0, flex_hours:0, textbook:"", exam_tyoe:"", comments:"" };
+
   static getDerivedStateFromProps(props, state) {
     let result = {};
-    /*if (props.openedDocId) {
-      if (props.openedDocId >= 0 && !state.isOpen) result = {isOpen: true};
-      else if (props.openedDocId < 0 && state.isOpen) result = {isOpen: false};
-    }*/
-    if ((props.openedDocId < 0 || props.isNewDoc) && props.openedDocId !== state.id) {  // No doc-props but id is not the same as previous
-      // Closed or create new doc
-      // Clear doc props
-      result = {...result, id: 0, user_id:props.userInfo.id, course_name:"", short_name:"", description:"",total_hours:0, theory_hours:0, lab_hours:0, flex_hours:0, textbook:"", exam_tyoe:"", comments:"" };
+    if (!props.isNewDoc && !props.fetchedDocId) {
+      return result;
+    }
+    if (props.isNewDoc && state.id !== 0) {
+      // New doc and id not assigned (1st time loaded)
+      // No doc-props and empty doc initial state never assigned
+      // Initialize empty doc props, fill user_id and department_id with current userInfo
+      result = {...result, ...(ProgressdocDialog.initDocState), user_id:props.userInfo.id, department_id:props.userInfo.departmentId};
     }
     if (!props.docProps) return result;
     // initialize the state with props by the same name id!
@@ -169,11 +171,13 @@ class ProgressdocDialog extends Component {
     return false;
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     //console.log("LIFECYCLE: componentDidMount");
-    const { docItems, openedDocId } = this.props;
-    if (!docItems) return;
-    if (prevProps.openedDocId !== openedDocId) {
+    const { docProps, docItems, isOpen } = this.props;
+    if (!docItems || isOpen !== true) return;
+    if ((!prevProps.docProps && docProps) || (prevProps.docProps.id !== docProps.id)) {
+      // Doc changed!
+      // Backup rows for comparison before saving doc
       this.doc_items_obj = {};
       docItems.forEach(item => {
         this.doc_items_obj[item.id] = {...item};
@@ -347,8 +351,7 @@ class ProgressdocDialog extends Component {
     this.props.closeDoc();
   }*/
   onSave = () => {
-    const { accessLevel, docProps, docItems } = this.props;
-    if (!docProps || !docItems) return;
+    const { accessLevel } = this.props;
     if (accessLevel > role.PROFESSOR ) {
       // Not enouth access right!
       this.props.setToast({type:"error", message:"toast.access_denied"})
@@ -737,20 +740,28 @@ class ProgressdocDialog extends Component {
     }
   };*/
 
+  onClose = () => {
+    if (this.props.onClose) {
+      // Page closed. Clear states
+      this.setState(ProgressdocDialog.initDocState);
+      this.props.onClose();
+    }
+  }
+
   isDocEditable = () => {
-    const { docProps, userInfo, accessLevel } = this.props;
-    return (accessLevel && (accessLevel >= role.PROFESSOR)) || (docProps && userInfo && (userInfo.id === docProps.user_id || accessLevel >= role.OFFICER));
+    const { isNewDoc, docProps, userInfo, accessLevel } = this.props;
+    return isNewDoc || (accessLevel && (accessLevel >= role.PROFESSOR)) || (docProps && userInfo && (userInfo.id === docProps.user_id || accessLevel >= role.OFFICER));
   }
 
   render() {
     const { department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, saveOption, createdItems } = this.state;
-    const { t, title, color, isOpen, onClose, openedDocId, tableTitle, departments, docProps, docItems, isNewDoc, curriculums } = this.props;
+    const { t, title, color, isOpen, fetchedDocId, tableTitle, departments, docProps, docItems, isNewDoc, curriculums } = this.props;
     // Admin or doc author can edit this doc
     let isEditable = this.isDocEditable();
     return (
       <>
         <Modal
-          onClose={onClose}
+          onClose={this.onClose}
           //finalFocusRef={this.btnRef}
           isOpen={isOpen}
           scrollBehavior="inside"
@@ -764,17 +775,18 @@ class ProgressdocDialog extends Component {
             <ModalCloseButton />
             <ModalBody>
             {
-              (openedDocId>=0 || isNewDoc) &&
+              (fetchedDocId>=0 || isNewDoc) &&
               <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2}>
                 {
                   this.forms.map((form) => (
                     <FormControl key={form.id} isRequired={form.isRequired} minW={form.minW} maxW={form.maxW} m={2}>
                       <FormLabel><b>{form.label}</b></FormLabel>
                       {form.type!=='int'
-                        ? <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={this.onFormChanged}
-                          borderColor={(docProps && this.state[form.id]===docProps[form.id])?"gray.200":"blue.500"}/>
+                        ? <Input id={form.id} type={form.id} value={this.state[form.id]} onChange={this.onFormChanged} isDisabled={!isEditable}
+                          borderColor={(docProps && this.state[form.id]===docProps[form.id])?"gray.200":"blue.500"}
+                          placeholder={form.placeholder}/>
                         : <NumberInput defaultValue={0} max={200} keepWithinRange={false} clampValueOnBlur={false} id={form.id} type={form.id} value={this.state[form.id]} onChange={newVal => {
-                          this.setState({[form.id] : newVal})}}
+                          this.setState({[form.id] : newVal})}} isDisabled={!isEditable}
                         borderColor={(docProps && this.state[form.id]===docProps[form.id])?"gray.200":"blue.500"}>
                             <NumberInputField type="number"/>
                             <NumberInputStepper>
@@ -790,7 +802,7 @@ class ProgressdocDialog extends Component {
                 departments &&
                 <FormControl key={tableFields.DEPARTMENT_ID} isRequired minW={280} m={2}>
                   <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
-                  <Select id={tableFields.DEPARTMENT_ID} variant="outline" value={department_id} onChange={this.onFormChanged}
+                  <Select id={tableFields.DEPARTMENT_ID} variant="outline" value={department_id} onChange={this.onFormChanged} isDisabled={!isEditable}
                     borderColor={(docProps && department_id===docProps.department_id)?"gray.200":"blue.500"}>
                   {
                     departments.map((dep) => (
@@ -826,17 +838,19 @@ class ProgressdocDialog extends Component {
                 pageNextCaption={t("common.next")}
                 initPageIndex={0}
                 onCellValueChanged={this.onCellValueChanged}
-                onCellDoubleClicked={this.onCellDoubleClicked}
-                onCellEditingStarted={this.onCellEditingStarted}
+                // Disable double-click if not editable
+                onCellDoubleClicked={isEditable?this.onCellDoubleClicked:null}
+                onCellEditingStarted={isEditable?this.onCellEditingStarted:null}
                 rowSelection="multiple"
                 onSelectionChanged={this.onSelectionChanged}
                 //getRowId={params => params.data.id} // NO USE, NEVER CALLED!
                 getRowNodeId={data => data.id}
-                onRowDragEnd={this.onRowDragEnd}
                 // Sort by week and order-in-week, enable dragging by setting rowDragManaged to false
                 rowDragManaged={false}
-                onRowDragMove={this.onRowDragMove}
-                onRowDragEnter={this.onRowDragEnter}
+                // Disable drag-drop if not editable
+                onRowDragEnter={isEditable?this.onRowDragEnter:null}                
+                onRowDragMove={isEditable?this.onRowDragMove:null}
+                onRowDragEnd={isEditable?this.onRowDragEnd:null}
                 additionalColumnState={{
                   state: [
                     { colId: tableFields.WEEK_IDX, sort: 'asc', sortIndex: 0 },
@@ -870,7 +884,7 @@ class ProgressdocDialog extends Component {
                 ? <Button variantColor="red" mr={3} onClick={this.onSave} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("common.save")}</Button>
                 : <Button variantColor="red" mr={3} onClick={this.saveDocAs} leftIcon={MdSave} /*isLoading={isSaving} loadingText={t("common.saving")}*/>{t("progressdocScreen.btn_save_as")}</Button>
               }
-              <Button onClick={onClose}>{t("common.close")}</Button>
+              <Button onClick={this.onClose}>{t("common.close")}</Button>
             </ModalFooter>
           </ModalContent>
         </Modal>
