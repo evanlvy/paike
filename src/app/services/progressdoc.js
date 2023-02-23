@@ -99,8 +99,8 @@ class Api {
         request_param["items"] = itemsDiffDict;
       }
       else if (itemsDiffCol && itemsDiffDataframe){
-        request_param["items_dfcol"] = itemsDiffCol;
-        request_param["items_dfdata"] = itemsDiffDataframe;
+        request_param["dfcol"] = itemsDiffCol;
+        request_param["dfdata"] = itemsDiffDataframe;
       }
       console.log(request_param);
       let response = await axios.post(url, request_param);

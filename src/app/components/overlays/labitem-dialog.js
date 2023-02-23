@@ -366,7 +366,7 @@ class LabitemDialog extends Component {
   render() {
     const { isOpen, selectedId, isSearching, tabIndex, formValues:edit_source,
       doc_department_id, doc_short_name, doc_course_name, doc_lab_content } = this.state;
-    const { t, title, color, isSaveable, departments, searchResult, data:labItemProp,  context:docContext } = this.props;
+    const { t, title, isSaveable, departmentsDict, searchResult, data:labItemProp,  context:docContext } = this.props;
     return (
       <>
         <Modal
@@ -422,9 +422,9 @@ class LabitemDialog extends Component {
                         isDisabled={isSearching} placeholder={t("labitemScreen.search_placeholder")}
                               borderColor={(docContext && "doc_department_id" in docContext && doc_department_id!==docContext.doc_department_id)?"blue.500":"gray.200"}>
                             {
-                              departments.map((dep) => (
-                                <option key={dep.id} value={dep.id} >{dep.name}</option>
-                              ))
+                            Object.keys(departmentsDict).map((dep_id) => (
+                              <option key={dep_id} value={dep_id} >{departmentsDict[dep_id]}</option>
+                            ))
                             }
                         </Select>
                         <Tooltip zIndex="tooltip" hasArrow label={t("labitemScreen.tooltip_search_item")}>
@@ -460,14 +460,14 @@ class LabitemDialog extends Component {
                         ))
                       }
                       {
-                      departments &&
+                      departmentsDict &&
                       <FormControl key="department_id" isRequired minW={280} m={2}>
                         <FormLabel><b><Trans>progressdocScreen.form_label_departmentid</Trans></b></FormLabel>
                         <Select id="department_id" variant="outline" value={edit_source["department_id"]} onChange={this.onFormChanged}
                           borderColor={(labItemProp && "department_id" in labItemProp && edit_source["department_id"]!==labItemProp["department_id"])?"red.500":"gray.200"}>
                         {
-                          departments.map((dep) => (
-                            <option key={dep.id} value={dep.id} >{dep.name}</option>
+                          Object.keys(departmentsDict).map((dep_id) => (
+                            <option key={dep_id} value={dep_id} >{departmentsDict[dep_id]}</option>
                           ))
                         }
                         </Select>

@@ -11,7 +11,8 @@ import { getJiaoyanshiIds, getJiaoyanshi } from './jiaoyanshi';
 // action types
 export const types = {
   FETCH_TEACHERS: "TEACHER/FETCH_TEACHERS",
-  SET_SELECTED_JYS: "TEACHER/SELECTED_JYS"
+  SET_SELECTED_JYS: "TEACHER/SELECTED_JYS",
+  SEARCH_TEACHERS: "TEACHER/SEARCH_TEACHERS"
 };
 
 // actions
@@ -47,6 +48,22 @@ export const actions = {
       }
     }
   },
+  searchTeachers: (department_id=0, labdivision_id=0, context="", name=null, email=null) => {
+    return async (dispatch) => {
+      try {
+        dispatch(appActions.startRequest());
+        const data = await teacherApi.searchTeachers(context, name, email, department_id, labdivision_id);
+        dispatch(appActions.finishRequest());
+        dispatch(searchTeachersSuccess(data));
+      } catch (error) {
+        dispatch(appActions.setError(error));
+      }
+    }
+  },
+  clearSearched: () => ({
+    type: types.SEARCH_TEACHERS,
+    data: {},
+  }),
 }
 
 export const buildTeacherSchedId = (teacherId, year, week) => {
@@ -157,6 +174,13 @@ const fetchTeachersSuccess = (data, jiaoyanshiId, labDivisionId) => {
   })
 }
 
+const searchTeachersSuccess = (data) => {
+  return ({
+    type: types.SEARCH_TEACHERS,
+    data
+  })
+}
+
 const setSelectedJys = (jysId) => {
   return ({
     type: types.SET_SELECTED_JYS,
@@ -196,16 +220,28 @@ const kebiaoByTeacherSched = (state = Immutable.fromJS({}), action) => {
   }
 }
 
+const searched = (state = Immutable.fromJS({}), action) => {
+  switch (action.type) {
+    case types.SEARCH_TEACHERS:
+      return Immutable.fromJS(action.data);
+    default:
+      return state;
+  }
+}
+
 const reducer = combineReducers({
   byIds,
   byJiaoyanshi,
-  kebiaoByTeacherSched
+  kebiaoByTeacherSched,
+  searched,
 });
 
 export default reducer;
 
 // selectors
 export const getTeachers = state => state.getIn(["teacher", "byIds"]);
+
+export const searchedTeachers = state => state.getIn(["teacher", "searched"]).toJS();
 
 export const getTeachersByJys = state => state.getIn(["teacher", "byJiaoyanshi"]);
 

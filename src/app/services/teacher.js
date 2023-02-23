@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 import { server } from './common/info';
+import { allInChinese } from '../redux/modules/common/info';
 
 class Api {
   constructor() {
@@ -52,6 +53,42 @@ class Api {
       }
       else {
         throw new Error("No parameter found when trying to get teachers!"); 
+      }
+      let response = await axios.post(url, request_param);
+      const { success, data, message } = response.data;
+      if (!success) {
+        throw new Error(message.message);
+      }
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  searchTeachers = async (keyword="", name=null, email=null, department_id=0, labdivision_id=0) => {
+    try {
+      const url = this.baseUrl+"/users";
+      console.log("Request url "+url+" with keyword: "+keyword+", dep_id: "+department_id+", lab_id: "+labdivision_id);
+      let request_param = {};
+      if (name) {
+        request_param["name"] = name;
+      } else if (email) {
+        request_param["email"] = email;
+      } else if (department_id > 0) {
+        request_param['department_id'] = department_id;
+      } else if (labdivision_id > 0) {
+        request_param['labdivision_id'] = labdivision_id;
+      } else if (typeof(keyword)==='string' && keyword.length >= 2) {
+        let _keyword = keyword.toLowerCase();
+        if (_keyword[0] >= 'a' && _keyword[0] <= 'z') {
+          // Query by email
+          request_param["email"] = _keyword;
+        } else if (allInChinese(keyword)) {
+          request_param["name"] = keyword;
+        }
+      }
+      if (Object.keys(request_param).length <= 0) {
+        throw new Error("No sufficient parameter found when trying to get teacher list!"); 
       }
       let response = await axios.post(url, request_param);
       const { success, data, message } = response.data;

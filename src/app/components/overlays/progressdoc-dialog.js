@@ -38,7 +38,7 @@ import { EditableTable, DATATYPE_WEEK, DATATYPE_COLOR_AS_WEEK } from '../result-
 import LabitemDialog from './labitem-dialog';
 import { actions as progressdocActions, tableFields, getDocProps, getDocItems, parseImmutableLocs, getCurriculumCount } from '../../redux/modules/progressdoc';
 import { actions as appActions } from '../../redux/modules/app';
-import role from '../../redux/modules/auth';
+import { role } from '../../redux/modules/auth';
 
 const DEFAULT_COLOR = "purple";
 const CANCEL_COLOR = "gray";
@@ -77,7 +77,7 @@ class ProgressdocDialog extends Component {
     this.commonModalRef = React.createRef();
     this.agGridRef = React.createRef();
     this.forms = [
-      {id: "user_id", label: t("progressdocScreen.form_label_docowner"), maxW: 100, isRequired: true, type: 'int'},
+      //{id: "user_id", label: t("progressdocScreen.form_label_docowner"), maxW: 100, isRequired: true, type: 'int'},
       {id: "course_name", label: t("progressdocScreen.form_label_coursename"), minW: 280, placeholder: "全称", isRequired: true},
       {id: "short_name", label: t("progressdocScreen.form_label_shortname"), minW: 280, placeholder: "简称(用于课表)", isRequired: true},
       {id: "description", label: t("progressdocScreen.form_label_description"), minW: 280, isRequired: false},
@@ -754,8 +754,8 @@ class ProgressdocDialog extends Component {
   }
 
   render() {
-    const { department_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, saveOption, createdItems } = this.state;
-    const { t, title, color, isOpen, fetchedDocId, tableTitle, departments, docProps, docItems, isNewDoc, curriculums } = this.props;
+    const { department_id, user_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, saveOption, createdItems } = this.state;
+    const { t, title, color, isOpen, fetchedDocId, tableTitle, docProps, docItems, isNewDoc, curriculums, departmentsDict, teachersDict, accessLevel } = this.props;
     // Admin or doc author can edit this doc
     let isEditable = this.isDocEditable();
     return (
@@ -799,20 +799,44 @@ class ProgressdocDialog extends Component {
                   ))
                 }
                 {
-                departments &&
-                <FormControl key={tableFields.DEPARTMENT_ID} isRequired minW={280} m={2}>
-                  <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
-                  <Select id={tableFields.DEPARTMENT_ID} variant="outline" value={department_id} onChange={this.onFormChanged} isDisabled={!isEditable}
-                    borderColor={(docProps && department_id===docProps.department_id)?"gray.200":"blue.500"}>
-                  {
-                    departments.map((dep) => (
-                      <option key={dep.id} value={dep.id} >{dep.name}</option>
-                    ))
-                  }
-                  </Select>
-                  <FormHelperText>{t("progressdocScreen.form_helper_departmentid")}</FormHelperText>
-                </FormControl>
-                }
+                  teachersDict && departmentsDict && accessLevel>role.PROFESSOR
+                  ?<>
+                    <FormControl key={tableFields.USER_ID} isRequired minW={100} maxW={200} m={2}>
+                      <FormLabel><b>{t("progressdocScreen.form_label_docowner")}</b></FormLabel>
+                      <Select id={tableFields.USER_ID} variant="outline" value={user_id} onChange={this.onFormChanged} isDisabled={!isEditable}
+                        borderColor={(docProps && user_id===docProps.user_id)?"gray.200":"blue.500"}>
+                      {
+                        Object.keys(teachersDict).map((teacher_id) => (
+                          <option key={teacher_id} value={teacher_id} >{teachersDict[teacher_id]}</option>
+                        ))
+                      }
+                      </Select>
+                      <FormHelperText>{t("progressdocScreen.form_helper_docowner")}</FormHelperText>
+                    </FormControl>
+                    <FormControl key={tableFields.DEPARTMENT_ID} isRequired minW={120} maxW={200} m={2}>
+                      <FormLabel><b>{t("progressdocScreen.form_label_departmentid")}</b></FormLabel>
+                      <Select id={tableFields.DEPARTMENT_ID} variant="outline" value={department_id} onChange={this.onFormChanged} isDisabled={!isEditable}
+                        borderColor={(docProps && department_id===docProps.department_id)?"gray.200":"blue.500"}>
+                      {
+                        Object.keys(departmentsDict).map((dep_id) => (
+                          <option key={dep_id} value={dep_id} >{departmentsDict[dep_id]}</option>
+                        ))
+                      }
+                      </Select>
+                      <FormHelperText>{t("progressdocScreen.form_helper_departmentid")}</FormHelperText>
+                    </FormControl>
+                  </>
+                  :<>
+                  <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2} maxW={200}>
+                    <Text as='b' mb='8px'>{t("progressdocScreen.form_label_docowner")}</Text>
+                    <Input isDisabled variant='filled' value={teachersDict && docProps?teachersDict[""+docProps.user_id]:docProps.name} />
+                  </Flex>
+                  <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2} maxW={200}>
+                    <Text as='b' mb='8px'>{t("progressdocScreen.form_label_departmentid")}</Text>
+                    <Input isDisabled variant='filled' value={departmentsDict && docProps?departmentsDict[""+docProps.department_id]:docProps.department_id} />
+                  </Flex>
+                  </>
+              }
               </Flex>
             }
             {
@@ -863,6 +887,7 @@ class ProgressdocDialog extends Component {
                 //pageInputCaption={[t("kebiao.input_semester_week_prefix"), t("kebiao.input_semester_week_suffix")]}
                 />
             }
+            {isLabItemOpen &&
             <LabitemDialog
               t={t}
               color={color}
@@ -870,9 +895,10 @@ class ProgressdocDialog extends Component {
               context={docContext}
               isOpen={isLabItemOpen}
               onClose={this.onLabItemClosed}
-              departments={departments}
+              departmentsDict={departmentsDict}
               title={t("labitemScreen.title")}
               isSaveable />
+            }
             </ModalBody>
             <ModalFooter alignItems='center'>
               { isEditable && 

@@ -200,8 +200,8 @@ export const actions = {
     /* params_json_sample = {
       "id": 1,
       "props": {"id": 1, "course_name": "ssskkk"},
-      "items_dfcol": ["id", "ord"],
-      "items_dfdata": [[1, 9999], [2, 8888]],
+      "dfcol": ["id", "ord"],
+      "dfdata": [[1, 9999], [2, 8888]],
       or
       "items": {"0": {"id": 1, "ord": 888},
                 "1": {"id": 2, "ord": 999}}

@@ -33,6 +33,8 @@ import { actions as gradeActions, getSchoolYear, getStageList } from '../redux/m
 import { actions as jysActions, getColoredJysList } from '../redux/modules/jiaoyanshi';
 import { actions as progressdocActions, getDocList, getFetchedDocId, getCreatedDocId, getSelectedGroup } from '../redux/modules/progressdoc';
 import { actions as appActions } from '../redux/modules/app';
+import { actions as teacherActions, searchedTeachers } from '../redux/modules/teacher'
+
 import PromptDrawer from '../components/overlays/prompt-drawer';
 import ProgressdocDialog from '../components/overlays/progressdoc-dialog';
 import ButtonConfirmPopover from '../components/modal/button-confirm-popover';
@@ -119,9 +121,15 @@ class ProgressdocScreen extends Component {
     //console.log("LIFECYCLE: componentDidUpdate");
     // Disable Open button when changing department then lost row selection
     if (prevState.selectedJysIdList !== this.state.selectedJysIdList) {
+      // Department changed by user
       this.setState({
         selectedDocId: -1,
       });
+      // Load teacher list
+      const department_id = this.state.selectedJysIdList[0];
+      if (department_id > 0) {
+        this.props.searchTeachers(department_id);
+      }
     }
     if (prevProps.fetchedDocId !== this.props.fetchedDocId) {
       if (this.props.fetchedDocId < 0 && this.state.isNewDoc === false) {
@@ -181,7 +189,7 @@ class ProgressdocScreen extends Component {
     if (!this.state.semesterPages || this.state.semesterPages.length === 0) {
       this.props.fetchStageList();
     }
-    if (!this.jysData || this.jysData.length === 0) { // only get jys list when it's empty
+    if (!this.jysDict || Object.keys(this.jysDict).length === 0) { // only get jys list when it's empty
       this.loadjysData();
     }
     if (this.state.selectedJysIdList && !this.hasFetchKebiao) {
@@ -191,7 +199,8 @@ class ProgressdocScreen extends Component {
 
   loadjysData = () => {
     //console.log("loadjysData");
-    this.props.fetchJiaoyanshi();
+    this.props.fetchJiaoyanshi(false);
+    this.jysDict = this.props.getJysDictByFaculty();
   }
   
   loadDocList = (jysIdList, stage_id=-1) => {
@@ -308,7 +317,7 @@ class ProgressdocScreen extends Component {
   };
 
   render() {
-    const { t, jysList, docList, userInfo, accessLevel, fetchedDocId } = this.props;
+    const { t, jysList, docList, userInfo, accessLevel, fetchedDocId, jysTeachers } = this.props;
     const { selectStage, selectedDocId, isProgressDocOpen, isNewDoc, isLoading, rowSelected, semesterPages, filteredDocList } = this.state;
     const { color, jysTitle, titleSelected, docListHeaders } = this;
     let tableTitle = "";
@@ -382,18 +391,22 @@ class ProgressdocScreen extends Component {
           <ButtonConfirmPopover t={t} leftIcon={MdDelete} variantColor="red" variant="solid" mt={3} isDisabled={rowSelected<1} 
             onConfirm={this.onDeleteDoc} btnTitle={t("common.delete")} popText={t("progressdocScreen.warning_delete_doc")}/>
         </ButtonGroup>
+        {
+        isProgressDocOpen &&
         <ProgressdocDialog
           t={t}
           color={color}
           isOpen={isProgressDocOpen}
           onClose={this.onProgressDocClose}
-          departments={jysList}
+          departmentsDict={this.jysDict}
           fetchedDocId={fetchedDocId}
           title={t("progressdocScreen.doc_detail_title")}
           btnText={t("common.open")}
           userInfo={userInfo}
           accessLevel={accessLevel}
-          isNewDoc={isNewDoc} />
+          isNewDoc={isNewDoc}
+          teachersDict={jysTeachers} />
+        }
       </Flex>
     );
   }
@@ -410,6 +423,7 @@ const mapStateToProps = (state) => {
     fetchedDocId: getFetchedDocId(state),
     createdDocId: getCreatedDocId(state),
     selectedGroup: getSelectedGroup(state),
+    jysTeachers: searchedTeachers(state),
   }
 }
 
@@ -420,6 +434,7 @@ const mapDispatchToProps = (dispatch) => {
     ...bindActionCreators(progressdocActions, dispatch),
     ...bindActionCreators(authActions, dispatch),
     ...bindActionCreators(appActions, dispatch),
+    ...bindActionCreators(teacherActions, dispatch),
   }
 }
 

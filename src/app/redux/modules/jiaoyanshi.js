@@ -19,12 +19,12 @@ export const types = {
 
 // actions
 export const actions = {
-  fetchJiaoyanshi: () => {
+  fetchJiaoyanshi: (in_brief=false) => {
     return async (dispatch, getState) => {
       try {
         if (shouldFetchJiaoyanshi(getState())) {
           dispatch(appActions.startRequest());
-          const data = await jiaoyanshiApi.queryJiaoyanshi();
+          const data = await jiaoyanshiApi.queryJiaoyanshi(in_brief);
           dispatch(appActions.finishRequest());
           const { centerByIds, centerIds, jiaoyanshiByIds, jiaoyanshiIds, jiaoyanshiByCenter } = convertJiaoyanshiToPlain(data);
           dispatch(fetchJiaoyanshiSuccess(centerIds, centerByIds, jiaoyanshiByCenter, jiaoyanshiByIds, jiaoyanshiIds));
@@ -39,6 +39,13 @@ export const actions = {
     return (dispatch, getState) => {
       const state = getState();
       return getJysDictByFac(state, fac_id);
+    }
+  },
+  getJysDetails: (dep_id=-1) => {
+    // Use thunk to call selector with State ref. In order to peek state value only.
+    return (dispatch, getState) => {
+      const state = getState();
+      return getJiaoyanshiDetails(state, dep_id);
     }
   },
 }
@@ -162,6 +169,8 @@ export const getJiaoyanshiByCenters = state => state.getIn(["jiaoyanshi", "jiaoy
 export const getCenter = state => state.getIn(["jiaoyanshi", "centerByIds"]);
 
 export const getCenterIds = state => state.getIn(["jiaoyanshi", "centerIds"]);
+
+export const getJiaoyanshiDetails = (state, department_id=0) => state.getIn(["jiaoyanshi", "jiaoyanshiByIds", ""+department_id]);
 
 export const getJysDictByFac = (state, fac_id=-1) => {
   // Use thunk to call selector with State ref. In order to peek state value only.
