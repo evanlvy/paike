@@ -13,7 +13,7 @@ export const types = {
   SET_ERROR: "APP/SET_ERROR",
   REMOVE_ERROR: "APP/REMOVE_ERROR",
   SET_TOAST: "APP/SET_TOAST",
-  REMOVE_TOAST: "APP/REMOVE_TOAST",
+  SET_SPINNER: "APP/SET_SPINNER",
 }
 
 // Action Creator
@@ -35,8 +35,9 @@ export const actions = {
     type: types.SET_TOAST,
     toast
   }),
-  removeToast: () => ({
-    type: types.REMOVE_TOAST
+  setSpinner: (enabled) => ({
+    type: types.SET_SPINNER,
+    enabled
   }),
 }
 
@@ -53,8 +54,8 @@ const reducer = (state = initialState, action) => {
       return state.merge({ error: null });
     case types.SET_TOAST:
       return state.merge({ toast: action.toast });
-    case types.REMOVE_TOAST:
-      return state.merge({ toast: null });
+    case types.SET_SPINNER:
+      return state.merge({ spinner: action.enabled });
     default:
       return state;
   }
@@ -74,4 +75,8 @@ export const getToast = state => {
 
 export const getRequestQuantity = state => {
   return state.getIn(["app", "requestsCount"]);
+};
+
+export const getSpinner = state => {
+  return state.getIn(["app", "spinner"]);
 };

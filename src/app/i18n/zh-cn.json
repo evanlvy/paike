@@ -31,7 +31,8 @@
     "insert_row": "插入新行",
     "remove_row": "删除行",
     "just_now": "刚刚",
-    "only_mine": "只看我的"
+    "only_mine": "只看我的",
+    "unknown": "未知"
   },
   "alert": {
     "default_title": "警告",

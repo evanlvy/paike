@@ -95,7 +95,7 @@ class ProgressdocDialog extends Component {
     this.lastHighlightedRow = null;
   }
 
-  static initDocState = { id: 0, user_id:0, department_id:0, course_name:"", short_name:"", description:"",total_hours:0, theory_hours:0, lab_hours:0, flex_hours:0, textbook:"", exam_tyoe:"", comments:"" };
+  static initDocState = { id: 0, user_id:0, uname:"", department_id:0, course_name:"", short_name:"", description:"",total_hours:0, theory_hours:0, lab_hours:0, flex_hours:0, textbook:"", exam_tyoe:"", comments:"" };
 
   static getDerivedStateFromProps(props, state) {
     let result = {};
@@ -106,7 +106,7 @@ class ProgressdocDialog extends Component {
       // New doc and id not assigned (1st time loaded)
       // No doc-props and empty doc initial state never assigned
       // Initialize empty doc props, fill user_id and department_id with current userInfo
-      result = {...result, ...(ProgressdocDialog.initDocState), user_id:props.userInfo.id, department_id:props.userInfo.departmentId};
+      result = {...result, ...(ProgressdocDialog.initDocState), user_id:props.userInfo.id, uname:props.userInfo.name, department_id:props.userInfo.departmentId};
     }
     if (!props.docProps) return result;
     // initialize the state with props by the same name id!
@@ -754,7 +754,7 @@ class ProgressdocDialog extends Component {
   }
 
   render() {
-    const { department_id, user_id, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, saveOption, createdItems } = this.state;
+    const { department_id, user_id, uname: user_name, labs: labItem, context: docContext, isLabItemOpen, editedRowCache, rowSelected, saveOption, createdItems } = this.state;
     const { t, title, color, isOpen, fetchedDocId, tableTitle, docProps, docItems, isNewDoc, curriculums, departmentsDict, teachersDict, accessLevel } = this.props;
     // Admin or doc author can edit this doc
     let isEditable = this.isDocEditable();
@@ -829,11 +829,11 @@ class ProgressdocDialog extends Component {
                   :<>
                   <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2} maxW={200}>
                     <Text as='b' mb='8px'>{t("progressdocScreen.form_label_docowner")}</Text>
-                    <Input isDisabled variant='filled' value={teachersDict && docProps?teachersDict[""+docProps.user_id]:docProps.name} />
+                    <Input isDisabled variant='filled' value={user_name?user_name:t("common.unknown")} />
                   </Flex>
                   <Flex direction="row" alignItems="center" wrap="wrap" px={5} py={2} maxW={200}>
                     <Text as='b' mb='8px'>{t("progressdocScreen.form_label_departmentid")}</Text>
-                    <Input isDisabled variant='filled' value={departmentsDict && docProps?departmentsDict[""+docProps.department_id]:docProps.department_id} />
+                    <Input isDisabled variant='filled' value={(departmentsDict && department_id)?departmentsDict[""+department_id]:t("common.unknown")} />
                   </Flex>
                   </>
               }
@@ -849,7 +849,7 @@ class ProgressdocDialog extends Component {
                 ref={this.agGridRef}
                 flex={1}
                 disableEdit={isEditable}
-                autoShrinkDomHeight
+                autoShrinkDomHeight={!isNewDoc}
                 minHeight={950}
                 titleHeight={50}
                 colLineHeight={15}

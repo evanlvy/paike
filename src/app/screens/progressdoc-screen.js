@@ -146,6 +146,10 @@ class ProgressdocScreen extends Component {
       });
       //console.log(this.state.filteredDocList);
     }
+    if (prevState.isLoading !== this.state.isLoading) {
+      // Trigger main-navigator to show circular progress bar!
+      this.props.setSpinner(this.state.isLoading);
+    }
     if (prevProps.stageList !== this.props.stageList) {
       const { t } = this.props;
       // Add special items to selector
@@ -326,7 +330,6 @@ class ProgressdocScreen extends Component {
     } else {
       tableTitle = t("subjectBoard.title_no_jys_template");
     }
-
     return (
       <Flex width="100%" minHeight={750} direction="column" align="center" mb={5}>
         <SubjectBoard t={t} my={4} color={color}
@@ -354,10 +357,6 @@ class ProgressdocScreen extends Component {
             <PromptDrawer t={t} promptText={t("editRawplanScreen.prompt_text")}/>
           </Flex>
         </Box>
-        {
-          isLoading &&
-          <CircularProgress isIndeterminate color="blue" size="120px" width="100%"></CircularProgress>
-        }
         {
           !isLoading && docList && 
           <ResultTable

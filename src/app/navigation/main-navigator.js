@@ -24,7 +24,7 @@ import {
 import { actions as authActions, getAccessLevel, getLoggedUser, getStudentInfo } from '../redux/modules/auth';
 import { actions as gradeActions, getGradesOfAllDegrees, getSchoolYear, getStageList } from '../redux/modules/grade';
 import { actions as jysActions, getJiaoyanshiOfAllCenters } from '../redux/modules/jiaoyanshi';
-import { actions as requestActions, getRequestQuantity, getError, getToast } from '../redux/modules/app';
+import { actions as requestActions, getRequestQuantity, getError, getToast, getSpinner } from '../redux/modules/app';
 
 import AsyncComponent from '../utils/AsyncComponent';
 import connectRoute from '../utils/connectRoute';
@@ -71,7 +71,7 @@ class MainNavigatorWrapper extends PureComponent {
       this.showConfirmDialog(requestError);
     }
     if (requestToast) {
-      this.props.removeToast();
+      this.props.setToast(null);
     }
   }
 
@@ -147,7 +147,7 @@ class MainNavigatorWrapper extends PureComponent {
       return <Redirect to="/login" />;
     }
     const { onConfirmError, onStageChanged } = this;
-    const { t, initStage, stageList, gradeTypes, centers, labBuildings, requestsCount, requestError, requestToast, user, accessLevel, stuInfo } = this.props;
+    const { t, initStage, stageList, gradeTypes, centers, labBuildings, requestsCount, requestError, requestToast, enableSpinner, user, accessLevel, stuInfo } = this.props;
     //console.log("Request count: "+requestsCount);
     return (
       <Flex direction="column" justify="center" basis="100%">
@@ -183,7 +183,7 @@ class MainNavigatorWrapper extends PureComponent {
         </Flex>
         {/* Spinner */}
         {
-          requestsCount > 0 && !requestError &&
+          (enableSpinner || (requestsCount > 0 && !requestError)) &&
           <AlertDialog
             isOpen={true}
             motionPreset="scale"
@@ -231,6 +231,7 @@ const mapStateToProps = (state) => {
     requestsCount: getRequestQuantity(state),
     requestError: getError(state),
     requestToast: getToast(state),
+    enableSpinner: getSpinner(state),
     stuInfo: getStudentInfo(state),
     accessLevel: getAccessLevel(state),
   }
