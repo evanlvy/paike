@@ -363,7 +363,7 @@ class ProgressdocScreen extends Component {
             ref={this.agGridRef}
             getRowNodeId={data => data.id}
             //minHeight={docList.length>3?800:180}
-            autoShrinkDomHeight
+            maxHeight={950}
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}

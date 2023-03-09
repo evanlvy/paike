@@ -849,8 +849,7 @@ class ProgressdocDialog extends Component {
                 ref={this.agGridRef}
                 flex={1}
                 disableEdit={isEditable}
-                autoShrinkDomHeight={!isNewDoc}
-                minHeight={950}
+                maxHeight={950}
                 titleHeight={50}
                 colLineHeight={15}
                 defaultColWidth={180}

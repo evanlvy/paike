@@ -4,18 +4,8 @@ import React, { Component } from 'react';
 import { bindActionCreators } from "redux";
 import { connect } from "react-redux";
 import { withTranslation } from 'react-i18next';
-import {
-  Flex,
-  Text,
-} from '@chakra-ui/core';
-
-import {
-  SubjectBoard,
-  ResultTable,
-} from '../components';
 
 import { getSchoolYear, getSchoolWeek } from '../redux/modules/grade';
-import { getStudentInfo, isStudent } from '../redux/modules/auth';
 import { actions as gradeActions } from '../redux/modules/grade';
 
 import JwcKebiaoScreen from './jwc-kebiao-screen';

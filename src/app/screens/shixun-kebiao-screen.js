@@ -257,8 +257,7 @@ class ShiXunKeBiaoScreen extends Component {
     const tableTitle = t("shixunKebiaoScreen.table_title_template", {jys_count: selectedJysIdList.length});
     if (tableData) {
       pageTables[0] = (<ResultTable
-        minHeight={tableData.length>3?800:180}
-        autoShrinkDomHeight
+        maxHeight={950}
         //height={450/*window.innerHeight*/}
         titleHeight={50}
         colLineHeight={20}

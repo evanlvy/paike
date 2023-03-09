@@ -329,7 +329,7 @@ class LiLunKeBiaoScreenWrapped extends Component {
     const pageTables = [];
     if (tableData) {
         pageTables[0] = (<ResultTable
-          autoShrinkDomHeight
+          maxHeight={950}
           titleHeight={50}
           colLineHeight={20}
           defaultColWidth={120}

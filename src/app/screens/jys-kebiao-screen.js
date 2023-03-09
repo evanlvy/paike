@@ -419,8 +419,7 @@ class JysKebiaoScreen extends Component {
         {
           tableData && 
           <ResultTable
-            minHeight={330}
-            autoShrinkDomHeight
+            maxHeight={950}
             fixedColWidth
             titleHeight={50}
             colLineHeight={20}

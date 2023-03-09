@@ -242,7 +242,6 @@ class EditRawplanScreen extends Component {
           <ResultTable
             margin="5"
             maxHeight={350}
-            autoShrinkDomHeight
             //minHeight={statistics.length>3?350:180}
             titleHeight={50}
             colLineHeight={20}
@@ -260,7 +259,6 @@ class EditRawplanScreen extends Component {
             ref={planTableRef}
             flex={1}
             minHeight={270}
-            autoShrinkDomHeight
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}

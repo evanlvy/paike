@@ -212,8 +212,7 @@ class JwcKebiaoScreen extends Component {
           dataRows &&
           <ResultTable
             flex={1}
-            //maxHeight={950}
-            autoShrinkDomHeight
+            maxHeight={950}
             titleHeight={50}
             colLineHeight={20}
             defaultColWidth={180}

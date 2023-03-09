@@ -630,7 +630,6 @@ class SolveConflictModalWrapped extends Component {
               <EditableTable
                 flex={1}
                 minHeight={200}
-                autoShrinkDomHeight
                 titleHeight={50}
                 colLineHeight={20}
                 defaultColWidth={80}
