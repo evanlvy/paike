@@ -17,6 +17,7 @@ import { CellConverters } from './cell-converters';
 import { CommonRenderer } from "./common-renderer";
 import { ArrayDataRenderer } from "./arraydata-renderer";
 import { SelectorCelleditor } from "./selector-celleditor";
+import { DEFAULT_TABLE_ROW_HEIGHT } from "../../redux/modules/common/info"
 
 export const DATATYPE_WEEK = "grouped_increasing_week";
 export const DATATYPE_COLOR_AS_WEEK = "grouped_color_as_week";
@@ -24,7 +25,7 @@ export const DATATYPE_COLOR_AS_WEEK = "grouped_color_as_week";
 class EditableTableWrapper extends Component {
   constructor(props) {
     super(props);
-    const { t, initPageIndex, fixedColWidth, maxHeight=9999, minHeight=0, rowHeight=25 } = props;
+    const { t, initPageIndex, fixedColWidth, maxHeight=9999, minHeight=0, colLineHeight=DEFAULT_TABLE_ROW_HEIGHT } = props;
     this.state = {
       curPageIndex: initPageIndex ? initPageIndex : 0,
       editPageNum: ""
@@ -47,8 +48,8 @@ class EditableTableWrapper extends Component {
     this.gridApi = null;
     this.prevRowCount = 0;
     this.prevHeight = 0;
-    this.maxRowCount = Math.ceil(maxHeight/rowHeight);
-    this.minRowCount = Math.ceil(minHeight/rowHeight);
+    this.maxRowCount = Math.ceil(maxHeight/colLineHeight);
+    this.minRowCount = Math.ceil(minHeight/colLineHeight);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -317,7 +318,7 @@ class EditableTableWrapper extends Component {
   };
 
   render() {
-    const { t, color, title, width, height: fixHeight, maxHeight, minHeight, rowHeight, titleHeight, 
+    const { t, margin, color, title, width, height: fixHeight, maxHeight, minHeight, titleHeight, 
       pageNames, pageInputCaption, pagePrevCaption, pageNextCaption, 
       rowSelection, onCellDoubleClicked, onCellEditingStarted, rowDragManaged, onSelectionChanged,
       onCellValueChanged, defaultColWidth, cellClassRules, headers, data,
@@ -326,7 +327,7 @@ class EditableTableWrapper extends Component {
     const { curPageIndex } = this.state;
     //console.log("RowData: "+JSON.stringify(rowData));
     return (
-      <Flex direction="column" width={width ? width : "100%"} height="inherit">
+      <Flex direction="column" width={width ? width : "100%"} height="inherit" margin={margin} >
         {
           (title || pageNames) &&
           <Box display="flex" flexDirection="row" bg={color+".400"} minH={titleHeight} px={4} alignItems="center"
@@ -363,7 +364,6 @@ class EditableTableWrapper extends Component {
               frameworkComponents={this.frameworkComponents}
               columnDefs={this.columnDefs}
               rowData={this.rowData}
-              rowHeight={rowHeight}
               stopEditingWhenCellsLoseFocus={true}
               //deltaRowMode={true}
               //getRowId={} // NO USE!!! Never called!

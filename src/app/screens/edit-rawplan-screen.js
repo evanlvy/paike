@@ -240,7 +240,7 @@ class EditRawplanScreen extends Component {
         {
           statistics &&
           <ResultTable
-            margin="5"
+            margin={2}
             maxHeight={350}
             //minHeight={statistics.length>3?350:180}
             titleHeight={50}
@@ -256,6 +256,7 @@ class EditRawplanScreen extends Component {
         {
           planRows &&
           <EditableTable
+            margin={2}
             ref={planTableRef}
             flex={1}
             minHeight={270}

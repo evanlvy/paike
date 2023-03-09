@@ -331,7 +331,7 @@ class ProgressdocScreen extends Component {
       tableTitle = t("subjectBoard.title_no_jys_template");
     }
     return (
-      <Flex width="100%" minHeight={750} direction="column" align="center" mb={5}>
+      <Flex width="100%" height="100%" direction="column" align="center" mb={5}>
         <SubjectBoard t={t} my={4} color={color}
           title={jysTitle}
           subjects={jysList}

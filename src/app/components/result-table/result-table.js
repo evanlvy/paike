@@ -19,11 +19,12 @@ import { CommonRenderer } from "./common-renderer";
 import { ArrayDataRenderer } from "./arraydata-renderer";
 import { ConflictsRenderer } from "./conflicts-renderer";
 import { CellConverters } from './cell-converters';
+import { DEFAULT_TABLE_ROW_HEIGHT } from "../../redux/modules/common/info"
 
 class ResultTableWrapper extends Component {
   constructor(props) {
     super(props);
-    const { t, onCellIndicatorClicked, initPageIndex, fixedColWidth, rowHeight, maxHeight=9999, minHeight=0} = props;
+    const { t, onCellIndicatorClicked, initPageIndex, fixedColWidth, colLineHeight, maxHeight=9999, minHeight=0} = props;
     this.state = {
       curPageIndex: initPageIndex ? initPageIndex : 0,
       editPageNum: ""
@@ -38,7 +39,7 @@ class ResultTableWrapper extends Component {
     };
 
     this.defaultColDef = {
-      autoHeight: !rowHeight,
+      autoHeight: !colLineHeight,
       flex: 1,
       minWidth: 80,
       resizable: !fixedColWidth,
@@ -58,8 +59,8 @@ class ResultTableWrapper extends Component {
     this.overlayLoadingTemplate = '<span class="ag-overlay-loading-center">...加载中...</span>';
     this.prevRowCount = 0;
     this.prevHeight = 0;
-    let rh = rowHeight;
-    if (!rowHeight) rh =25;
+    let rh = colLineHeight;
+    if (!colLineHeight) rh = DEFAULT_TABLE_ROW_HEIGHT;
     this.maxRowCount = Math.ceil(maxHeight/rh);
     this.minRowCount = Math.ceil(minHeight/rh);
   }
@@ -304,15 +305,15 @@ class ResultTableWrapper extends Component {
   }
 
   render() {
-    const { t, width, title, titleHeight, color, rowHeight, height: fixHeight,
+    const { t, margin, width, title, titleHeight, color, height: fixHeight,
       pageNames, pagePrevCaption, pageNextCaption, initPageIndex, pageInputCaption, rowSelection, 
       onCellClicked: onCellClickedCallback, onRowClicked: onRowClickedCallback, onRowDoubleClicked: onRowDoubleClickedCb,
-      headers, data, colLineHeight, onResultPageIndexChanged, onRowSelected: onRowSelectedCallback,
+      headers, data, onResultPageIndexChanged, onRowSelected: onRowSelectedCallback,
       ...other_props } = this.props;
     const { curPageIndex } = this.state;
     //console.log("render: curPageIndex: "+curPageIndex);
     return (
-      <Flex flex={1} direction="column" width={width ? width : "100%"} height="inherit">
+      <Flex flex={1} direction="column" width={width ? width : "100%"} height="inherit" margin={margin} >
         {
           (title || pageNames) &&
           <Box display="flex" flexDirection="row" bg={color+".400"} minH={titleHeight} px={4} alignItems="center"
@@ -349,7 +350,6 @@ class ResultTableWrapper extends Component {
               frameworkComponents={this.frameworkComponents}
               columnDefs={this.columnDefs}
               rowData={data}
-              rowHeight={rowHeight}
               //rowClassRules={rowClassRules}
               onCellClicked={this.onCellClicked}
               onRowClicked={this.onRowClicked}

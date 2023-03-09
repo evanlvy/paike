@@ -1,13 +1,14 @@
 /* @flow */
 
 import React, { Component } from 'react';
+import { DEFAULT_TABLE_ROW_HEIGHT } from "../../redux/modules/common/info"
 import "./table.css"
 
 class CommonRenderer extends Component {
   render() {
     const { value, data, colDef, lineHeight, valueFormatted, fn_disable } = this.props;
     const { editable } = colDef;
-    let line_height = lineHeight?lineHeight:20;
+    let line_height = lineHeight?lineHeight:DEFAULT_TABLE_ROW_HEIGHT;
     let value_array = [];
     if (value) {
       let value_obj = value;
